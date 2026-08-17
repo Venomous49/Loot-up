@@ -1,139 +1,310 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>RiseLooter — Multiplie les actions. Fais monter tes gains.</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RiseLooter</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--bg:#09090d;--p:#111116;--p2:#17171d;--line:#292932;--purple:#9d5cff;--purple2:#c08cff;--muted:#9696a2;--green:#69e6a6;--orange:#ffad75;--red:#ff7777}*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:#fff;min-height:100vh}button,input{font:inherit}button{cursor:pointer}.hidden{display:none!important}header{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:17px 6%;border-bottom:1px solid #222229;background:rgba(9,9,13,.97);position:sticky;top:0;z-index:50}.logo{font-size:27px;font-weight:950}.logo span{color:var(--purple)}.head-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.head-balance{display:none;color:var(--purple2);font-weight:900}.btn{border:0;background:var(--purple);color:#fff;padding:11px 16px;border-radius:9px;font-weight:800}.btn2{border:1px solid #40404a;background:#202027;color:#fff;padding:9px 13px;border-radius:9px;font-weight:750}.btn.small,.btn2.small{padding:7px 9px;font-size:12px}.danger{background:#713b3b!important}.success{background:#2d7551!important}#logoutButton,#adminButton{display:none}main{width:88%;max-width:1160px;margin:26px auto 70px}.section{margin-bottom:50px}.section-title{font-size:27px;margin-bottom:7px}.section-subtitle{color:var(--muted);line-height:1.5;margin-bottom:18px}.empty,.loading{background:var(--p);border:1px solid #25252e;border-radius:14px;padding:22px;text-align:center;color:var(--muted)}
-/* wallet */.wallet{display:none;background:linear-gradient(135deg,rgba(157,92,255,.18),#111116 58%);border:1px solid #49336a;border-radius:20px;padding:22px;margin-bottom:18px}.wallet-head{display:flex;justify-content:space-between;gap:18px}.wallet-total{font-size:39px;color:var(--purple2);font-weight:950}.wallet-euro{color:#c8c8d1;margin-top:4px}.wallet-actions{display:flex;flex-direction:column;align-items:flex-end;gap:8px}.wallet-note{background:#19191f;border:1px solid var(--line);padding:9px 13px;border-radius:9px;color:#c6c6cf;font-size:13px}.wallet-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:18px}.tile{background:rgba(17,17,22,.82);border:1px solid var(--line);padding:12px;border-radius:11px}.label{color:#8e8e99;font-size:12px;margin-bottom:5px}.value{font-weight:850}
-/* looter */.looter-wrap{display:grid;grid-template-columns:minmax(320px,1.05fr) minmax(300px,.95fr);gap:17px;margin-bottom:38px}.looter-card{position:relative;overflow:hidden;min-height:470px;border:1px solid #343442;border-radius:21px;background:#101015}.environment{position:absolute;inset:0;transition:1s}.environment:after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(8,8,12,.98),rgba(8,8,12,.1) 70%)}.stage-1 .environment{background:linear-gradient(160deg,#29232a,#17171b 50%,#09090d)}.stage-2 .environment{background:linear-gradient(155deg,#36343c,#1b1b21 50%,#0b0b10)}.stage-3 .environment{background:linear-gradient(150deg,#2b3545,#171b25 55%,#090a10)}.stage-4 .environment{background:linear-gradient(145deg,#3c3150,#1b1728 55%,#09090e)}.stage-5 .environment{background:linear-gradient(145deg,#27435b,#121c29 55%,#07090e)}.stage-6 .environment{background:linear-gradient(140deg,#452f5b,#101a2a 58%,#07080d)}.stage-7 .environment{background:radial-gradient(circle at 70% 22%,#31557d,#191429 44%,#08090d 78%)}.stage-8 .environment{background:radial-gradient(circle at 50% 22%,#647da8,#34214f 32%,#0a0c15 74%)}.looter-meta{position:absolute;z-index:5;left:21px;right:21px;top:19px}.looter-level{font-size:12px;font-weight:900;letter-spacing:.7px;color:#c6b5ef}.looter-title{font-size:31px;font-weight:950;margin-top:4px}.env-label{font-size:12px;color:#a0a0aa;margin-top:5px}.char{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);width:200px;height:330px;z-index:3}.head{position:absolute;top:5px;left:50%;transform:translateX(-50%);width:80px;height:88px;border-radius:46%;background:#b58d7b}.hair{position:absolute;top:-5px;left:-4px;right:-4px;height:42px;border-radius:50% 50% 28% 26%;background:#272128}.body{position:absolute;top:84px;left:50%;transform:translateX(-50%);width:125px;height:154px;border-radius:25px 25px 16px 16px;background:#535058}.arm{position:absolute;top:101px;width:31px;height:129px;background:#4d4951;border-radius:16px}.arm.l{left:16px;transform:rotate(8deg)}.arm.r{right:16px;transform:rotate(-8deg)}.leg{position:absolute;top:226px;width:43px;height:92px;background:#343237;border-radius:8px}.leg.l{left:48px}.leg.r{right:48px}.shoe{position:absolute;bottom:0;width:59px;height:21px;background:#25252b;border-radius:14px 17px 7px 7px}.shoe.l{left:31px}.shoe.r{right:31px}.stage-1 .body{background:#49464b;border:2px dashed #68636b}.stage-1 .hair{height:48px;transform:rotate(-7deg)}.stage-2 .body{background:#565b68}.stage-3 .body{background:#29394f;border:1px solid #4e6685}.stage-3 .leg,.stage-3 .arm{background:#202d3d}.stage-4 .body{background:#3d2e50;box-shadow:0 0 18px rgba(157,92,255,.16)}.stage-5 .body{background:#1e384d;border:1px solid #5b87a8}.stage-5 .body:after{content:"";position:absolute;left:18px;right:18px;top:22px;height:4px;background:#72a5c8;border-radius:20px;box-shadow:0 35px 0 #4b7897}.stage-6 .body{background:#211b32;border:1px solid #7652a3;box-shadow:0 0 25px rgba(157,92,255,.27)}.stage-6 .body:after{content:"";position:absolute;left:15px;right:15px;top:20px;height:5px;background:#9d5cff;border-radius:10px;box-shadow:0 36px 0 #7150a0,0 72px 0 #47335f}.stage-7 .head,.stage-8 .head{background:#17202e;border:2px solid #7089aa}.stage-7 .hair,.stage-8 .hair{display:none}.stage-7 .head:after,.stage-8 .head:after{content:"";position:absolute;left:9px;right:9px;top:31px;height:13px;border-radius:20px;background:#8ab8e9;box-shadow:0 0 22px #8ab8e9}.stage-7 .body{background:#141e2c;border:2px solid #59779d;box-shadow:0 0 30px rgba(96,151,214,.35)}.stage-7 .arm,.stage-7 .leg{background:#111925;border:1px solid #435b78}.stage-8 .head{border-color:#aa91ef;box-shadow:0 0 28px rgba(157,92,255,.55)}.stage-8 .head:after{background:linear-gradient(90deg,#75d7ff,#c98fff);box-shadow:0 0 26px #9d7aff}.stage-8 .body{background:linear-gradient(145deg,#131b2d,#2c1c42);border:2px solid #a589ea;box-shadow:0 0 38px rgba(157,92,255,.5),inset 0 0 18px rgba(117,215,255,.14)}.stage-8 .body:after{content:"";position:absolute;left:14px;right:14px;top:22px;height:5px;background:linear-gradient(90deg,#75d7ff,#c58cff);border-radius:20px;box-shadow:0 40px 0 #7d72c8,0 80px 0 #75d7ff}.stage-8 .arm,.stage-8 .leg{background:#121a29;border:1px solid #7865ad}.progress-panel{border:1px solid var(--line);background:var(--p);border-radius:21px;padding:23px}.progress-row{display:flex;justify-content:space-between;align-items:center;gap:14px}.big-level{font-size:37px;font-weight:950;color:var(--purple2)}.xp-small{font-size:12px;color:#9999a5}.xpbar{height:13px;background:#202027;border-radius:999px;overflow:hidden;margin:15px 0 8px}.xpfill{height:100%;width:0;background:linear-gradient(90deg,#8650e8,#c08cff);border-radius:999px;transition:.7s}.xpvals{display:flex;justify-content:space-between;color:#8f8f9a;font-size:12px}.next{margin-top:24px;border:1px solid #3b2c52;background:linear-gradient(145deg,rgba(157,92,255,.09),#16151b);border-radius:16px;padding:17px}.next-label{font-size:11px;font-weight:900;color:#b9a0e6;letter-spacing:.7px}.next-level{font-size:21px;font-weight:900;margin-top:6px}.next-title{font-size:13px;color:#aaaab5;margin-top:4px}.next-preview{height:120px;position:relative;margin-top:13px;overflow:hidden;border-radius:11px;background:#0c0c11}.silhouette{position:absolute;left:50%;bottom:-40px;transform:translateX(-50%);width:75px;height:145px;border-radius:35px 35px 15px 15px;background:#020204;box-shadow:0 0 25px rgba(157,92,255,.15)}.silhouette:before{content:"";position:absolute;left:50%;top:-52px;transform:translateX(-50%);width:55px;height:58px;border-radius:50%;background:#020204}.lock{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:27px;background:rgba(0,0,0,.16)}.preview-note{text-align:center;color:#777783;font-size:11px;margin-top:9px}.maxevo{margin-top:22px;padding:15px;text-align:center;border:1px solid #60498a;border-radius:13px;color:#c9aaff;font-weight:900;background:rgba(157,92,255,.08)}
-
-/* avatar customization */
-.looter-card,.avatar-preview-card{--skin:#b58d7b;--hair:#272128}
-.head{background:var(--skin)}
-.hair{background:var(--hair)}
-.face-eye{position:absolute;top:37px;width:8px;height:10px;border-radius:50%;background:#17171b;z-index:3}
-.face-eye.l{left:20px}.face-eye.r{right:20px}
-.face-eye:after{content:"";position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;top:1px;left:2px}
-.face-nose{position:absolute;top:49px;left:50%;transform:translateX(-50%);width:7px;height:9px;border-radius:50% 50% 55% 55%;border-bottom:2px solid rgba(70,35,30,.35);z-index:3}
-.face-mouth{position:absolute;top:65px;left:50%;transform:translateX(-50%);width:22px;height:8px;border-bottom:2px solid #6d3d3d;border-radius:0 0 50% 50%;z-index:3}
-.avatar-female .body{width:116px;border-radius:25px 25px 34px 34px}
-.avatar-female .head{width:76px}
-.hair-medium .hair{height:62px;left:-8px;right:-8px;border-radius:48% 48% 40% 40%}
-.hair-curly .hair{height:48px;left:-9px;right:-9px;border-radius:48%;box-shadow:-7px 9px 0 var(--hair),7px 8px 0 var(--hair),-10px 21px 0 var(--hair),10px 21px 0 var(--hair)}
-.hair-shaved .hair{height:17px;top:-1px;border-radius:50% 50% 20% 20%}
-.avatar-female.hair-medium .hair{height:88px;top:-4px;border-radius:48% 48% 42% 42%}
-.stage-7 .face-eye,.stage-7 .face-nose,.stage-7 .face-mouth,.stage-8 .face-eye,.stage-8 .face-nose,.stage-8 .face-mouth{display:none}
-.avatar-preview-card{position:relative;width:250px;height:360px;border:1px solid #3b3b48;border-radius:18px;background:linear-gradient(155deg,#2a2631,#101015 70%);overflow:hidden;margin:0 auto}
-.avatar-preview-card .char{bottom:10px;transform:translateX(-50%) scale(.88);transform-origin:bottom center}
-.creator-modal{max-width:760px}
-.creator-layout{display:grid;grid-template-columns:280px 1fr;gap:22px;align-items:start}
-.creator-options{display:grid;gap:17px}
-.option-title{font-size:13px;font-weight:850;color:#c8c8d1;margin-bottom:8px}
-.choice-row{display:flex;gap:8px;flex-wrap:wrap}
-.choice-btn{border:1px solid #353541;background:#19191f;color:#ddd;padding:9px 12px;border-radius:9px;font-weight:750}
-.choice-btn.active{border-color:#9d5cff;background:rgba(157,92,255,.18);color:#fff}
-.swatch{width:36px;height:36px;border-radius:50%;border:3px solid transparent;box-shadow:0 0 0 1px #3a3a43;cursor:pointer}
-.swatch.active{border-color:#fff;box-shadow:0 0 0 2px #9d5cff}
-.creator-note{color:#8f8f9a;font-size:12px;line-height:1.45;margin-top:8px}
-.creator-actions{display:flex;justify-content:flex-end;margin-top:20px}
-@media(max-width:720px){.creator-layout{grid-template-columns:1fr}.avatar-preview-card{width:220px;height:330px}}
-
-/* content */.hero{text-align:center;padding:28px 0 55px}.hero h1{font-size:clamp(42px,7vw,74px);line-height:1.04;letter-spacing:-2px;margin-bottom:20px}.hero h1 span{color:var(--purple)}.hero p{color:#a5a5b0;max-width:760px;margin:auto;font-size:18px;line-height:1.6}.conversion{margin:17px auto 0;display:table;background:var(--p);border:1px solid var(--line);color:#c7c7d0;padding:9px 13px;border-radius:9px}.daily{display:none;background:linear-gradient(135deg,rgba(157,92,255,.17),#111116 60%);border:1px solid #49336a;border-radius:18px;padding:24px}.badge{display:inline-block;background:var(--purple);font-weight:900;font-size:12px;border-radius:999px;padding:7px 11px;margin-bottom:14px}.daily-icon{font-size:34px;margin-bottom:9px}.daily-title{font-size:25px;font-weight:900;margin-bottom:7px}.daily-desc{color:#a5a5b0;line-height:1.5;margin-bottom:16px}.daily-reward{color:var(--purple2);font-size:28px;font-weight:950}.daily-euro{color:#aaaab4;margin:3px 0 17px}.categories{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}.card,.offer{background:var(--p);border:1px solid #25252e;border-radius:15px;padding:19px}.card-icon,.offer-icon{font-size:30px;margin-bottom:11px}.card h3,.offer h3{margin-bottom:7px}.card p,.offer p{color:#91919c;line-height:1.45;font-size:13px}.card p{min-height:57px}.card button,.offer button{width:100%;margin-top:14px;border:0;background:#202027;color:#fff;padding:10px;border-radius:8px;font-weight:750}.offers{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:13px}.offer-cat{display:inline-block;background:#1b1b21;color:#aaaab4;padding:5px 8px;border-radius:999px;font-size:11px;margin-bottom:9px}.offer-reward{color:var(--purple2);font-size:19px;font-weight:900;margin-top:13px}.offer-euro{color:#91919c;font-size:12px;margin-top:4px}
-/* challenges etc */.panel{background:var(--p);border:1px solid var(--line);border-radius:17px;padding:22px}.challenge-head{display:flex;justify-content:space-between;gap:14px;margin-bottom:14px}.challenge-count{color:var(--purple2);font-weight:900}.chbar{height:10px;background:#202027;border-radius:999px;overflow:hidden;margin-bottom:17px}.chfill{height:100%;width:0;background:var(--purple)}.challenge-list{display:grid;gap:8px}.challenge{background:var(--p2);border:1px solid #272730;border-radius:10px;padding:12px;display:flex;justify-content:space-between;gap:10px}.challenge.done{border-color:#446f5a}.challenge-status{color:#858590}.challenge.done .challenge-status{color:var(--green)}.bonus{margin-top:15px;background:rgba(157,92,255,.12);border:1px solid #53377a;padding:15px;border-radius:11px;text-align:center}.bonus-value{font-size:22px;font-weight:950;color:var(--purple2);margin:5px}#claimBonus{display:none;margin-top:10px}.streak-number{color:var(--purple2);font-size:31px;font-weight:950;margin-bottom:4px}.streak-days{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}.streak-day{background:var(--p2);border:1px solid #272730;border-radius:8px;text-align:center;padding:10px 3px;color:#858590;font-size:11px}.streak-day.active{color:#fff;border-color:#654296;background:rgba(157,92,255,.15)}.auto-note{margin-top:14px;color:#9a9aa5;font-size:12px;padding:11px;background:#16161c;border-radius:9px}.ref-link{display:flex;gap:8px;margin:16px 0}.ref-link div{flex:1;background:var(--p2);border:1px solid var(--line);color:#c7c7d0;padding:11px;border-radius:9px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.stat{background:var(--p2);border:1px solid #272730;border-radius:10px;padding:13px}.stat-label{color:#898994;font-size:11px;margin-bottom:5px}.stat-value{font-weight:900}.history,.withdrawals,.profile{display:none}.rowitem{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:13px 0;border-bottom:1px solid #25252e}.rowitem:last-child{border-bottom:0}.item-title{font-weight:750;margin-bottom:4px}.item-meta{color:#83838e;font-size:11px;margin-top:3px}.item-amount{color:var(--purple2);font-weight:900;white-space:nowrap}.status{display:inline-block;font-size:11px;padding:5px 8px;border-radius:999px;margin-top:6px}.pending{background:#382b1c;color:#ffb86b}.processing{background:#202f45;color:#79b9ff}.paid{background:#1d3a2c;color:var(--green)}.rejected{background:#402020;color:var(--red)}.cancelled{background:#29292f;color:#aaaab4}
-/* admin */#adminSection{display:none}.admin-panel{border-color:#513779;background:linear-gradient(135deg,rgba(157,92,255,.10),#111116 45%)}.admin-head{display:flex;justify-content:space-between;align-items:center}.admin-badge{background:var(--purple);padding:6px 10px;border-radius:999px;font-size:11px;font-weight:900}.admin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:18px 0}.admin-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
-/* modals */.modal-overlay{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.84);align-items:center;justify-content:center;padding:20px}.modal{width:100%;max-width:430px;background:var(--p);border:1px solid #30303a;padding:24px;border-radius:16px;position:relative}.close{position:absolute;right:15px;top:11px;border:0;background:transparent;color:#aaaab4;font-size:25px}.modal h2{margin-bottom:7px}.modal-sub{color:#92929d;margin-bottom:17px;line-height:1.45}.auth-tabs{display:flex;gap:7px;margin-bottom:17px}.auth-tab{flex:1;border:1px solid #30303a;background:transparent;color:#fff;padding:9px;border-radius:8px;font-weight:700}.auth-tab.active{background:var(--purple);border-color:var(--purple)}.auth-form{display:none}.auth-form.active{display:block}label{display:block;color:#c0c0c8;font-size:13px;margin-bottom:6px}input{width:100%;background:#0b0b0f;border:1px solid #30303a;border-radius:8px;color:#fff;padding:12px;margin-bottom:13px}.msg{margin-top:11px;min-height:18px;font-size:12px}.msg.ok{color:var(--green)}.msg.err{color:var(--red)}
-/* evo */.evo{display:none;position:fixed;inset:0;z-index:1000;background:#010103;overflow:hidden;align-items:center;justify-content:center}.evo.active{display:flex}.evo-bg{position:absolute;inset:-20%;background:radial-gradient(circle at 50% 55%,rgba(157,92,255,.28),rgba(20,15,34,.08) 30%,#010103 65%);opacity:0;animation:eb 5.4s forwards}.evo-scene{position:relative;width:100%;max-width:650px;text-align:center;z-index:4;padding:20px}.evo-small{font-size:12px;font-weight:900;letter-spacing:3px;color:#a693d5;opacity:0;animation:fi .6s .8s forwards}.evo-wrap{height:320px;position:relative}.evo-sil{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);width:145px;height:225px;border-radius:70px 70px 25px 25px;background:#000;filter:brightness(0);animation:es 4s forwards}.evo-sil:before{content:"";position:absolute;left:50%;top:-79px;transform:translateX(-50%);width:92px;height:98px;border-radius:50%;background:#000}.evo-ring{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.1);width:400px;height:400px;border:2px solid rgba(157,92,255,.8);border-radius:50%;opacity:0;animation:er 1.1s 2.5s forwards}.evo-flash{position:absolute;inset:0;background:#fff;opacity:0;animation:ef .45s 3s forwards}.evo-heading{font-size:clamp(38px,8vw,78px);font-weight:1000;letter-spacing:-2px;opacity:0;transform:scale(.92);animation:eh 1s 3.25s forwards}.evo-sub{color:#b8adc9;font-size:17px;margin-top:6px;opacity:0;animation:fi .7s 4s forwards}.evo-items{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-top:17px;opacity:0;animation:fi .7s 4.25s forwards}.evo-item{background:#17131f;border:1px solid #49336a;padding:9px 13px;border-radius:10px;font-size:12px}.evo-close{margin-top:20px;opacity:0;animation:fi .7s 4.5s forwards}@keyframes eb{0%{opacity:0}50%{opacity:.8}100%{opacity:1}}@keyframes es{0%{transform:translateX(-50%) scale(.8);filter:brightness(0)}55%{transform:translateX(-50%) scale(.95);filter:brightness(0);box-shadow:0 0 90px rgba(157,92,255,.55)}78%{filter:brightness(0);transform:translateX(-50%) scale(1.04)}86%{filter:brightness(6);transform:translateX(-50%) scale(1.13)}100%{filter:brightness(1);transform:translateX(-50%) scale(1)}}@keyframes er{0%{opacity:0;transform:translate(-50%,-50%) scale(.1)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}}@keyframes ef{0%{opacity:0}30%{opacity:.9}100%{opacity:0}}@keyframes fi{to{opacity:1}}@keyframes eh{to{opacity:1;transform:scale(1)}}footer{border-top:1px solid #222229;padding-top:24px;color:#72727d;text-align:center;font-size:12px;line-height:1.6}@media(max-width:900px){.looter-wrap{grid-template-columns:1fr}.categories{grid-template-columns:repeat(2,1fr)}.admin-stats{grid-template-columns:repeat(2,1fr)}}@media(max-width:650px){header{padding:14px 5%}.logo{font-size:21px}main{width:91%}.wallet-head{display:block}.wallet-actions{align-items:stretch;margin-top:14px}.wallet-grid,.stats,.admin-stats{grid-template-columns:1fr}.categories{grid-template-columns:1fr}.streak-days{grid-template-columns:repeat(4,1fr)}.head-balance{display:none!important}.rowitem{align-items:flex-start;flex-direction:column}.admin-actions{justify-content:flex-start}}
-</style></head><body>
-<header><div class="logo">RISE<span>LOOTER</span></div><div class="head-actions"><div class="head-balance" id="headBalance">🪙 0 RL Coins</div><button class="btn2" id="adminButton">⚙️ Administration</button><button class="btn2" id="loginButton">Se connecter</button><button class="btn2" id="logoutButton">Déconnexion</button></div></header>
-<main>
-<section class="wallet" id="wallet"><div class="wallet-head"><div><div class="wallet-title">💰 Ta cagnotte</div><div class="wallet-total" id="walletTotal">0 RL Coins</div><div class="wallet-euro" id="walletEuro">= 0,00 €</div></div><div class="wallet-actions"><div class="wallet-note">Continue et fais monter ta cagnotte.</div><button class="btn" id="withdrawButton">💸 Retirer mes gains</button></div></div><div class="wallet-grid"><div class="tile"><div class="label">🟢 Disponible</div><div class="value" id="availableCoins">0 RL Coins</div></div><div class="tile"><div class="label">🟠 En attente</div><div class="value" id="pendingCoins">0 RL Coins</div></div><div class="tile"><div class="label">🔥 Série</div><div class="value" id="walletStreak">0 jour</div></div></div></section>
-<section class="looter-wrap"><div class="looter-card stage-1" id="looterCard"><div class="environment"></div><div class="looter-meta"><div class="looter-level" id="looterLevel">NIVEAU 1</div><div class="looter-title" id="looterTitle">Le Débutant</div><div class="env-label" id="envLabel">Départ difficile</div></div><div class="char"><div class="head"><div class="hair"></div><span class="face-eye l"></span><span class="face-eye r"></span><span class="face-nose"></span><span class="face-mouth"></span></div><div class="arm l"></div><div class="arm r"></div><div class="body"></div><div class="leg l"></div><div class="leg r"></div><div class="shoe l"></div><div class="shoe r"></div></div></div><div class="progress-panel"><div class="progress-row"><div><div class="xp-small">PROGRESSION DU LOOTER</div><div class="big-level" id="bigLevel">Niveau 1</div></div><div class="xp-small" id="totalXp">0 XP</div></div><div class="xpbar"><div class="xpfill" id="xpFill"></div></div><div class="xpvals"><span id="xpCurrent">0 XP</span><span id="xpNeeded">100 XP</span></div><div class="next" id="nextEvolution"><div class="next-label">🔒 PROCHAINE ÉVOLUTION</div><div class="next-level" id="nextLevel">Niveau 5</div><div class="next-title" id="nextTitle">Le Débrouillard</div><div class="next-preview"><div class="silhouette"></div><div class="lock">🔒</div></div><div class="preview-note">La prochaine apparence reste secrète jusqu'au déblocage.</div></div><div class="maxevo hidden" id="maxEvolution">👑 ÉVOLUTION ULTIME ATTEINTE</div></div></section>
-<section class="hero"><h1>Multiplie les actions.<br><span>Fais monter tes gains.</span></h1><p>Joue, regarde, réponds à des sondages, relève des défis, parraine tes amis et fais évoluer ton Looter tout en accumulant des RL Coins.</p><div style="margin-top:24px"><button class="btn" id="mainCTA">Commencer à gagner</button></div><div class="conversion">🪙 100 RL Coins = 1 €</div></section>
-<section class="section"><h2 class="section-title">🔥 Le bon plan du jour</h2><div class="section-subtitle">Notre sélection pour faire monter ta cagnotte aujourd'hui.</div><div class="daily" id="daily"><div class="badge">⭐ Sélection RiseLooter</div><div class="daily-icon" id="dailyIcon">🎯</div><div class="daily-title" id="dailyTitle">Chargement...</div><div class="daily-desc" id="dailyDesc"></div><div class="daily-reward" id="dailyReward">0 RL Coins</div><div class="daily-euro" id="dailyEuro">= 0,00 €</div><button class="btn" id="dailyButton">Profiter de l'offre</button></div></section>
-<section class="section"><h2 class="section-title">⚡ Gagne comme tu veux</h2><div class="section-subtitle">Choisis la manière qui te convient.</div><div class="categories"><div class="card"><div class="card-icon">🎮</div><h3>Joue</h3><p>Découvre les missions de jeux et atteins les objectifs proposés.</p><button data-filter="game">Voir les jeux</button></div><div class="card"><div class="card-icon">📺</div><h3>Regarde</h3><p>Regarde les contenus rémunérés disponibles sur RiseLooter.</p><button data-filter="video">Voir les vidéos</button></div><div class="card"><div class="card-icon">📝</div><h3>Sondages</h3><p>Partage ton avis et gagne des RL Coins grâce aux sondages.</p><button data-filter="survey">Voir les sondages</button></div><div class="card"><div class="card-icon">👥</div><h3>Parrainage</h3><p>Invite tes amis et gagne lorsque leur activité devient éligible.</p><button id="goReferral">Parrainer un ami</button></div></div></section>
-<section class="section" id="offersSection"><h2 class="section-title" id="offersTitle">🎯 Missions disponibles</h2><div class="offers" id="offers"><div class="loading">Chargement...</div></div></section>
-<section class="section"><h2 class="section-title">🎯 Défis du jour</h2><div class="section-subtitle">Complète les trois actions pour débloquer ton bonus.</div><div class="panel"><div class="challenge-head"><strong>Progression</strong><div class="challenge-count" id="challengeCount">0 / 3</div></div><div class="chbar"><div class="chfill" id="challengeFill"></div></div><div class="challenge-list"><div class="challenge" id="cGame"><span>🎮 Termine une mission de jeu</span><span class="challenge-status">À faire</span></div><div class="challenge" id="cVideo"><span>📺 Réalise une action vidéo</span><span class="challenge-status">À faire</span></div><div class="challenge" id="cSurvey"><span>📝 Termine un sondage</span><span class="challenge-status">À faire</span></div></div><div class="bonus"><div>🎁 BONUS DU JOUR</div><div class="bonus-value" id="challengeBonus">+100 RL Coins</div><div id="challengeBonusEuro">= 1,00 €</div><button class="btn" id="claimBonus">Récupérer mon bonus</button></div></div></section>
-<section class="section"><h2 class="section-title">🔥 Ta série</h2><div class="section-subtitle">Ta série se valide automatiquement à ta première connexion de chaque journée.</div><div class="panel"><div class="streak-number" id="streakNumber">0 jour</div><div class="streak-days"><div class="streak-day" data-s="1">Jour 1</div><div class="streak-day" data-s="2">Jour 2</div><div class="streak-day" data-s="3">Jour 3</div><div class="streak-day" data-s="4">Jour 4</div><div class="streak-day" data-s="5">Jour 5</div><div class="streak-day" data-s="6">Jour 6</div><div class="streak-day" data-s="7">🔥 Jour 7</div></div><div class="auto-note" id="autoNote">✓ Aucune validation manuelle : la première connexion du jour suffit.</div></div></section>
-<section class="section" id="referralSection"><h2 class="section-title">👥 Parrainage</h2><div class="section-subtitle">Invite tes amis et suis tes gains.</div><div class="panel"><div class="ref-link"><div id="referralLink">Connecte-toi pour obtenir ton lien.</div><button class="btn small" id="copyReferral">Copier</button></div><div class="stats"><div class="stat"><div class="stat-label">👥 Filleuls</div><div class="stat-value" id="referralCount">0</div></div><div class="stat"><div class="stat-label">🟠 En attente</div><div class="stat-value" id="refPending">0 RL Coins</div></div><div class="stat"><div class="stat-label">🟢 Validés</div><div class="stat-value" id="refConfirmed">0 RL Coins</div></div></div></div></section>
-<section class="section"><h2 class="section-title">💸 Mes retraits</h2><div class="withdrawals panel" id="withdrawals"><div id="withdrawalList"></div></div></section><section class="section"><h2 class="section-title">🧾 Historique</h2><div class="history panel" id="history"><div id="historyList"></div></div></section><section class="section"><h2 class="section-title">👤 Mon profil</h2><div class="profile panel" id="profile"><div class="stats"><div class="stat"><div class="stat-label">🏆 Niveau</div><div class="stat-value" id="profileLevel">1</div></div><div class="stat"><div class="stat-label">⚡ XP</div><div class="stat-value" id="profileXp">0</div></div><div class="stat"><div class="stat-label">🔥 Meilleure série</div><div class="stat-value" id="profileLongest">0 jour</div></div><div class="stat"><div class="stat-label">👥 Code</div><div class="stat-value" id="profileRef">-</div></div></div></div></section>
-<section class="section" id="adminSection"><div class="panel admin-panel"><div class="admin-head"><h2>⚙️ Administration RiseLooter</h2><div class="admin-badge">ADMIN</div></div><div class="admin-stats"><div class="stat"><div class="stat-label">👥 Utilisateurs</div><div class="stat-value" id="adminUsers">0</div></div><div class="stat"><div class="stat-label">🟢 RL Coins dispo</div><div class="stat-value" id="adminAvail">0</div></div><div class="stat"><div class="stat-label">🟠 RL Coins attente</div><div class="stat-value" id="adminPending">0</div></div><div class="stat"><div class="stat-label">💸 Retraits attente</div><div class="stat-value" id="adminWithdrawalsCount">0</div></div><div class="stat"><div class="stat-label">💶 À payer</div><div class="stat-value" id="adminToPay">0 €</div></div><div class="stat"><div class="stat-label">🎯 Offres actives</div><div class="stat-value" id="adminOffers">0</div></div><div class="stat"><div class="stat-label">⚡ Niveau moyen</div><div class="stat-value" id="adminAvg">—</div></div><div class="stat"><div class="stat-label">👑 Niveau max</div><div class="stat-value" id="adminMax">—</div></div></div><h3 style="margin:20px 0 8px">Retraits à traiter</h3><div id="adminWithdrawalList"></div></div></section>
-<footer>RiseLooter — 100 RL Coins = 1 €<br>Les récompenses dépendent des conditions et de la validation de chaque mission.</footer></main>
-
-<!-- Looter creator -->
-<div class="modal-overlay" id="creatorModal">
-  <div class="modal creator-modal">
-    <h2>🎮 Crée ton Looter</h2>
-    <div class="modal-subtitle">Choisis ton apparence de départ. Ton visage et tes caractéristiques resteront les mêmes pendant que tes vêtements et ton environnement évolueront avec tes niveaux.</div>
-    <div class="creator-layout">
-      <div>
-        <div class="avatar-preview-card avatar-male hair-short" id="avatarPreview">
-          <div class="char">
-            <div class="head"><div class="hair"></div><span class="face-eye l"></span><span class="face-eye r"></span><span class="face-nose"></span><span class="face-mouth"></span></div>
-            <div class="arm l"></div><div class="arm r"></div><div class="body"></div>
-            <div class="leg l"></div><div class="leg r"></div><div class="shoe l"></div><div class="shoe r"></div>
-          </div>
-        </div>
-        <div class="creator-note">Aperçu de départ. Les tenues et les décors se transformeront automatiquement avec ton niveau.</div>
-      </div>
-      <div class="creator-options">
-        <div>
-          <div class="option-title">Personnage</div>
-          <div class="choice-row">
-            <button class="choice-btn active" type="button" data-gender="male">Homme</button>
-            <button class="choice-btn" type="button" data-gender="female">Femme</button>
-          </div>
-        </div>
-        <div>
-          <div class="option-title">Teint de peau</div>
-          <div class="choice-row" id="skinChoices">
-            <button class="swatch active" type="button" data-skin="light" style="background:#f0c7ae" aria-label="Peau claire"></button>
-            <button class="swatch" type="button" data-skin="warm" style="background:#d49a78" aria-label="Peau dorée"></button>
-            <button class="swatch" type="button" data-skin="medium" style="background:#b97859" aria-label="Peau mate"></button>
-            <button class="swatch" type="button" data-skin="deep" style="background:#7b4b36" aria-label="Peau foncée"></button>
-            <button class="swatch" type="button" data-skin="dark" style="background:#4b2d22" aria-label="Peau très foncée"></button>
-          </div>
-        </div>
-        <div>
-          <div class="option-title">Couleur des cheveux</div>
-          <div class="choice-row" id="hairColorChoices">
-            <button class="swatch active" type="button" data-hair-color="black" style="background:#1d1a1d" aria-label="Noir"></button>
-            <button class="swatch" type="button" data-hair-color="brown" style="background:#5a3829" aria-label="Brun"></button>
-            <button class="swatch" type="button" data-hair-color="blond" style="background:#d7b56d" aria-label="Blond"></button>
-            <button class="swatch" type="button" data-hair-color="red" style="background:#9a452d" aria-label="Roux"></button>
-            <button class="swatch" type="button" data-hair-color="purple" style="background:#69449c" aria-label="Violet"></button>
-          </div>
-        </div>
-        <div>
-          <div class="option-title">Style de cheveux</div>
-          <div class="choice-row">
-            <button class="choice-btn active" type="button" data-hair-style="short">Court</button>
-            <button class="choice-btn" type="button" data-hair-style="medium">Mi-long</button>
-            <button class="choice-btn" type="button" data-hair-style="curly">Bouclé</button>
-            <button class="choice-btn" type="button" data-hair-style="shaved">Rasé</button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="creator-actions">
-      <button class="btn" id="saveAvatar" type="button">Commencer mon aventure</button>
-    </div>
-    <div class="msg" id="creatorMessage"></div>
-  </div>
+:root{--bg:#03070b;--panel:#07111a;--line:#172737;--purple:#8d38ff;--gold:#ffad18;--green:#48dc79;--muted:#9ba6b4}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 55% 0,#0b111a,#020508 50%);color:#fff;font:14px Arial,sans-serif}
+button{font:inherit}.wrap{width:min(1530px,97%);margin:auto}.nav{height:62px;display:flex;align-items:center;gap:40px;border-bottom:1px solid #101b25}.logo{font-size:26px;font-weight:900;font-style:italic;margin-right:auto}.logo b{color:#913dff}.nav a{color:#ddd;text-decoration:none}.nav a:first-of-type{color:#bd76ff;border-bottom:2px solid #9c42ff;padding:22px 0}.wallet{margin-left:auto;border:1px solid #263343;border-radius:10px;padding:8px 14px;color:#ffb92c}.purple{background:linear-gradient(#8032eb,#5815bd);color:#fff;border:0;border-radius:7px;padding:10px 17px;font-weight:bold}
+.layout{display:grid;grid-template-columns:1.13fr 1fr;gap:14px;margin-top:14px}.panel{border:1px solid var(--line);border-radius:13px;background:linear-gradient(145deg,#08121b,#040a10);overflow:hidden}
+.hero{height:470px;position:relative;background:linear-gradient(90deg,rgba(5,8,10,.25),rgba(5,8,10,.05)),url("assets/stage-1.jpg") center/cover}
+.heroText{position:absolute;z-index:3;left:22px;top:20px}.hero h1{font-size:26px;margin:13px 0 5px}.badge{background:#7432df;padding:5px 9px;border-radius:5px;font-size:11px}
+.next{position:absolute;z-index:4;left:16px;bottom:80px;width:220px;background:rgba(3,10,16,.92);border:1px solid #26394a;border-radius:10px;padding:14px}.next small{color:#b96cff}.silhouette{width:70px;height:100px;margin:7px auto;background:#010204;clip-path:polygon(34% 0,66% 0,75% 15%,87% 25%,100% 100%,0 100%,13% 25%,25% 15%);filter:drop-shadow(0 0 5px #536070)}
+.actor{position:absolute;left:53%;bottom:25px;width:270px;height:390px;transform:translateX(-50%);background:center bottom/contain no-repeat;animation:idle 4.6s ease-in-out infinite;filter:drop-shadow(0 16px 16px #000)}
+@keyframes idle{0%,100%{transform:translateX(-50%) translateY(0) rotate(-.2deg)}35%{transform:translateX(-50%) translateY(-3px) rotate(.35deg)}70%{transform:translateX(-50%) translateY(0) rotate(-.35deg)}}
+.track{position:absolute;z-index:5;left:22px;right:22px;bottom:17px;display:grid;grid-template-columns:repeat(8,1fr)}.node{text-align:center;color:#aeb6c1;font-size:10px}.node i{display:grid;place-items:center;margin:auto auto 6px;width:31px;height:31px;border:1px solid #556170;border-radius:50%;font-style:normal;background:#081018}.node.on{color:#b868ff}.node.on i{border-color:#a04aff;box-shadow:0 0 13px #7829c8}
+.progress{padding:20px}.progressGrid{display:grid;grid-template-columns:1fr 1fr;gap:25px}.big{font-size:55px;color:#9c4dff;font-weight:900}.bar{height:9px;background:#020508;border-radius:10px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#6c21db,#a95dff)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);margin-top:16px}.stat{text-align:center;border-right:1px solid #203040;padding:16px}.stat:last-child{border:0}.stat b{font-size:23px;display:block;margin-top:7px}
+.lower{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.box{padding:17px}.row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #142330}.reward{color:#ba69ff;margin-top:12px}.streak{text-align:center}.days{display:flex;justify-content:center;gap:14px;margin:18px 0}.day{width:35px;height:35px;border:1px solid #354354;border-radius:50%;display:grid;place-items:center}.day.on{border-color:#a64eff;box-shadow:0 0 12px #7427c7}
+.missions{margin-top:14px;padding:16px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.card{border:1px solid #233342;border-radius:9px;overflow:hidden}.pic{height:95px;background:linear-gradient(145deg,#173b4a,#25101b)}.card section{padding:10px}.card button{width:100%}
+.evolution{margin-top:14px;padding:12px}.evoGrid{display:grid;grid-template-columns:repeat(8,1fr);gap:7px}.evo{height:205px;border:1px solid #1c2b39;border-radius:9px;position:relative;overflow:hidden;background:#050a0f center/cover no-repeat}.evo .lock{position:absolute;inset:0;background:rgba(1,3,5,.91);backdrop-filter:brightness(.12);display:flex;align-items:center;justify-content:center;font-size:27px}.evo.unlocked .lock{display:none}.evo label{position:absolute;left:7px;right:7px;bottom:7px;text-shadow:0 2px 5px #000}.evo label small{font-size:9px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99;display:none;place-items:center}.modal.show{display:grid}.modalBox{width:min(520px,92%);background:#08111a;border:1px solid #2b3c4e;border-radius:14px;padding:22px}.choices{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 15px}.choices button{background:#111c27;color:white;border:1px solid #314356;border-radius:7px;padding:9px}.choices button.sel{border-color:#a75aff;box-shadow:0 0 9px #6422aa}
+@media(max-width:900px){.layout,.lower{grid-template-columns:1fr}.evoGrid{grid-template-columns:repeat(4,1fr)}.nav a{display:none}}@media(max-width:600px){.evoGrid{grid-template-columns:repeat(2,1fr)}.actor{left:65%}.track{display:none}}
+</style></head>
+<body><div class="wrap">
+<header class="nav"><div class="logo">RISE <b>LOOTER</b></div><a>ACCUEIL</a><a>MISSIONS</a><a>DÉFIS</a><a>CLASSEMENT</a><a>PARRAINAGE</a><div class="wallet">🪙 <b id="coins">0</b> RL Coins</div><button class="purple">Retirer mes gains</button><button id="auth" class="purple">Connexion</button></header>
+<div class="layout">
+<div>
+<section class="panel hero" id="hero"><div class="heroText">TON LOOTER &nbsp;<span class="badge" id="levelBadge">NIVEAU 1</span><h1 id="heroTitle">LE DÉBUTANT</h1><div id="heroDesc">Pas grand chose, mais la volonté d'y arriver.</div></div>
+<div class="next"><small>PROCHAINE ÉVOLUTION</small><h3 id="nextLevel">NIVEAU 5</h3><b id="nextTitle">LE DÉBROUILLARD</b><div class="silhouette"></div><div id="untilEvolution">Encore quelques XP avant d'évoluer !</div></div>
+<div class="actor" id="actor"></div><div class="track" id="track"></div></section>
+<div class="lower"><section class="panel box"><h3>DÉFI DU JOUR</h3><div class="row"><span>🎮 Termine une mission de jeu</span><span style="color:var(--green)">+ 40 RL Coins</span></div><div class="row"><span>▶ Regarde une vidéo</span><span style="color:var(--green)">+ 30 RL Coins</span></div><div class="row"><span>▤ Réponds à un sondage</span><span style="color:var(--green)">+ 30 RL Coins</span></div><div class="reward">🎁 RÉCOMPENSE : &nbsp; +100 RL Coins</div></section>
+<section class="panel box streak"><h3>🔥 TA SÉRIE</h3><div style="color:var(--muted)">Ta série se valide automatiquement à ta première connexion de chaque journée.</div><div class="days" id="days"></div><div class="big" style="font-size:29px" id="streakBig">0 jours</div><div>Continue comme ça !</div></section></div>
 </div>
+<div><section class="panel progress"><h3>PROGRESSION</h3><div class="progressGrid"><div><small>NIVEAU ACTUEL</small><div class="big" id="levelBig">1</div><div class="bar"><i id="xpBar"></i></div><p id="xpLine">0 / 0 XP</p><small>XP TOTAL</small><h2 id="xpTotal">0 XP</h2></div><div><small>PROCHAIN NIVEAU</small><h3 id="nextXP" style="color:#b968ff">+ 0 XP</h3><div class="next" style="position:relative;left:0;bottom:0;width:100%;margin-top:15px"><small>PROCHAINE ÉVOLUTION</small><h3 id="nextLevel2">NIVEAU 5</h3><b id="nextTitle2">LE DÉBROUILLARD</b><div class="silhouette"></div></div></div></div>
+<div class="stats"><div class="stat">🔥 SÉRIE ACTUELLE<b id="streak">0 jours</b></div><div class="stat">👑 MEILLEURE SÉRIE<b id="best">0 jours</b></div><div class="stat">🏆 CLASSEMENT<b># —</b></div></div></section>
+<section class="panel missions"><h3>MISSIONS RECOMMANDÉES</h3><div class="cards"><div class="card"><div class="pic"></div><section><b>Dice Dreams</b><p style="color:var(--gold)">+85 RL Coins</p><button class="purple">Jouer</button></section></div><div class="card"><div class="pic"></div><section><b>Regarde cette vidéo</b><p style="color:var(--gold)">+25 RL Coins</p><button class="purple">Regarder</button></section></div><div class="card"><div class="pic"></div><section><b>Ton avis compte</b><p style="color:var(--gold)">+60 RL Coins</p><button class="purple">Répondre</button></section></div></div></section></div>
+</div>
+<section class="panel evolution"><h3>TON PARCOURS D'ÉVOLUTION</h3><div class="evoGrid" id="evoGrid"></div></section></div>
 
-<div class="modal-overlay" id="authModal"><div class="modal"><button class="close" id="closeAuth">×</button><h2>Bienvenue sur RiseLooter</h2><div class="modal-sub">Crée ton compte et fais évoluer ton Looter.</div><div class="auth-tabs"><button class="auth-tab active" data-tab="signup">Créer un compte</button><button class="auth-tab" data-tab="login">Se connecter</button></div><form class="auth-form active" id="signupForm"><label>E-mail</label><input id="signupEmail" type="email" required><label>Mot de passe</label><input id="signupPassword" type="password" minlength="6" required><label>Confirme</label><input id="signupConfirm" type="password" minlength="6" required><button class="btn" style="width:100%" type="submit">Créer mon compte</button></form><form class="auth-form" id="loginForm"><label>E-mail</label><input id="loginEmail" type="email" required><label>Mot de passe</label><input id="loginPassword" type="password" required><button class="btn" style="width:100%" type="submit">Se connecter</button></form><div class="msg" id="authMessage"></div></div></div>
-<div class="modal-overlay" id="withdrawModal"><div class="modal"><button class="close" id="closeWithdraw">×</button><h2>💸 Retirer mes gains</h2><div class="modal-sub">Seuls les RL Coins disponibles peuvent être retirés.</div><div class="tile" style="margin-bottom:15px"><div class="label">Disponible</div><div class="wallet-total" style="font-size:25px" id="withdrawAvailable">0 RL Coins</div><div id="withdrawEuro">0 €</div></div><form id="withdrawForm"><label>Nombre de RL Coins</label><input id="withdrawAmount" type="number" min="500" step="1" required><div class="label" id="withdrawInfo">Minimum : 500 RL Coins = 5 €</div><br><label>E-mail PayPal</label><input id="paypalEmail" type="email" required><button class="btn" style="width:100%" type="submit">Demander le retrait</button></form><div class="msg" id="withdrawMessage"></div></div></div>
-<div class="evo" id="evo"><div class="evo-bg"></div><div class="evo-flash"></div><div class="evo-scene"><div class="evo-small">ÉVOLUTION EN COURS...</div><div class="evo-wrap"><div class="evo-ring"></div><div class="evo-sil"></div></div><div class="evo-heading" id="evoHeading">NIVEAU 5</div><div class="evo-sub" id="evoSub">Ton Looter évolue</div><div class="evo-items"><div class="evo-item">✦ Nouvelle tenue</div><div class="evo-item">✦ Nouvel environnement</div><div class="evo-item">✦ Nouveau rang</div></div><button class="btn evo-close" id="closeEvo">Découvrir mon Looter</button></div></div>
+<div class="modal" id="avatarModal"><div class="modalBox"><h2>Crée ton Looter</h2><p style="color:var(--muted)">Choisis ton apparence de départ.</p>
+<label>Personnage</label><div class="choices" data-g="gender"><button data-v="male">Homme</button><button data-v="female">Femme</button></div>
+<label>Teint</label><div class="choices" data-g="skin"><button data-v="light">Clair</button><button data-v="warm">Doré</button><button data-v="medium">Mat</button><button data-v="deep">Foncé</button><button data-v="dark">Très foncé</button></div>
+<label>Cheveux</label><div class="choices" data-g="hair"><button data-v="black">Noir</button><button data-v="brown">Brun</button><button data-v="blond">Blond</button><button data-v="red">Roux</button><button data-v="purple">Violet</button></div>
+<label>Coiffure</label><div class="choices" data-g="style"><button data-v="short">Court</button><button data-v="medium">Mi-long</button><button data-v="curly">Bouclé</button><button data-v="shaved">Rasé</button></div>
+<button id="saveAvatar" class="purple" style="width:100%">Commencer mon aventure</button></div></div>
 <script>
-const URL="https://dvvjujkpnpzerbjxjjsy.supabase.co",KEY="sb_publishable_HvsPthhIg2aTGnluSJ9R5w_4InrkBOo",db=supabase.createClient(URL,KEY),$=id=>document.getElementById(id);let user=null,profile=null,isAdmin=false,minWithdraw=500;let avatarDraft={gender:"male",skin:"light",hairColor:"black",hairStyle:"short"};const skinMap={light:"#f0c7ae",warm:"#d49a78",medium:"#b97859",deep:"#7b4b36",dark:"#4b2d22"},hairMap={black:"#1d1a1d",brown:"#5a3829",blond:"#d7b56d",red:"#9a452d",purple:"#69449c"};const stage={1:["Le Débutant","Départ difficile"],2:["Le Débrouillard","Premiers progrès"],3:["Le Chasseur","Premier vrai setup"],4:["Le Hustler","La réussite commence à se voir"],5:["Le Pro","Appartement moderne"],6:["L'Élite","Loft premium"],7:["Cyber Looter","Métropole futuriste"],8:["RiseLooter","Sommet orbital"]};const fmt=n=>new Intl.NumberFormat("fr-FR").format(Number(n||0)),eur=n=>new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"}).format(Number(n||0)/100),euro=n=>new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"}).format(Number(n||0));function catI(c){c=String(c||"").toLowerCase();return c.includes("game")?"🎮":c.includes("survey")?"📝":c.includes("video")?"📺":c.includes("app")?"📱":"🎯"}function catL(c){c=String(c||"").toLowerCase();return c.includes("game")?"Jeu":c.includes("survey")?"Sondage":c.includes("video")?"Vidéo":c.includes("app")?"Application":"Mission"}function applyAvatarTo(el,a){if(!el)return;const g=a?.avatar_gender||a?.gender||"male",sk=a?.avatar_skin||a?.skin||"light",hc=a?.avatar_hair_color||a?.hairColor||"black",hs=a?.avatar_hair_style||a?.hairStyle||"short";el.classList.remove("avatar-male","avatar-female","hair-short","hair-medium","hair-curly","hair-shaved");el.classList.add("avatar-"+g,"hair-"+hs);el.style.setProperty("--skin",skinMap[sk]||skinMap.light);el.style.setProperty("--hair",hairMap[hc]||hairMap.black)}function applyAvatar(a){applyAvatarTo($("looterCard"),a);applyAvatarTo($("avatarPreview"),a)}function updateCreatorPreview(){applyAvatarTo($("avatarPreview"),avatarDraft)}function openCreator(a){avatarDraft={gender:a?.avatar_gender||"male",skin:a?.avatar_skin||"light",hairColor:a?.avatar_hair_color||"black",hairStyle:a?.avatar_hair_style||"short"};document.querySelectorAll("[data-gender]").forEach(b=>b.classList.toggle("active",b.dataset.gender===avatarDraft.gender));document.querySelectorAll("[data-skin]").forEach(b=>b.classList.toggle("active",b.dataset.skin===avatarDraft.skin));document.querySelectorAll("[data-hair-color]").forEach(b=>b.classList.toggle("active",b.dataset.hairColor===avatarDraft.hairColor));document.querySelectorAll("[data-hair-style]").forEach(b=>b.classList.toggle("active",b.dataset.hairStyle===avatarDraft.hairStyle));updateCreatorPreview();$("creatorMessage").textContent="";$("creatorModal").style.display="flex"}function closeCreator(){$("creatorModal").style.display="none"}document.querySelectorAll("[data-gender]").forEach(b=>b.onclick=()=>{avatarDraft.gender=b.dataset.gender;document.querySelectorAll("[data-gender]").forEach(x=>x.classList.toggle("active",x===b));updateCreatorPreview()});document.querySelectorAll("[data-skin]").forEach(b=>b.onclick=()=>{avatarDraft.skin=b.dataset.skin;document.querySelectorAll("[data-skin]").forEach(x=>x.classList.toggle("active",x===b));updateCreatorPreview()});document.querySelectorAll("[data-hair-color]").forEach(b=>b.onclick=()=>{avatarDraft.hairColor=b.dataset.hairColor;document.querySelectorAll("[data-hair-color]").forEach(x=>x.classList.toggle("active",x===b));updateCreatorPreview()});document.querySelectorAll("[data-hair-style]").forEach(b=>b.onclick=()=>{avatarDraft.hairStyle=b.dataset.hairStyle;document.querySelectorAll("[data-hair-style]").forEach(x=>x.classList.toggle("active",x===b));updateCreatorPreview()});$("saveAvatar").onclick=async()=>{if(!user)return;const btn=$("saveAvatar");btn.disabled=true;btn.textContent="Enregistrement...";const {error}=await db.rpc("save_looter_customization",{p_gender:avatarDraft.gender,p_skin:avatarDraft.skin,p_hair_color:avatarDraft.hairColor,p_hair_style:avatarDraft.hairStyle});btn.disabled=false;btn.textContent="Commencer mon aventure";if(error){$("creatorMessage").className="msg err";$("creatorMessage").textContent="Impossible d'enregistrer ton Looter.";return}closeCreator();await refresh(false)};function setStage(s,l,t,e){s=Math.max(1,Math.min(8,Number(s||1)));$("looterCard").className="looter-card stage-"+s;$("looterLevel").textContent="NIVEAU "+l;$("looterTitle").textContent=t||stage[s][0];$("envLabel").textContent=e||stage[s][1]}function visitor(){applyAvatar({avatar_gender:"male",avatar_skin:"light",avatar_hair_color:"black",avatar_hair_style:"short"});setStage(1,1);$("bigLevel").textContent="Niveau 1";$("totalXp").textContent="0 XP";$("xpCurrent").textContent="0 XP";$("xpNeeded").textContent="100 XP";$("xpFill").style.width="0%";$("nextEvolution").classList.remove("hidden");$("maxEvolution").classList.add("hidden");$("nextLevel").textContent="Niveau 5";$("nextTitle").textContent="Le Débrouillard"}
-function openAuth(tab="signup"){$("authModal").style.display="flex";document.querySelectorAll(".auth-tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===tab));document.querySelectorAll(".auth-form").forEach(x=>x.classList.toggle("active",x.id===tab+"Form"))}function closeAuth(){$("authModal").style.display="none";$('authMessage').textContent=""}$("loginButton").onclick=()=>openAuth("login");$("closeAuth").onclick=closeAuth;document.querySelectorAll(".auth-tab").forEach(x=>x.onclick=()=>openAuth(x.dataset.tab));$("authModal").onclick=e=>{if(e.target===$('authModal'))closeAuth()};$("signupForm").onsubmit=async e=>{e.preventDefault();if($("signupPassword").value!==$("signupConfirm").value){$("authMessage").className="msg err";$("authMessage").textContent="Les mots de passe ne correspondent pas.";return}const {data,error}=await db.auth.signUp({email:$("signupEmail").value.trim(),password:$("signupPassword").value});if(error){$("authMessage").className="msg err";$("authMessage").textContent=error.message;return}if(data.session){await refresh(true);closeAuth()}else{$("authMessage").className="msg ok";$("authMessage").textContent="Compte créé. Vérifie ton e-mail."}};$("loginForm").onsubmit=async e=>{e.preventDefault();const {error}=await db.auth.signInWithPassword({email:$("loginEmail").value.trim(),password:$("loginPassword").value});if(error){$("authMessage").className="msg err";$("authMessage").textContent="Identifiants incorrects.";return}await refresh(true);closeAuth()};$("logoutButton").onclick=async()=>{await db.auth.signOut();user=null;profile=null;isAdmin=false;loggedOut()};function loggedIn(){$("loginButton").style.display="none";$("logoutButton").style.display="block";$("wallet").style.display="block";$("headBalance").style.display="block";$("history").style.display="block";$("withdrawals").style.display="block";$("profile").style.display="block";$("mainCTA").textContent="Découvrir les missions"}function loggedOut(){$("loginButton").style.display="block";$("logoutButton").style.display="none";$("adminButton").style.display="none";$("adminSection").style.display="none";$("wallet").style.display="none";$("headBalance").style.display="none";$("history").style.display="none";$("withdrawals").style.display="none";$("profile").style.display="none";$("mainCTA").textContent="Commencer à gagner";visitor()}$("mainCTA").onclick=()=>{if(!user){openAuth();return}$("offersSection").scrollIntoView({behavior:"smooth"})};
-async function autoCheckin(){if(!user)return;const {data,error}=await db.rpc("claim_daily_checkin");if(error){console.warn(error);return}if(data?.length){const r=data[0];$("autoNote").textContent=r.already_claimed?"✓ Ta connexion du jour est déjà validée automatiquement.":"🔥 Première connexion du jour validée : +"+(r.xp_earned||0)+" XP."}}async function loadProfile(){const {data,error}=await db.from("profiles").select("id,lootix_available,lootix_pending,level,xp,looter_stage,current_streak,longest_streak,referral_code,is_admin,avatar_gender,avatar_skin,avatar_hair_color,avatar_hair_style,avatar_customized").eq("id",user.id).single();if(error||!data)return;profile=data;isAdmin=!!data.is_admin;applyAvatar(data);if(!data.avatar_customized)setTimeout(()=>openCreator(data),120);const a=Number(data.lootix_available||0),p=Number(data.lootix_pending||0);$("walletTotal").textContent=fmt(a+p)+" RL Coins";$("walletEuro").textContent="= "+eur(a+p);$("availableCoins").textContent=fmt(a)+" RL Coins";$("pendingCoins").textContent=fmt(p)+" RL Coins";$("headBalance").textContent="🪙 "+fmt(a)+" RL Coins";$("walletStreak").textContent=data.current_streak+(data.current_streak===1?" jour":" jours");$("streakNumber").textContent=$("walletStreak").textContent;$("profileLevel").textContent=data.level;$("profileXp").textContent=fmt(data.xp)+" XP";$("profileLongest").textContent=data.longest_streak+(data.longest_streak===1?" jour":" jours");$("profileRef").textContent=data.referral_code||"-";$("withdrawAvailable").textContent=fmt(a)+" RL Coins";$("withdrawEuro").textContent=eur(a);document.querySelectorAll(".streak-day").forEach(x=>x.classList.toggle("active",Number(x.dataset.s)<=Math.min(Number(data.current_streak||0),7)));$("adminButton").style.display=isAdmin?"block":"none";buildRef(data.referral_code)}async function loadProgress(){const {data,error}=await db.rpc("get_looter_progress");if(error||!data?.length)return;const r=data[0],s=Number(r.stage||1),l=Number(r.level||1);setStage(s,l,r.looter_title,stage[s]?.[1]);$("bigLevel").textContent="Niveau "+l;$("totalXp").textContent=fmt(r.xp)+" XP";$("xpCurrent").textContent=fmt(r.xp_in_level)+" XP";if(r.max_level){$("xpNeeded").textContent="MAX";$("xpFill").style.width="100%";$("nextEvolution").classList.add("hidden");$("maxEvolution").classList.remove("hidden")}else{const need=Math.max(1,Number(r.xp_needed_this_level||1));$("xpNeeded").textContent=fmt(need)+" XP";$("xpFill").style.width=Math.min(100,(Number(r.xp_in_level||0)/need)*100)+"%";$("nextEvolution").classList.remove("hidden");$("maxEvolution").classList.add("hidden");$("nextLevel").textContent="Niveau "+r.next_evolution;$("nextTitle").textContent=r.next_evolution_title}const key="riselooter_stage_"+user.id,prev=Number(localStorage.getItem(key)||s);if(s>prev){$("evoHeading").textContent="NIVEAU "+l;$("evoSub").textContent="Ton Looter évolue : "+r.looter_title;$("evo").classList.add("active")}localStorage.setItem(key,String(s))}$("closeEvo").onclick=()=>$("evo").classList.remove("active");
-async function loadSettings(){const {data}=await db.from("app_settings").select("withdrawal_minimum_lootix").eq("id",1).single();if(data){minWithdraw=Number(data.withdrawal_minimum_lootix||500);$("withdrawAmount").min=minWithdraw;$("withdrawInfo").textContent="Minimum : "+fmt(minWithdraw)+" RL Coins = "+eur(minWithdraw)}}async function loadDaily(){const {data,error}=await db.rpc("get_daily_deal");if(error||!data?.length)return;const d=data[0];$("daily").style.display="block";$("dailyIcon").textContent=catI(d.category);$("dailyTitle").textContent=d.title;$("dailyDesc").textContent=d.description||"Notre sélection du jour.";$("dailyReward").textContent="+"+fmt(d.user_reward_lootix)+" RL Coins";$("dailyEuro").textContent="= "+eur(d.user_reward_lootix)}$("dailyButton").onclick=()=>{if(!user){openAuth();return}alert("Cette offre sera activée lorsque Torox sera connecté.")};async function loadOffers(f=null){$("offers").innerHTML='<div class="loading">Chargement...</div>';let q=db.from("offers").select("id,title,description,category,user_reward_lootix,status").eq("status","active").order("user_reward_lootix",{ascending:false});if(f)q=q.ilike("category","%"+f+"%");const {data,error}=await q;$("offers").innerHTML="";if(error||!data?.length){$("offers").innerHTML='<div class="empty">Aucune mission disponible.</div>';return}data.forEach(o=>{const el=document.createElement("div");el.className="offer";el.innerHTML=`<div class="offer-icon">${catI(o.category)}</div><div class="offer-cat">${catL(o.category)}</div><h3></h3><p></p><div class="offer-reward">+${fmt(o.user_reward_lootix)} RL Coins</div><div class="offer-euro">= ${eur(o.user_reward_lootix)}</div><button>Commencer</button>`;el.querySelector("h3").textContent=o.title;el.querySelector("p").textContent=o.description||"Accomplis cette mission.";el.querySelector("button").onclick=()=>{if(!user){openAuth();return}alert("Connexion Torox à venir.")};$("offers").appendChild(el)})}document.querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>{const f=b.dataset.filter;$("offersTitle").textContent=f==="game"?"🎮 Missions de jeux":f==="video"?"📺 Vidéos disponibles":"📝 Sondages disponibles";loadOffers(f);$("offersSection").scrollIntoView({behavior:"smooth"})});async function loadChallenges(){const {data,error}=await db.rpc("get_daily_challenge_progress");if(error||!data?.length)return;const r=data[0],n=Number(r.completed_count||0);$("challengeCount").textContent=n+" / 3";$("challengeFill").style.width=(n/3*100)+"%";[["cGame",r.game_done],["cVideo",r.video_done],["cSurvey",r.survey_done]].forEach(([id,d])=>{const e=$(id);e.classList.toggle("done",!!d);e.querySelector(".challenge-status").textContent=d?"✓ Terminé":"À faire"});$("challengeBonus").textContent="+"+fmt(r.bonus_lootix)+" RL Coins";$("challengeBonusEuro").textContent="= "+eur(r.bonus_lootix);$("claimBonus").style.display=user&&n===3&&!r.bonus_claimed?"inline-block":"none"}$("claimBonus").onclick=async()=>{const {data,error}=await db.rpc("claim_daily_challenge_bonus");if(error){alert("Bonus indisponible.");return}alert("🎉 +"+fmt(data)+" RL Coins !");await refresh(false)};
-function captureRef(){const c=new URLSearchParams(location.search).get("ref");if(c)localStorage.setItem("riselooter_ref",c)}async function applyRef(){const c=localStorage.getItem("riselooter_ref");if(!c||!user)return;await db.rpc("apply_referral_code",{p_referral_code:c});localStorage.removeItem("riselooter_ref")}function buildRef(c){if(!c)return;const l=location.origin+location.pathname+"?ref="+encodeURIComponent(c);$("referralLink").textContent=l;$("referralLink").dataset.link=l}$("copyReferral").onclick=async()=>{const l=$("referralLink").dataset.link;if(!l){openAuth("login");return}await navigator.clipboard.writeText(l);alert("Lien copié !")};$("goReferral").onclick=()=>{if(!user){openAuth();return}$("referralSection").scrollIntoView({behavior:"smooth"})};async function loadReferral(){if(!user)return;const {data,error}=await db.rpc("get_referral_summary");if(error||!data?.length)return;const r=data[0];$("referralCount").textContent=r.active_referrals;$("refPending").textContent=fmt(r.pending_lootix)+" RL Coins";$("refConfirmed").textContent=fmt(r.confirmed_lootix)+" RL Coins"}
-async function loadHistory(){const {data,error}=await db.from("lootix_transactions").select("amount,status,description,created_at").eq("user_id",user.id).order("created_at",{ascending:false}).limit(30);$("historyList").innerHTML="";if(error||!data?.length){$("historyList").innerHTML='<div class="empty">Aucune transaction.</div>';return}data.forEach(t=>{const el=document.createElement("div");el.className="rowitem";el.innerHTML='<div><div class="item-title"></div><div class="item-meta"></div><div class="item-meta"></div></div><div class="item-amount"></div>';el.querySelector(".item-title").textContent=t.description||"Transaction RiseLooter";const m=el.querySelectorAll(".item-meta");m[0].textContent=new Date(t.created_at).toLocaleString("fr-FR");m[1].textContent=t.status==="confirmed"?"✓ Confirmé":t.status==="pending"?"⏳ En attente":t.status;el.querySelector(".item-amount").textContent=(Number(t.amount)>=0?"+":"")+fmt(t.amount)+" RL Coins";$("historyList").appendChild(el)})}
-function openWithdraw(){if(!user){openAuth("login");return}$("withdrawMessage").textContent="";$("withdrawModal").style.display="flex"}function closeWithdraw(){$("withdrawModal").style.display="none"}$("withdrawButton").onclick=openWithdraw;$("closeWithdraw").onclick=closeWithdraw;$("withdrawAmount").oninput=()=>{const a=Number($("withdrawAmount").value||0);$("withdrawInfo").textContent=a?fmt(a)+" RL Coins = "+eur(a)+" • Minimum "+fmt(minWithdraw):"Minimum : "+fmt(minWithdraw)+" RL Coins = "+eur(minWithdraw)};$("withdrawForm").onsubmit=async e=>{e.preventDefault();const a=Number($("withdrawAmount").value),mail=$("paypalEmail").value.trim();if(a<minWithdraw){$("withdrawMessage").className="msg err";$("withdrawMessage").textContent="Minimum non atteint.";return}if(!profile||a>Number(profile.lootix_available||0)){$("withdrawMessage").className="msg err";$("withdrawMessage").textContent="Solde insuffisant.";return}if(!confirm("Retirer "+fmt(a)+" RL Coins ("+eur(a)+") ?"))return;const {error}=await db.rpc("request_withdrawal",{p_amount_lootix:a,p_payment_method:"paypal",p_payout_destination:mail});if(error){$("withdrawMessage").className="msg err";$("withdrawMessage").textContent="Impossible de créer le retrait.";return}$("withdrawMessage").className="msg ok";$("withdrawMessage").textContent="✓ Demande créée.";e.target.reset();await refresh(false);setTimeout(closeWithdraw,900)};async function loadWithdrawals(){const {data,error}=await db.from("withdrawals").select("id,amount_lootix,amount_eur,payout_destination,status,created_at").eq("user_id",user.id).order("created_at",{ascending:false});$("withdrawalList").innerHTML="";if(error||!data?.length){$("withdrawalList").innerHTML='<div class="empty">Aucun retrait.</div>';return}data.forEach(w=>{const el=document.createElement("div");el.className="rowitem";const left=document.createElement("div");left.innerHTML=`<div class="item-title">${fmt(w.amount_lootix)} RL Coins — ${euro(w.amount_eur)}</div><div class="item-meta">${new Date(w.created_at).toLocaleString("fr-FR")} • PayPal : ${w.payout_destination}</div><div class="status ${w.status}">${w.status}</div>`;if(w.status==="pending"){const b=document.createElement("button");b.className="btn2 small danger";b.textContent="Annuler";b.onclick=async()=>{if(!confirm("Annuler ?"))return;await db.rpc("cancel_withdrawal",{p_withdrawal_id:w.id});await refresh(false)};left.appendChild(b)}const amt=document.createElement("div");amt.className="item-amount";amt.textContent=euro(w.amount_eur);el.append(left,amt);$("withdrawalList").appendChild(el)})}
-$("adminButton").onclick=async()=>{if(!isAdmin)return;$("adminSection").style.display="block";await loadAdmin();$("adminSection").scrollIntoView({behavior:"smooth"})};async function loadAdmin(){if(!isAdmin)return;const[d,p]=await Promise.all([db.rpc("get_admin_dashboard"),db.rpc("get_admin_progress_stats")]);if(!d.error&&d.data?.length){const x=d.data[0];$("adminUsers").textContent=fmt(x.total_users);$("adminAvail").textContent=fmt(x.total_lootix_available);$("adminPending").textContent=fmt(x.total_lootix_pending);$("adminWithdrawalsCount").textContent=fmt(x.pending_withdrawals);$("adminToPay").textContent=eur(x.pending_withdrawals_lootix)}if(!p.error&&p.data?.length){$("adminAvg").textContent=p.data[0].average_level;$("adminMax").textContent=p.data[0].highest_level}const {count}=await db.from("offers").select("*",{count:"exact",head:true}).eq("status","active");$("adminOffers").textContent=count||0;const {data,error}=await db.from("withdrawals").select("id,amount_lootix,amount_eur,payout_destination,status").in("status",["pending","processing"]);$("adminWithdrawalList").innerHTML="";if(error||!data?.length){$("adminWithdrawalList").innerHTML='<div class="empty">Aucun retrait à traiter.</div>';return}data.forEach(w=>{const el=document.createElement("div");el.className="rowitem";const i=document.createElement("div");i.innerHTML=`<div class="item-title">${fmt(w.amount_lootix)} RL Coins — ${euro(w.amount_eur)}</div><div class="item-meta">${w.payout_destination}</div><div class="status ${w.status}">${w.status}</div>`;const a=document.createElement("div");a.className="admin-actions";if(w.status==="pending"){const b=document.createElement("button");b.className="btn2 small";b.textContent="Prendre en charge";b.onclick=async()=>{await db.rpc("admin_process_withdrawal",{p_withdrawal_id:w.id});await loadAdmin()};a.appendChild(b)}const paid=document.createElement("button");paid.className="btn2 small success";paid.textContent="Payé";paid.onclick=async()=>{if(confirm("Paiement réellement effectué ?")){await db.rpc("admin_mark_withdrawal_paid",{p_withdrawal_id:w.id});await refresh(false)}};const rej=document.createElement("button");rej.className="btn2 small danger";rej.textContent="Refuser";rej.onclick=async()=>{const r=prompt("Motif :");if(r===null)return;await db.rpc("admin_reject_withdrawal",{p_withdrawal_id:w.id,p_reason:r||"Refusé"});await refresh(false)};a.append(paid,rej);el.append(i,a);$("adminWithdrawalList").appendChild(el)})}
-async function refresh(auto=false){const {data:{user:u}}=await db.auth.getUser();user=u;if(!user){loggedOut();return}loggedIn();if(auto)await autoCheckin();await loadProfile();await Promise.all([loadProgress(),loadHistory(),loadChallenges(),loadReferral(),loadWithdrawals()]);if(isAdmin)await loadAdmin()}async function init(){captureRef();visitor();await Promise.all([loadSettings(),loadDaily(),loadOffers(),loadChallenges()]);const {data:{session}}=await db.auth.getSession();if(session?.user){user=session.user;await applyRef();await refresh(true)}else loggedOut()}db.auth.onAuthStateChange(async(e,s)=>{if(e==="SIGNED_IN"&&s){user=s.user;await applyRef();await refresh(true)}if(e==="SIGNED_OUT"){user=null;profile=null;isAdmin=false;loggedOut()}});init();
-</script></body></html>
+const SUPABASE_URL="https://dvvjujkpnpzerbjxjjsy.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_HvsPthhIg2aTGnluSJ9R5w_4InrkBOo";
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+const stages=[
+{level:1,title:"DÉBUTANT",desc:"Pas grand chose, mais la volonté d'y arriver.",asset:"assets/looter-01-debutant.png"},
+{level:5,title:"DÉBROUILLARD",desc:"Tu te débrouilles, tu commences à avancer.",asset:"assets/looter-05-debrouillard.png"},
+{level:10,title:"CHASSEUR",desc:"Plus agile, plus fort, tu deviens redoutable.",asset:"assets/looter-10-chasseur.png"},
+{level:15,title:"HUSTLER",desc:"Ambitieux, stratège, tu prends le contrôle.",asset:"assets/looter-15-hustler.png"},
+{level:20,title:"PRO",desc:"Rien ne t'arrête, tu deviens une légende.",asset:"assets/looter-20-pro.png"},
+{level:30,title:"ÉLITE",desc:"Respecté et craint, tu domines le terrain.",asset:"assets/looter-30-elite.png"},
+{level:40,title:"CYBER LOOTER",desc:"Technologie de pointe, puissance absolue.",asset:"assets/looter-40-cyber.png"},
+{level:50,title:"RISE LOOTER",desc:"Forme ultime : entité cybernétique transcendante.",asset:"assets/looter-50-rise.png"}
+];
+
+const $=id=>document.getElementById(id);
+
+function stageIndex(level){
+let n=0;
+stages.forEach((s,i)=>{
+if(level>=s.level)n=i
+});
+return n
+}
+
+function renderTrack(level){
+$("track").innerHTML=stages.map(s=>`
+<div class="node ${level>=s.level?"on":""}">
+<i>${s.level}</i>${s.title}
+</div>
+`).join("")
+}
+
+function renderEvolution(level){
+$("evoGrid").innerHTML=stages.map((s,i)=>`
+<div class="evo ${level>=s.level?"unlocked":""}" style="background-image:url('${s.asset}')">
+<div class="lock">🔒</div>
+<label>
+<small>NIVEAU ${s.level}</small><br>
+<b>${s.title}</b><br>
+<small>${level>=s.level?s.desc:"Évolution à découvrir"}</small>
+</label>
+</div>
+`).join("")
+}
+
+function renderDays(n){
+$("days").innerHTML=["LUN","MAR","MER","JEU","VEN","SAM","DIM"].map((d,i)=>`
+<div>
+<div class="day ${i<Math.min(n,7)?"on":""}">🔥</div>
+<small>${d}</small>
+</div>
+`).join("")
+}
+
+function render(p){
+
+let level=p.level||1
+let i=stageIndex(level)
+let s=stages[i]
+let next=stages[i+1]
+
+$("heroTitle").textContent="LE "+s.title
+$("heroDesc").textContent=s.desc
+$("levelBadge").textContent="NIVEAU "+level
+$("levelBig").textContent=level
+
+$("actor").style.backgroundImage=`url('${s.asset}')`
+
+$("hero").style.backgroundImage=
+`linear-gradient(90deg,rgba(5,8,10,.2),rgba(5,8,10,.03)),url('assets/stage-${i+1}.jpg')`
+
+$("coins").textContent=
+Number(p.rl_coins||0).toLocaleString("fr-FR")
+
+$("streak").textContent=
+(p.current_streak||0)+" jours"
+
+$("best").textContent=
+(p.best_streak||0)+" jours"
+
+$("streakBig").textContent=
+(p.current_streak||0)+" jours"
+
+renderDays(p.current_streak||0)
+renderTrack(level)
+renderEvolution(level)
+
+let start=50*(level-1)*level
+let end=level>=50?start:50*level*(level+1)
+let inside=Math.max(0,(p.xp||0)-start)
+let need=Math.max(0,end-start)
+let left=Math.max(0,end-(p.xp||0))
+
+$("xpTotal").textContent=
+Number(p.xp||0).toLocaleString("fr-FR")+" XP"
+
+$("xpLine").textContent=
+inside.toLocaleString("fr-FR")+" / "+need.toLocaleString("fr-FR")+" XP"
+
+$("xpBar").style.width=
+level>=50
+?"100%"
+:Math.min(100,inside/Math.max(1,need)*100)+"%"
+
+$("nextXP").textContent=
+level>=50
+?"MAX"
+:"+ "+left.toLocaleString("fr-FR")+" XP"
+
+if(next){
+
+$("nextLevel").textContent=
+$("nextLevel2").textContent=
+"NIVEAU "+next.level
+
+$("nextTitle").textContent=
+$("nextTitle2").textContent=
+"LE "+next.title
+
+$("untilEvolution").textContent=
+"Encore "+
+Math.max(
+0,
+50*(next.level-1)*next.level-(p.xp||0)
+).toLocaleString("fr-FR")+
+" XP avant d'évoluer !"
+
+}else{
+
+$("nextLevel").textContent=
+$("nextLevel2").textContent=
+"MAX"
+
+$("nextTitle").textContent=
+$("nextTitle2").textContent=
+"ÉVOLUTION ULTIME"
+
+$("untilEvolution").textContent=
+"Puissance maximale atteinte."
+
+}
+
+}
+
+async function load(){
+
+const {data:{session}}=
+await sb.auth.getSession()
+
+if(!session){
+
+render({
+level:1,
+xp:0,
+rl_coins:0,
+current_streak:0,
+best_streak:0
+})
+
+return
+}
+
+await sb.rpc("claim_daily_checkin")
+
+const {data,error}=
+await sb
+.from("profiles")
+.select("*")
+.eq("id",session.user.id)
+.single()
+
+if(error){
+console.error(error)
+return
+}
+
+if(!data.avatar_customized){
+$("avatarModal").classList.add("show")
+}
+
+render(data)
+
+}
+
+document.querySelectorAll(".choices").forEach(g=>{
+
+g.onclick=e=>{
+
+if(e.target.tagName!=="BUTTON")return
+
+g.querySelectorAll("button").forEach(b=>
+b.classList.remove("sel")
+)
+
+e.target.classList.add("sel")
+
+}
+
+})
+
+$("saveAvatar").onclick=async()=>{
+
+let v=g=>
+document.querySelector(
+`[data-g="${g}"] .sel`
+)?.dataset.v
+
+if(
+!v("gender")||
+!v("skin")||
+!v("hair")||
+!v("style")
+){
+alert("Choisis chaque option.")
+return
+}
+
+let {error}=await sb.rpc(
+"save_looter_customization",
+{
+p_gender:v("gender"),
+p_skin:v("skin"),
+p_hair_color:v("hair"),
+p_hair_style:v("style")
+}
+)
+
+if(error){
+alert(error.message)
+return
+}
+
+location.reload()
+
+}
+
+$("auth").onclick=async()=>{
+
+let email=prompt("E-mail")
+if(!email)return
+
+let password=prompt("Mot de passe")
+if(!password)return
+
+let {error}=await sb.auth.signInWithPassword({
+email,
+password
+})
+
+if(error){
+alert(error.message)
+}else{
+location.reload()
+}
+
+}
+
+load()
+</script>
+</body>
+</html>
