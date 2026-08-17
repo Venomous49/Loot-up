@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<base href="/">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>RiseLooter</title>
@@ -1568,13 +1569,13 @@ TEMPORAIREMENT FIXÉ SUR LE SET VALIDÉ
 
 function assetPath(profile,stage){
 
-return `assets/characters/male/medium/brown/male_textured/${stages[stage].slug}.webp`;
+return `/assets/characters/male/medium/brown/male_textured/${stages[stage].slug}.webp`;
 
 }
 
 function creatorAssetPath(){
 
-return "assets/characters/male/medium/brown/male_textured/01-debutant.webp";
+return "/assets/characters/male/medium/brown/male_textured/01-debutant.webp";
 
 }
 
@@ -1590,7 +1591,7 @@ return null;
 
 }
 
-return `assets/outfits/${slug}.webp`;
+return `/assets/outfits/${slug}.webp`;
 
 }
 
