@@ -1,1411 +1,3622 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>LOOT UP — Multiplie les actions. Fais monter tes gains.</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      background: #0b0b0f;
-      color: #ffffff;
-      min-height: 100vh;
-    }
-
-    button,
-    input {
-      font-family: inherit;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 20px;
-      padding: 22px 7%;
-      border-bottom: 1px solid #222229;
-      background: #0b0b0f;
-      position: sticky;
-      top: 0;
-      z-index: 50;
-    }
-
-    .logo {
-      font-size: 28px;
-      font-weight: 900;
-      letter-spacing: -1px;
-      white-space: nowrap;
-    }
-
-    .logo span {
-      color: #9d5cff;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .header-balance {
-      display: none;
-      color: #b878ff;
-      font-weight: 800;
-    }
-
-    .login-button,
-    .logout-button {
-      border: 1px solid #444450;
-      background: transparent;
-      color: white;
-      padding: 10px 18px;
-      border-radius: 10px;
-      font-weight: 700;
-    }
-
-    .logout-button {
-      display: none;
-    }
-
-    main {
-      width: 86%;
-      max-width: 1150px;
-      margin: 65px auto;
-    }
-
-    .hero {
-      text-align: center;
-      margin-bottom: 55px;
-    }
-
-    .hero h1 {
-      font-size: clamp(42px, 7vw, 76px);
-      line-height: 1.04;
-      margin-bottom: 22px;
-      letter-spacing: -2px;
-    }
-
-    .hero h1 span {
-      color: #9d5cff;
-    }
-
-    .hero p {
-      color: #a7a7b2;
-      font-size: 19px;
-      line-height: 1.6;
-      max-width: 700px;
-      margin: 0 auto 28px;
-    }
-
-    .cta {
-      display: inline-block;
-      border: none;
-      background: #9d5cff;
-      color: white;
-      padding: 15px 28px;
-      border-radius: 12px;
-      font-weight: 800;
-      font-size: 16px;
-    }
-
-    .conversion {
-      margin: 28px auto 0;
-      display: table;
-      padding: 10px 16px;
-      border: 1px solid #292932;
-      border-radius: 10px;
-      color: #c9c9d3;
-      background: #111116;
-    }
-
-    .section {
-      margin-bottom: 55px;
-    }
-
-    .section-title {
-      font-size: 27px;
-      margin-bottom: 8px;
-    }
-
-    .section-subtitle {
-      color: #8f8f99;
-      margin-bottom: 20px;
-      line-height: 1.5;
-    }
-
-    /* ==========================
-       BON PLAN DU JOUR
-    ========================== */
-
-    .daily-deal {
-      display: none;
-      position: relative;
-      overflow: hidden;
-      background:
-        linear-gradient(
-          135deg,
-          rgba(157,92,255,0.16),
-          rgba(17,17,22,1) 55%
-        );
-      border: 1px solid #4c3371;
-      border-radius: 20px;
-      padding: 28px;
-    }
-
-    .daily-deal::after {
-      content: "";
-      position: absolute;
-      width: 220px;
-      height: 220px;
-      right: -80px;
-      top: -90px;
-      background: rgba(157,92,255,0.12);
-      border-radius: 50%;
-      filter: blur(10px);
-    }
-
-    .daily-badge {
-      display: inline-block;
-      background: #9d5cff;
-      color: white;
-      padding: 7px 11px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 800;
-      margin-bottom: 18px;
-    }
-
-    .daily-content {
-      position: relative;
-      z-index: 2;
-    }
-
-    .daily-icon {
-      font-size: 38px;
-      margin-bottom: 12px;
-    }
-
-    .daily-deal h3 {
-      font-size: 27px;
-      margin-bottom: 10px;
-    }
-
-    .daily-deal p {
-      color: #b0b0bb;
-      max-width: 700px;
-      line-height: 1.6;
-      margin-bottom: 20px;
-    }
-
-    .daily-reward {
-      font-size: 30px;
-      font-weight: 900;
-      color: #b878ff;
-      margin-bottom: 4px;
-    }
-
-    .daily-euro {
-      color: #c8c8d0;
-      margin-bottom: 20px;
-    }
-
-    .daily-button {
-      border: none;
-      background: #9d5cff;
-      color: white;
-      padding: 13px 22px;
-      border-radius: 10px;
-      font-weight: 800;
-    }
-
-    /* ==========================
-       GAGNE COMME TU VEUX
-    ========================== */
-
-    .earning-categories {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 15px;
-    }
-
-    .earning-card {
-      background: #111116;
-      border: 1px solid #24242d;
-      border-radius: 16px;
-      padding: 22px;
-      transition: transform 0.2s ease, border-color 0.2s ease;
-    }
-
-    .earning-card:hover {
-      transform: translateY(-3px);
-      border-color: #494957;
-    }
-
-    .earning-icon {
-      font-size: 32px;
-      margin-bottom: 13px;
-    }
-
-    .earning-card h3 {
-      margin-bottom: 8px;
-    }
-
-    .earning-card p {
-      color: #9696a1;
-      font-size: 14px;
-      line-height: 1.5;
-      min-height: 63px;
-      margin-bottom: 16px;
-    }
-
-    .earning-card button {
-      width: 100%;
-      padding: 11px;
-      border: none;
-      border-radius: 9px;
-      background: #202027;
-      color: white;
-      font-weight: 700;
-    }
-
-    /* ==========================
-       DÉFIS DU JOUR
-    ========================== */
-
-    .challenge-box {
-      background: #111116;
-      border: 1px solid #292932;
-      border-radius: 18px;
-      padding: 25px;
-    }
-
-    .challenge-progress {
-      margin-bottom: 18px;
-    }
-
-    .progress-text {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      color: #b7b7c1;
-      font-size: 14px;
-      margin-bottom: 8px;
-    }
-
-    .progress-bar {
-      width: 100%;
-      height: 10px;
-      background: #202027;
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      width: 0%;
-      height: 100%;
-      background: #9d5cff;
-      border-radius: 999px;
-      transition: width 0.3s ease;
-    }
-
-    .challenge-list {
-      display: grid;
-      gap: 10px;
-    }
-
-    .challenge-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 15px;
-      background: #17171d;
-      border: 1px solid #262630;
-      border-radius: 12px;
-      padding: 14px 15px;
-    }
-
-    .challenge-label {
-      font-weight: 700;
-    }
-
-    .challenge-reward {
-      color: #b878ff;
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
-    .challenge-bonus {
-      margin-top: 15px;
-      background: rgba(157,92,255,0.1);
-      border: 1px solid #4a3370;
-      border-radius: 12px;
-      padding: 16px;
-      text-align: center;
-      color: #d7c7ff;
-      font-weight: 800;
-    }
-
-    /* ==========================
-       SÉRIE
-    ========================== */
-
-    .streak-box {
-      background: #111116;
-      border: 1px solid #292932;
-      border-radius: 18px;
-      padding: 25px;
-    }
-
-    .streak-main {
-      font-size: 34px;
-      font-weight: 900;
-      color: #b878ff;
-      margin-bottom: 7px;
-    }
-
-    .streak-next {
-      color: #a2a2ad;
-      margin-bottom: 18px;
-    }
-
-    .streak-days {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 8px;
-    }
-
-    .streak-day {
-      text-align: center;
-      padding: 12px 4px;
-      border-radius: 10px;
-      background: #17171d;
-      border: 1px solid #272730;
-      color: #8e8e99;
-      font-size: 12px;
-    }
-
-    .streak-day.active {
-      background: rgba(157,92,255,0.14);
-      color: white;
-      border-color: #6a45a1;
-    }
-
-    /* ==========================
-       CAGNOTTE
-    ========================== */
-
-    .wallet {
-      display: none;
-      background: #111116;
-      border: 1px solid #292932;
-      border-radius: 18px;
-      padding: 28px;
-      text-align: center;
-    }
-
-    .wallet-title {
-      font-size: 22px;
-      margin-bottom: 5px;
-      font-weight: 700;
-    }
-
-    .wallet-total {
-      color: #b878ff;
-      font-size: 38px;
-      font-weight: 900;
-      margin-top: 18px;
-    }
-
-    .wallet-euros {
-      color: #a7a7b2;
-      margin-top: 5px;
-      margin-bottom: 24px;
-    }
-
-    .wallet-details {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
-
-    .wallet-detail {
-      background: #17171d;
-      border: 1px solid #25252e;
-      padding: 15px 10px;
-      border-radius: 12px;
-    }
-
-    .wallet-detail-label {
-      color: #92929e;
-      font-size: 13px;
-      margin-bottom: 7px;
-    }
-
-    .wallet-detail-value {
-      font-weight: 800;
-    }
-
-    /* ==========================
-       HISTORIQUE
-    ========================== */
-
-    .history-box {
-      display: none;
-      margin-top: 18px;
-      background: #111116;
-      border: 1px solid #292932;
-      border-radius: 18px;
-      padding: 28px;
-    }
-
-    .history-title {
-      font-size: 22px;
-      font-weight: 700;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .history-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 18px;
-      padding: 17px 0;
-      border-bottom: 1px solid #262630;
-    }
-
-    .history-item:last-child {
-      border-bottom: none;
-    }
-
-    .history-description {
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .history-date {
-      font-size: 13px;
-      color: #888894;
-    }
-
-    .history-status {
-      font-size: 13px;
-      margin-top: 5px;
-    }
-
-    .history-amount {
-      font-weight: 900;
-      color: #b878ff;
-      white-space: nowrap;
-      font-size: 17px;
-    }
-
-    .history-empty {
-      text-align: center;
-      color: #888894;
-      padding: 20px 0;
-    }
-
-    /* ==========================
-       OFFRES DYNAMIQUES
-    ========================== */
-
-    .offers-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 15px;
-    }
-
-    .offer-card {
-      background: #111116;
-      border: 1px solid #24242d;
-      border-radius: 16px;
-      padding: 22px;
-    }
-
-    .offer-icon {
-      font-size: 30px;
-      margin-bottom: 12px;
-    }
-
-    .offer-category {
-      display: inline-block;
-      margin-bottom: 10px;
-      padding: 5px 9px;
-      border-radius: 999px;
-      background: #1a1a21;
-      color: #a7a7b2;
-      font-size: 12px;
-    }
-
-    .offer-card h3 {
-      margin-bottom: 8px;
-    }
-
-    .offer-card p {
-      color: #9999a5;
-      font-size: 14px;
-      margin-bottom: 16px;
-      line-height: 1.5;
-    }
-
-    .offer-reward {
-      color: #b878ff;
-      font-weight: 900;
-      font-size: 20px;
-      margin-bottom: 4px;
-    }
-
-    .offer-euro {
-      color: #8f8f99;
-      font-size: 13px;
-      margin-bottom: 15px;
-    }
-
-    .offer-card button {
-      width: 100%;
-      padding: 11px;
-      border: none;
-      border-radius: 9px;
-      background: #202027;
-      color: white;
-      font-weight: 700;
-    }
-
-    .loading,
-    .empty-state {
-      grid-column: 1 / -1;
-      background: #111116;
-      border: 1px solid #24242d;
-      border-radius: 16px;
-      padding: 28px;
-      text-align: center;
-      color: #9999a5;
-    }
-
-    /* ==========================
-       MODALE AUTH
-    ========================== */
-
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 999;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: rgba(0,0,0,0.78);
-      backdrop-filter: blur(5px);
-    }
-
-    .modal {
-      position: relative;
-      width: 100%;
-      max-width: 430px;
-      background: #111116;
-      border: 1px solid #30303a;
-      border-radius: 18px;
-      padding: 28px;
-    }
-
-    .close-modal {
-      position: absolute;
-      right: 18px;
-      top: 15px;
-      border: none;
-      background: transparent;
-      color: #aaaab5;
-      font-size: 26px;
-    }
-
-    .modal h2 {
-      font-size: 25px;
-      margin-bottom: 8px;
-      padding-right: 30px;
-    }
-
-    .modal-subtitle {
-      color: #9999a5;
-      font-size: 14px;
-      line-height: 1.5;
-      margin-bottom: 22px;
-    }
-
-    .auth-tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 22px;
-    }
-
-    .auth-tab {
-      flex: 1;
-      padding: 11px 8px;
-      border-radius: 9px;
-      border: 1px solid #30303a;
-      background: transparent;
-      color: white;
-      font-weight: 700;
-    }
-
-    .auth-tab.active {
-      background: #9d5cff;
-      border-color: #9d5cff;
-    }
-
-    .auth-form {
-      display: none;
-    }
-
-    .auth-form.active {
-      display: block;
-    }
-
-    label {
-      display: block;
-      color: #c9c9d3;
-      font-size: 14px;
-      margin-bottom: 7px;
-    }
-
-    input {
-      width: 100%;
-      padding: 13px;
-      margin-bottom: 16px;
-      border: 1px solid #30303a;
-      border-radius: 9px;
-      background: #0b0b0f;
-      color: white;
-      outline: none;
-      font-size: 15px;
-    }
-
-    input:focus {
-      border-color: #9d5cff;
-    }
-
-    .submit-auth {
-      width: 100%;
-      padding: 13px;
-      border: none;
-      border-radius: 10px;
-      background: #9d5cff;
-      color: white;
-      font-weight: 800;
-      font-size: 15px;
-    }
-
-    .submit-auth:disabled {
-      opacity: 0.55;
-    }
-
-    .auth-message {
-      min-height: 20px;
-      margin-top: 15px;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    .message-error {
-      color: #ff7777;
-    }
-
-    .message-success {
-      color: #69e6a6;
-    }
-
-    footer {
-      margin-top: 65px;
-      padding-top: 25px;
-      border-top: 1px solid #222229;
-      color: #74747f;
-      text-align: center;
-      font-size: 13px;
-      line-height: 1.7;
-    }
-
-    @media (max-width: 850px) {
-      .earning-categories {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (max-width: 700px) {
-      header {
-        padding: 17px 5%;
-      }
-
-      .logo {
-        font-size: 23px;
-      }
-
-      main {
-        width: 90%;
-        margin-top: 45px;
-      }
-
-      .hero h1 {
-        letter-spacing: -1px;
-      }
-
-      .wallet-details {
-        grid-template-columns: 1fr;
-      }
-
-      .header-balance {
-        display: none !important;
-      }
-
-      .history-item {
-        align-items: flex-start;
-      }
-
-      .streak-days {
-        grid-template-columns: repeat(4, 1fr);
-      }
-    }
-
-    @media (max-width: 520px) {
-      .earning-categories {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>LOOT UP — Multiplie les actions. Fais monter tes gains.</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #0b0b0f;
+  color: white;
+  min-height: 100vh;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 7%;
+  border-bottom: 1px solid #222229;
+  background: rgba(11,11,15,.96);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.logo {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+
+.logo span {
+  color: #9d5cff;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.header-balance {
+  display: none;
+  color: #b878ff;
+  font-weight: 900;
+}
+
+.login-button,
+.logout-button {
+  color: white;
+  background: transparent;
+  border: 1px solid #444450;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.logout-button {
+  display: none;
+}
+
+main {
+  width: 88%;
+  max-width: 1150px;
+  margin: 32px auto 70px;
+}
+
+.section {
+  margin-bottom: 55px;
+}
+
+.section-title {
+  font-size: 27px;
+  margin-bottom: 8px;
+}
+
+.section-subtitle {
+  color: #92929d;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+/* ==============================
+   CAGNOTTE EN HAUT
+================================ */
+
+.top-wallet {
+  display: none;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(157,92,255,.17),
+      rgba(17,17,22,1) 55%
+    );
+  border: 1px solid #49336a;
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 35px;
+}
+
+.wallet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.wallet-small-title {
+  color: #b8b8c2;
+  margin-bottom: 7px;
+}
+
+.wallet-total {
+  font-size: 38px;
+  color: #b878ff;
+  font-weight: 900;
+}
+
+.wallet-euros {
+  color: #c9c9d1;
+  margin-top: 4px;
+}
+
+.wallet-motivation {
+  background: #19191f;
+  border: 1px solid #292932;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: #c7c7d0;
+  font-size: 14px;
+}
+
+.wallet-details {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.wallet-detail {
+  background: rgba(17,17,22,.75);
+  border: 1px solid #292932;
+  padding: 13px;
+  border-radius: 12px;
+}
+
+.wallet-label {
+  color: #8e8e99;
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+
+.wallet-value {
+  font-weight: 800;
+}
+
+/* HERO */
+
+.hero {
+  text-align: center;
+  padding: 35px 0 60px;
+}
+
+.hero h1 {
+  font-size: clamp(42px,7vw,75px);
+  line-height: 1.04;
+  letter-spacing: -2px;
+  margin-bottom: 22px;
+}
+
+.hero h1 span {
+  color: #9d5cff;
+}
+
+.hero p {
+  color: #a5a5b0;
+  max-width: 720px;
+  margin: auto;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.hero-actions {
+  margin-top: 26px;
+}
+
+.main-cta {
+  border: 0;
+  background: #9d5cff;
+  color: white;
+  padding: 15px 25px;
+  border-radius: 11px;
+  font-weight: 900;
+  font-size: 15px;
+}
+
+.conversion {
+  margin: 18px auto 0;
+  display: table;
+  background: #111116;
+  border: 1px solid #292932;
+  color: #c7c7d0;
+  padding: 9px 13px;
+  border-radius: 9px;
+}
+
+/* BON PLAN */
+
+.daily-deal {
+  display: none;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(157,92,255,.17),
+      #111116 60%
+    );
+  border: 1px solid #49336a;
+  border-radius: 19px;
+  padding: 26px;
+}
+
+.daily-badge {
+  display: inline-block;
+  background: #9d5cff;
+  font-weight: 900;
+  font-size: 12px;
+  border-radius: 999px;
+  padding: 7px 11px;
+  margin-bottom: 15px;
+}
+
+.daily-icon {
+  font-size: 35px;
+  margin-bottom: 10px;
+}
+
+.daily-title {
+  font-size: 25px;
+  margin-bottom: 8px;
+}
+
+.daily-description {
+  color: #a5a5b0;
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+
+.daily-reward {
+  color: #b878ff;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.daily-euros {
+  color: #aaaab4;
+  margin: 3px 0 18px;
+}
+
+.primary-button {
+  background: #9d5cff;
+  color: white;
+  border: 0;
+  padding: 12px 18px;
+  border-radius: 9px;
+  font-weight: 800;
+}
+
+/* CATÉGORIES */
+
+.categories {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 14px;
+}
+
+.category-card {
+  background: #111116;
+  border: 1px solid #25252e;
+  border-radius: 15px;
+  padding: 20px;
+}
+
+.category-icon {
+  font-size: 30px;
+  margin-bottom: 12px;
+}
+
+.category-card h3 {
+  margin-bottom: 7px;
+}
+
+.category-card p {
+  color: #91919c;
+  line-height: 1.45;
+  font-size: 13px;
+  min-height: 57px;
+}
+
+.category-card button {
+  width: 100%;
+  margin-top: 15px;
+  border: 0;
+  background: #202027;
+  color: white;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+/* OFFRES */
+
+.offers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(230px,1fr));
+  gap: 14px;
+}
+
+.offer {
+  background: #111116;
+  border: 1px solid #25252e;
+  border-radius: 15px;
+  padding: 20px;
+}
+
+.offer-icon {
+  font-size: 29px;
+  margin-bottom: 9px;
+}
+
+.offer-category {
+  display: inline-block;
+  background: #1b1b21;
+  color: #aaaab4;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  margin-bottom: 10px;
+}
+
+.offer h3 {
+  margin-bottom: 7px;
+}
+
+.offer p {
+  color: #91919c;
+  font-size: 13px;
+  line-height: 1.45;
+  margin-bottom: 15px;
+}
+
+.offer-reward {
+  color: #b878ff;
+  font-size: 19px;
+  font-weight: 900;
+}
+
+.offer-euro {
+  color: #91919c;
+  font-size: 12px;
+  margin: 4px 0 14px;
+}
+
+.offer button {
+  width: 100%;
+  border: 0;
+  background: #202027;
+  color: white;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.loading {
+  grid-column: 1/-1;
+  background: #111116;
+  border: 1px solid #25252e;
+  border-radius: 15px;
+  padding: 25px;
+  text-align: center;
+  color: #90909a;
+}
+
+/* DÉFIS */
+
+.challenge-box {
+  background: #111116;
+  border: 1px solid #292932;
+  border-radius: 18px;
+  padding: 23px;
+}
+
+.challenge-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.challenge-count {
+  color: #b878ff;
+  font-weight: 900;
+}
+
+.progress {
+  height: 10px;
+  background: #202027;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: #9d5cff;
+  transition: width .3s;
+}
+
+.challenge-list {
+  display: grid;
+  gap: 9px;
+}
+
+.challenge {
+  background: #17171d;
+  border: 1px solid #272730;
+  border-radius: 11px;
+  padding: 13px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.challenge.done {
+  border-color: #446f5a;
+}
+
+.challenge-status {
+  color: #858590;
+}
+
+.challenge.done .challenge-status {
+  color: #69e6a6;
+}
+
+.challenge-bonus {
+  margin-top: 16px;
+  background: rgba(157,92,255,.12);
+  border: 1px solid #53377a;
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.challenge-bonus-value {
+  font-size: 22px;
+  font-weight: 900;
+  color: #b878ff;
+  margin: 5px;
+}
+
+.claim-bonus {
+  display: none;
+  margin-top: 10px;
+}
+
+/* SÉRIE */
+
+.streak-box {
+  background: #111116;
+  border: 1px solid #292932;
+  border-radius: 18px;
+  padding: 23px;
+}
+
+.streak-number {
+  color: #b878ff;
+  font-size: 32px;
+  font-weight: 900;
+  margin-bottom: 5px;
+}
+
+.streak-description {
+  color: #91919c;
+  margin-bottom: 16px;
+}
+
+.streak-days {
+  display: grid;
+  grid-template-columns: repeat(7,1fr);
+  gap: 7px;
+  margin-bottom: 17px;
+}
+
+.streak-day {
+  background: #17171d;
+  border: 1px solid #272730;
+  border-radius: 9px;
+  text-align: center;
+  padding: 11px 3px;
+  color: #858590;
+  font-size: 11px;
+}
+
+.streak-day.active {
+  color: white;
+  border-color: #654296;
+  background: rgba(157,92,255,.15);
+}
+
+/* PARRAINAGE */
+
+.referral-box {
+  background: #111116;
+  border: 1px solid #292932;
+  border-radius: 18px;
+  padding: 23px;
+}
+
+.referral-link-box {
+  display: flex;
+  gap: 8px;
+  margin: 17px 0;
+}
+
+.referral-link {
+  flex: 1;
+  background: #17171d;
+  border: 1px solid #292932;
+  color: #c7c7d0;
+  padding: 11px;
+  border-radius: 9px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.referral-link-box button {
+  border: 0;
+  background: #9d5cff;
+  color: white;
+  padding: 10px 14px;
+  border-radius: 9px;
+  font-weight: 800;
+}
+
+.referral-stats {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 9px;
+}
+
+.referral-stat {
+  background: #17171d;
+  border: 1px solid #272730;
+  border-radius: 10px;
+  padding: 13px;
+}
+
+.referral-stat-label {
+  color: #898994;
+  font-size: 11px;
+  margin-bottom: 5px;
+}
+
+.referral-stat-value {
+  font-weight: 900;
+}
+
+/* HISTORIQUE */
+
+.history-box {
+  display: none;
+  background: #111116;
+  border: 1px solid #292932;
+  border-radius: 18px;
+  padding: 23px;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 14px 0;
+  border-bottom: 1px solid #25252e;
+}
+
+.history-item:last-child {
+  border-bottom: 0;
+}
+
+.history-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.history-meta {
+  color: #83838e;
+  font-size: 11px;
+}
+
+.history-status {
+  margin-top: 4px;
+  font-size: 11px;
+}
+
+.history-amount {
+  color: #b878ff;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+/* PROFIL */
+
+.profile-box {
+  display: none;
+  background: #111116;
+  border: 1px solid #292932;
+  border-radius: 18px;
+  padding: 23px;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 10px;
+}
+
+.profile-stat {
+  background: #17171d;
+  border: 1px solid #272730;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.profile-label {
+  color: #868691;
+  font-size: 11px;
+  margin-bottom: 5px;
+}
+
+.profile-value {
+  font-weight: 900;
+}
+
+/* AUTH */
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0,0,0,.8);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal {
+  width: 100%;
+  max-width: 420px;
+  background: #111116;
+  border: 1px solid #30303a;
+  padding: 25px;
+  border-radius: 17px;
+  position: relative;
+}
+
+.close-modal {
+  position: absolute;
+  right: 15px;
+  top: 12px;
+  border: 0;
+  background: transparent;
+  color: #aaaab4;
+  font-size: 25px;
+}
+
+.modal h2 {
+  margin-bottom: 7px;
+}
+
+.modal-subtitle {
+  color: #92929d;
+  margin-bottom: 18px;
+  line-height: 1.45;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 7px;
+  margin-bottom: 18px;
+}
+
+.auth-tab {
+  flex: 1;
+  border: 1px solid #30303a;
+  background: transparent;
+  color: white;
+  padding: 9px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.auth-tab.active {
+  background: #9d5cff;
+  border-color: #9d5cff;
+}
+
+.auth-form {
+  display: none;
+}
+
+.auth-form.active {
+  display: block;
+}
+
+label {
+  display: block;
+  color: #c0c0c8;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+input {
+  width: 100%;
+  background: #0b0b0f;
+  border: 1px solid #30303a;
+  border-radius: 8px;
+  color: white;
+  padding: 12px;
+  margin-bottom: 13px;
+}
+
+.auth-submit {
+  width: 100%;
+  border: 0;
+  background: #9d5cff;
+  color: white;
+  padding: 12px;
+  border-radius: 9px;
+  font-weight: 900;
+}
+
+.auth-message {
+  margin-top: 12px;
+  min-height: 18px;
+  font-size: 12px;
+}
+
+.success {
+  color: #69e6a6;
+}
+
+.error {
+  color: #ff7777;
+}
+
+footer {
+  border-top: 1px solid #222229;
+  padding-top: 25px;
+  color: #72727d;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+
+/* MOBILE */
+
+@media(max-width:850px) {
+
+  .categories {
+    grid-template-columns: repeat(2,1fr);
+  }
+
+}
+
+@media(max-width:650px) {
+
+  header {
+    padding: 15px 5%;
+  }
+
+  .logo {
+    font-size: 22px;
+  }
+
+  main {
+    width: 91%;
+  }
+
+  .wallet-header {
+    display: block;
+  }
+
+  .wallet-motivation {
+    margin-top: 15px;
+  }
+
+  .wallet-details,
+  .referral-stats,
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .categories {
+    grid-template-columns: 1fr;
+  }
+
+  .streak-days {
+    grid-template-columns: repeat(4,1fr);
+  }
+
+  .header-balance {
+    display: none !important;
+  }
+
+}
+
+</style>
 </head>
 
 <body>
 
 <header>
 
-  <div class="logo">
-    LOOT <span>UP</span>
-  </div>
+<div class="logo">
+LOOT <span>UP</span>
+</div>
 
-  <div class="header-actions">
+<div class="header-actions">
 
-    <div class="header-balance" id="headerBalance">
-      0 LOOTIX
-    </div>
+<div
+class="header-balance"
+id="headerBalance">
+0 LOOTIX
+</div>
 
-    <button class="login-button" id="loginButton">
-      Se connecter
-    </button>
+<button
+class="login-button"
+id="loginButton">
+Se connecter
+</button>
 
-    <button class="logout-button" id="logoutButton">
-      Déconnexion
-    </button>
+<button
+class="logout-button"
+id="logoutButton">
+Déconnexion
+</button>
 
-  </div>
+</div>
 
 </header>
 
+
 <main>
 
-  <!-- HERO -->
 
-  <section class="hero">
+<!-- ==========================
+     CAGNOTTE EN PREMIER
+========================== -->
 
-    <h1>
-      Multiplie les actions.<br>
-      <span>Fais monter tes gains.</span>
-    </h1>
+<section
+class="top-wallet"
+id="topWallet">
 
-    <p>
-      Joue, regarde, réponds, parraine et accomplis des missions
-      pour gagner des LOOTIX.
-    </p>
+<div class="wallet-header">
 
-    <button class="cta" id="startButton">
-      Commencer à gagner
-    </button>
+<div>
 
-    <div class="conversion">
-      🪙 100 LOOTIX = 1 €
-    </div>
+<div class="wallet-small-title">
+💰 Ta cagnotte
+</div>
 
-  </section>
+<div
+class="wallet-total"
+id="walletTotal">
+0 LOOTIX
+</div>
 
+<div
+class="wallet-euros"
+id="walletEuros">
+= 0,00 €
+</div>
 
-  <!-- BON PLAN DU JOUR -->
+</div>
 
-  <section class="section">
-
-    <h2 class="section-title">
-      🔥 Le bon plan du jour
-    </h2>
-
-    <div class="section-subtitle">
-      Notre sélection pour faire monter ta cagnotte aujourd’hui.
-    </div>
-
-    <div class="daily-deal" id="dailyDeal">
-
-      <div class="daily-content">
-
-        <div class="daily-badge">
-          ⭐ Sélection Loot Up
-        </div>
-
-        <div class="daily-icon" id="dailyIcon">
-          🎯
-        </div>
-
-        <h3 id="dailyTitle">
-          Chargement...
-        </h3>
-
-        <p id="dailyDescription">
-          Recherche de la meilleure opportunité disponible.
-        </p>
-
-        <div class="daily-reward" id="dailyReward">
-          0 LOOTIX
-        </div>
-
-        <div class="daily-euro" id="dailyEuro">
-          = 0,00 €
-        </div>
-
-        <button class="daily-button" id="dailyButton">
-          Profiter de l'offre
-        </button>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- GAGNE COMME TU VEUX -->
-
-  <section class="section">
-
-    <h2 class="section-title">
-      ⚡ Gagne comme tu veux
-    </h2>
-
-    <div class="section-subtitle">
-      Choisis la manière qui te convient le mieux pour gagner des LOOTIX.
-    </div>
-
-    <div class="earning-categories">
-
-      <div class="earning-card">
-
-        <div class="earning-icon">
-          🎮
-        </div>
-
-        <h3>
-          Joue
-        </h3>
-
-        <p>
-          Joue à des jeux et accomplis des objectifs pour obtenir des récompenses.
-        </p>
-
-        <button data-category="game">
-          Voir les jeux
-        </button>
-
-      </div>
-
-
-      <div class="earning-card">
-
-        <div class="earning-icon">
-          📺
-        </div>
-
-        <h3>
-          Regarde
-        </h3>
-
-        <p>
-          Regarde des contenus ou publicités rémunérées lorsque disponibles.
-        </p>
-
-        <button data-category="video">
-          Voir les vidéos
-        </button>
-
-      </div>
-
-
-      <div class="earning-card">
-
-        <div class="earning-icon">
-          📝
-        </div>
-
-        <h3>
-          Sondages
-        </h3>
-
-        <p>
-          Donne ton avis et récupère des LOOTIX grâce aux sondages partenaires.
-        </p>
-
-        <button data-category="survey">
-          Voir les sondages
-        </button>
-
-      </div>
-
-
-      <div class="earning-card">
-
-        <div class="earning-icon">
-          👥
-        </div>
-
-        <h3>
-          Parrainage
-        </h3>
-
-        <p>
-          Invite tes amis et gagne lorsque leur activité devient éligible.
-        </p>
-
-        <button id="referralButton">
-          Parrainer un ami
-        </button>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- OFFRES -->
-
-  <section class="section" id="offersSection">
-
-    <h2 class="section-title" id="offersTitle">
-      🎯 Missions disponibles
-    </h2>
-
-    <div class="offers-grid" id="offersContainer">
-
-      <div class="loading">
-        Chargement des missions...
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- DÉFIS -->
-
-  <section class="section">
-
-    <h2 class="section-title">
-      🎯 Défis du jour
-    </h2>
-
-    <div class="section-subtitle">
-      Termine plusieurs actions aujourd’hui pour débloquer un bonus supplémentaire.
-    </div>
-
-    <div class="challenge-box">
-
-      <div class="challenge-progress">
-
-        <div class="progress-text">
-          <span>
-            Progression
-          </span>
-
-          <span id="challengeCounter">
-            0 / 3
-          </span>
-        </div>
-
-        <div class="progress-bar">
-          <div class="progress-fill" id="challengeProgress"></div>
-        </div>
-
-      </div>
-
-      <div class="challenge-list">
-
-        <div class="challenge-item">
-          <div class="challenge-label">
-            🎮 Réalise une mission de jeu
-          </div>
-
-          <div class="challenge-reward">
-            + bonus
-          </div>
-        </div>
-
-        <div class="challenge-item">
-          <div class="challenge-label">
-            📺 Réalise une action vidéo
-          </div>
-
-          <div class="challenge-reward">
-            + bonus
-          </div>
-        </div>
-
-        <div class="challenge-item">
-          <div class="challenge-label">
-            📝 Termine un sondage
-          </div>
-
-          <div class="challenge-reward">
-            + bonus
-          </div>
-        </div>
-
-      </div>
-
-      <div class="challenge-bonus">
-        🎁 Termine les 3 défis pour débloquer le bonus du jour.
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- SÉRIE -->
-
-  <section class="section">
-
-    <h2 class="section-title">
-      🔥 Ta série
-    </h2>
-
-    <div class="section-subtitle">
-      Reviens régulièrement sur Loot Up pour faire progresser ta série.
-    </div>
-
-    <div class="streak-box">
-
-      <div class="streak-main" id="streakMain">
-        0 jour
-      </div>
-
-      <div class="streak-next">
-        Continue ta série pour débloquer tes prochains bonus.
-      </div>
-
-      <div class="streak-days">
-
-        <div class="streak-day" data-day="1">
-          Jour 1
-        </div>
-
-        <div class="streak-day" data-day="2">
-          Jour 2
-        </div>
-
-        <div class="streak-day" data-day="3">
-          Jour 3
-        </div>
-
-        <div class="streak-day" data-day="4">
-          Jour 4
-        </div>
-
-        <div class="streak-day" data-day="5">
-          Jour 5
-        </div>
-
-        <div class="streak-day" data-day="6">
-          Jour 6
-        </div>
-
-        <div class="streak-day" data-day="7">
-          🔥 Jour 7
-        </div>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- CAGNOTTE -->
-
-  <section class="section">
-
-    <h2 class="section-title">
-      💰 Ma cagnotte
-    </h2>
-
-    <div class="wallet" id="wallet">
-
-      <div class="wallet-title">
-        Ton solde Loot Up
-      </div>
-
-      <div class="wallet-total" id="walletTotal">
-        0 LOOTIX
-      </div>
-
-      <div class="wallet-euros" id="walletEuros">
-        = 0,00 €
-      </div>
-
-      <div class="wallet-details">
-
-        <div class="wallet-detail">
-
-          <div class="wallet-detail-label">
-            🟢 Disponible
-          </div>
-
-          <div class="wallet-detail-value" id="availableLootix">
-            0 LOOTIX
-          </div>
-
-        </div>
-
-
-        <div class="wallet-detail">
-
-          <div class="wallet-detail-label">
-            🟠 En attente
-          </div>
-
-          <div class="wallet-detail-value" id="pendingLootix">
-            0 LOOTIX
-          </div>
-
-        </div>
-
-
-        <div class="wallet-detail">
-
-          <div class="wallet-detail-label">
-            🔥 Série
-          </div>
-
-          <div class="wallet-detail-value" id="streak">
-            0 jour
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <div class="history-box" id="historyBox">
-
-      <div class="history-title">
-        🧾 Historique de tes gains
-      </div>
-
-      <div id="historyList"></div>
-
-    </div>
-
-  </section>
-
-
-  <footer>
-    LOOT UP — 100 LOOTIX = 1 €<br>
-    Les récompenses sont soumises aux conditions de chaque mission.
-  </footer>
-
-</main>
-
-
-<!-- MODALE AUTH -->
-
-<div class="modal-overlay" id="authModal">
-
-  <div class="modal">
-
-    <button class="close-modal" id="closeModal">
-      ×
-    </button>
-
-    <h2>
-      Bienvenue sur LOOT UP
-    </h2>
-
-    <div class="modal-subtitle">
-      Crée ton compte et commence à faire monter ta cagnotte.
-    </div>
-
-    <div class="auth-tabs">
-
-      <button
-        type="button"
-        class="auth-tab active"
-        data-tab="signup"
-      >
-        Créer un compte
-      </button>
-
-      <button
-        type="button"
-        class="auth-tab"
-        data-tab="login"
-      >
-        Se connecter
-      </button>
-
-    </div>
-
-
-    <form class="auth-form active" id="signupForm">
-
-      <label for="signupEmail">
-        Adresse e-mail
-      </label>
-
-      <input
-        id="signupEmail"
-        type="email"
-        placeholder="ton@email.fr"
-        autocomplete="email"
-        required
-      >
-
-      <label for="signupPassword">
-        Mot de passe
-      </label>
-
-      <input
-        id="signupPassword"
-        type="password"
-        placeholder="Minimum 6 caractères"
-        minlength="6"
-        autocomplete="new-password"
-        required
-      >
-
-      <label for="signupPasswordConfirm">
-        Confirme ton mot de passe
-      </label>
-
-      <input
-        id="signupPasswordConfirm"
-        type="password"
-        placeholder="Retape ton mot de passe"
-        minlength="6"
-        autocomplete="new-password"
-        required
-      >
-
-      <button
-        class="submit-auth"
-        id="signupSubmit"
-        type="submit"
-      >
-        Créer mon compte
-      </button>
-
-    </form>
-
-
-    <form class="auth-form" id="loginForm">
-
-      <label for="loginEmail">
-        Adresse e-mail
-      </label>
-
-      <input
-        id="loginEmail"
-        type="email"
-        placeholder="ton@email.fr"
-        autocomplete="email"
-        required
-      >
-
-      <label for="loginPassword">
-        Mot de passe
-      </label>
-
-      <input
-        id="loginPassword"
-        type="password"
-        placeholder="Ton mot de passe"
-        autocomplete="current-password"
-        required
-      >
-
-      <button
-        class="submit-auth"
-        id="loginSubmit"
-        type="submit"
-      >
-        Se connecter
-      </button>
-
-    </form>
-
-    <div class="auth-message" id="authMessage"></div>
-
-  </div>
+<div class="wallet-motivation">
+Continue et fais monter ta cagnotte.
+</div>
 
 </div>
 
 
+<div class="wallet-details">
+
+<div class="wallet-detail">
+
+<div class="wallet-label">
+🟢 Disponible
+</div>
+
+<div
+class="wallet-value"
+id="availableLootix">
+0 LOOTIX
+</div>
+
+</div>
+
+
+<div class="wallet-detail">
+
+<div class="wallet-label">
+🟠 En attente
+</div>
+
+<div
+class="wallet-value"
+id="pendingLootix">
+0 LOOTIX
+</div>
+
+</div>
+
+
+<div class="wallet-detail">
+
+<div class="wallet-label">
+🔥 Série actuelle
+</div>
+
+<div
+class="wallet-value"
+id="walletStreak">
+0 jour
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+
+<!-- HERO -->
+
+<section class="hero">
+
+<h1>
+Multiplie les actions.<br>
+<span>Fais monter tes gains.</span>
+</h1>
+
+<p>
+Joue, regarde, réponds à des sondages,
+relève des défis et parraine tes amis
+pour accumuler des LOOTIX.
+</p>
+
+<div class="hero-actions">
+
+<button
+class="main-cta"
+id="mainCTA">
+Commencer à gagner
+</button>
+
+</div>
+
+<div class="conversion">
+🪙 100 LOOTIX = 1 €
+</div>
+
+</section>
+
+
+
+<!-- BON PLAN -->
+
+<section class="section">
+
+<h2 class="section-title">
+🔥 Le bon plan du jour
+</h2>
+
+<div class="section-subtitle">
+Notre sélection pour faire monter ta cagnotte aujourd'hui.
+</div>
+
+<div
+class="daily-deal"
+id="dailyDeal">
+
+<div class="daily-badge">
+⭐ Sélection Loot Up
+</div>
+
+<div
+class="daily-icon"
+id="dailyIcon">
+🎯
+</div>
+
+<div
+class="daily-title"
+id="dailyTitle">
+Chargement...
+</div>
+
+<div
+class="daily-description"
+id="dailyDescription">
+Recherche de la meilleure mission disponible.
+</div>
+
+<div
+class="daily-reward"
+id="dailyReward">
+0 LOOTIX
+</div>
+
+<div
+class="daily-euros"
+id="dailyEuros">
+= 0,00 €
+</div>
+
+<button
+class="primary-button"
+id="dailyButton">
+Profiter de l'offre
+</button>
+
+</div>
+
+</section>
+
+
+
+<!-- CATÉGORIES -->
+
+<section class="section">
+
+<h2 class="section-title">
+⚡ Gagne comme tu veux
+</h2>
+
+<div class="section-subtitle">
+Choisis la manière qui te convient.
+</div>
+
+<div class="categories">
+
+<div class="category-card">
+
+<div class="category-icon">
+🎮
+</div>
+
+<h3>
+Joue
+</h3>
+
+<p>
+Découvre les missions de jeux et atteins les objectifs proposés.
+</p>
+
+<button data-filter="game">
+Voir les jeux
+</button>
+
+</div>
+
+
+<div class="category-card">
+
+<div class="category-icon">
+📺
+</div>
+
+<h3>
+Regarde
+</h3>
+
+<p>
+Regarde les contenus rémunérés disponibles sur Loot Up.
+</p>
+
+<button data-filter="video">
+Voir les vidéos
+</button>
+
+</div>
+
+
+<div class="category-card">
+
+<div class="category-icon">
+📝
+</div>
+
+<h3>
+Sondages
+</h3>
+
+<p>
+Partage ton avis et gagne des LOOTIX grâce aux sondages.
+</p>
+
+<button data-filter="survey">
+Voir les sondages
+</button>
+
+</div>
+
+
+<div class="category-card">
+
+<div class="category-icon">
+👥
+</div>
+
+<h3>
+Parrainage
+</h3>
+
+<p>
+Invite tes amis et gagne lorsque leur activité devient éligible.
+</p>
+
+<button id="goReferral">
+Parrainer un ami
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+
+
+<!-- OFFRES -->
+
+<section
+class="section"
+id="offersSection">
+
+<h2
+class="section-title"
+id="offersTitle">
+🎯 Missions disponibles
+</h2>
+
+<div
+class="offers"
+id="offersContainer">
+
+<div class="loading">
+Chargement des missions...
+</div>
+
+</div>
+
+</section>
+
+
+
+<!-- DÉFIS -->
+
+<section class="section">
+
+<h2 class="section-title">
+🎯 Défis du jour
+</h2>
+
+<div class="section-subtitle">
+Complète les trois actions pour débloquer ton bonus.
+</div>
+
+<div class="challenge-box">
+
+<div class="challenge-head">
+
+<strong>
+Progression du jour
+</strong>
+
+<div
+class="challenge-count"
+id="challengeCount">
+0 / 3
+</div>
+
+</div>
+
+<div class="progress">
+
+<div
+class="progress-fill"
+id="challengeProgress">
+</div>
+
+</div>
+
+
+<div class="challenge-list">
+
+<div
+class="challenge"
+id="challengeGame">
+
+<span>
+🎮 Termine une mission de jeu
+</span>
+
+<span class="challenge-status">
+À faire
+</span>
+
+</div>
+
+
+<div
+class="challenge"
+id="challengeVideo">
+
+<span>
+📺 Réalise une action vidéo
+</span>
+
+<span class="challenge-status">
+À faire
+</span>
+
+</div>
+
+
+<div
+class="challenge"
+id="challengeSurvey">
+
+<span>
+📝 Termine un sondage
+</span>
+
+<span class="challenge-status">
+À faire
+</span>
+
+</div>
+
+</div>
+
+
+<div class="challenge-bonus">
+
+<div>
+🎁 BONUS DU JOUR
+</div>
+
+<div
+class="challenge-bonus-value"
+id="challengeBonus">
++100 LOOTIX
+</div>
+
+<div
+id="challengeBonusEuro">
+= 1,00 €
+</div>
+
+<button
+class="primary-button claim-bonus"
+id="claimBonus">
+Récupérer mon bonus
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+
+
+<!-- SÉRIE -->
+
+<section class="section">
+
+<h2 class="section-title">
+🔥 Ta série
+</h2>
+
+<div class="section-subtitle">
+Reviens régulièrement pour conserver ta progression.
+</div>
+
+<div class="streak-box">
+
+<div
+class="streak-number"
+id="streakNumber">
+0 jour
+</div>
+
+<div class="streak-description">
+Valide ta présence quotidienne pour faire progresser ta série.
+</div>
+
+
+<div class="streak-days">
+
+<div class="streak-day" data-streak="1">
+Jour 1
+</div>
+
+<div class="streak-day" data-streak="2">
+Jour 2
+</div>
+
+<div class="streak-day" data-streak="3">
+Jour 3
+</div>
+
+<div class="streak-day" data-streak="4">
+Jour 4
+</div>
+
+<div class="streak-day" data-streak="5">
+Jour 5
+</div>
+
+<div class="streak-day" data-streak="6">
+Jour 6
+</div>
+
+<div class="streak-day" data-streak="7">
+🔥 Jour 7
+</div>
+
+</div>
+
+
+<button
+class="primary-button"
+id="checkinButton">
+Valider ma journée
+</button>
+
+</div>
+
+</section>
+
+
+
+<!-- PARRAINAGE -->
+
+<section
+class="section"
+id="referralSection">
+
+<h2 class="section-title">
+👥 Parrainage
+</h2>
+
+<div class="section-subtitle">
+Invite tes amis et suis les gains générés par leur activité.
+</div>
+
+
+<div class="referral-box">
+
+<strong>
+Ton lien personnel
+</strong>
+
+<div class="referral-link-box">
+
+<div
+class="referral-link"
+id="referralLink">
+Connecte-toi pour obtenir ton lien.
+</div>
+
+<button id="copyReferral">
+Copier
+</button>
+
+</div>
+
+
+<div class="referral-stats">
+
+<div class="referral-stat">
+
+<div class="referral-stat-label">
+👥 Filleuls
+</div>
+
+<div
+class="referral-stat-value"
+id="referralCount">
+0
+</div>
+
+</div>
+
+
+<div class="referral-stat">
+
+<div class="referral-stat-label">
+🟠 Gains en attente
+</div>
+
+<div
+class="referral-stat-value"
+id="referralPending">
+0 LOOTIX
+</div>
+
+</div>
+
+
+<div class="referral-stat">
+
+<div class="referral-stat-label">
+🟢 Gains validés
+</div>
+
+<div
+class="referral-stat-value"
+id="referralConfirmed">
+0 LOOTIX
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+
+<!-- HISTORIQUE -->
+
+<section class="section">
+
+<h2 class="section-title">
+🧾 Historique
+</h2>
+
+<div
+class="history-box"
+id="historyBox">
+
+<div id="historyList">
+</div>
+
+</div>
+
+</section>
+
+
+
+<!-- PROFIL -->
+
+<section class="section">
+
+<h2 class="section-title">
+👤 Mon profil
+</h2>
+
+<div
+class="profile-box"
+id="profileBox">
+
+<div class="profile-grid">
+
+<div class="profile-stat">
+
+<div class="profile-label">
+🏆 Niveau
+</div>
+
+<div
+class="profile-value"
+id="profileLevel">
+1
+</div>
+
+</div>
+
+
+<div class="profile-stat">
+
+<div class="profile-label">
+🔥 Meilleure série
+</div>
+
+<div
+class="profile-value"
+id="profileLongestStreak">
+0 jour
+</div>
+
+</div>
+
+
+<div class="profile-stat">
+
+<div class="profile-label">
+👥 Code parrainage
+</div>
+
+<div
+class="profile-value"
+id="profileReferralCode">
+-
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+
+<footer>
+
+LOOT UP — 100 LOOTIX = 1 €<br>
+
+Les récompenses dépendent des conditions et
+de la validation de chaque mission.
+
+</footer>
+
+</main>
+
+
+
+<!-- AUTH -->
+
+<div
+class="modal-overlay"
+id="authModal">
+
+<div class="modal">
+
+<button
+class="close-modal"
+id="closeModal">
+×
+</button>
+
+<h2>
+Bienvenue sur LOOT UP
+</h2>
+
+<div class="modal-subtitle">
+Crée ton compte et commence à faire monter ta cagnotte.
+</div>
+
+
+<div class="auth-tabs">
+
+<button
+class="auth-tab active"
+type="button"
+data-tab="signup">
+Créer un compte
+</button>
+
+<button
+class="auth-tab"
+type="button"
+data-tab="login">
+Se connecter
+</button>
+
+</div>
+
+
+<form
+class="auth-form active"
+id="signupForm">
+
+<label>
+Adresse e-mail
+</label>
+
+<input
+id="signupEmail"
+type="email"
+required>
+
+
+<label>
+Mot de passe
+</label>
+
+<input
+id="signupPassword"
+type="password"
+minlength="6"
+required>
+
+
+<label>
+Confirme ton mot de passe
+</label>
+
+<input
+id="signupConfirm"
+type="password"
+minlength="6"
+required>
+
+
+<button
+class="auth-submit"
+id="signupSubmit"
+type="submit">
+Créer mon compte
+</button>
+
+</form>
+
+
+<form
+class="auth-form"
+id="loginForm">
+
+<label>
+Adresse e-mail
+</label>
+
+<input
+id="loginEmail"
+type="email"
+required>
+
+
+<label>
+Mot de passe
+</label>
+
+<input
+id="loginPassword"
+type="password"
+required>
+
+
+<button
+class="auth-submit"
+id="loginSubmit"
+type="submit">
+Se connecter
+</button>
+
+</form>
+
+
+<div
+class="auth-message"
+id="authMessage">
+</div>
+
+</div>
+
+</div>
+
+
+
 <script>
 
-  const SUPABASE_URL =
-    "https://dvvjujkpnpzerbjxjjsy.supabase.co";
+/* =========================================================
+   SUPABASE
+========================================================= */
 
-  const SUPABASE_PUBLISHABLE_KEY =
-    "sb_publishable_HvsPthhIg2aTGnluSJ9R5w_4InrkBOo";
+const SUPABASE_URL =
+"https://dvvjujkpnpzerbjxjjsy.supabase.co";
 
-  const supabaseClient =
-    window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    );
+const SUPABASE_KEY =
+"sb_publishable_HvsPthhIg2aTGnluSJ9R5w_4InrkBOo";
 
 
-  const authModal =
-    document.getElementById("authModal");
+const supabaseClient =
+window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
 
-  const closeModalButton =
-    document.getElementById("closeModal");
 
-  const loginButton =
-    document.getElementById("loginButton");
 
-  const logoutButton =
-    document.getElementById("logoutButton");
+let currentUser = null;
+let currentProfile = null;
+let currentDailyDeal = null;
+let currentOfferFilter = null;
 
-  const startButton =
-    document.getElementById("startButton");
 
-  const signupForm =
-    document.getElementById("signupForm");
 
-  const loginForm =
-    document.getElementById("loginForm");
+/* =========================================================
+   OUTILS
+========================================================= */
 
-  const signupSubmit =
-    document
+function formatLootix(value) {
+
+return new Intl.NumberFormat(
+"fr-FR"
+).format(
+Number(value || 0)
+);
+
+}
+
+
+function lootixToEuro(value) {
+
+return new Intl.NumberFormat(
+"fr-FR",
+{
+style:"currency",
+currency:"EUR"
+}
+).format(
+Number(value || 0) / 100
+);
+
+}
+
+
+function categoryIcon(category) {
+
+const c =
+String(category || "")
+.toLowerCase();
+
+if(c.includes("game"))
+return "🎮";
+
+if(c.includes("survey"))
+return "📝";
+
+if(c.includes("video"))
+return "📺";
+
+if(c.includes("app"))
+return "📱";
+
+return "🎯";
+
+}
+
+
+function categoryLabel(category) {
+
+const c =
+String(category || "")
+.toLowerCase();
+
+if(c.includes("game"))
+return "Jeu";
+
+if(c.includes("survey"))
+return "Sondage";
+
+if(c.includes("video"))
+return "Vidéo";
+
+if(c.includes("app"))
+return "Application";
+
+return "Mission";
+
+}
+
+
+
+/* =========================================================
+   AUTH MODALE
+========================================================= */
+
+const authModal =
+document.getElementById("authModal");
+
+const authMessage =
+document.getElementById("authMessage");
+
+
+function openAuth(tab="signup") {
+
+authModal.style.display =
+"flex";
+
+switchAuth(tab);
+
+}
+
+
+function closeAuth() {
+
+authModal.style.display =
+"none";
+
+authMessage.textContent =
+"";
+
+}
+
+
+function switchAuth(tabName) {
+
+document
+.querySelectorAll(".auth-tab")
+.forEach(tab => {
+
+tab.classList.toggle(
+"active",
+tab.dataset.tab === tabName
+);
+
+});
+
+
+document
+.querySelectorAll(".auth-form")
+.forEach(form => {
+
+form.classList.toggle(
+"active",
+form.id === tabName + "Form"
+);
+
+});
+
+}
+
+
+document
+.getElementById("closeModal")
+.onclick =
+closeAuth;
+
+
+document
+.querySelectorAll(".auth-tab")
+.forEach(tab => {
+
+tab.onclick =
+() => switchAuth(
+tab.dataset.tab
+);
+
+});
+
+
+document
+.getElementById("loginButton")
+.onclick =
+() => openAuth("login");
+
+
+authModal.onclick =
+event => {
+
+if(event.target === authModal)
+closeAuth();
+
+};
+
+
+
+/* =========================================================
+   INSCRIPTION
+========================================================= */
+
+document
+.getElementById("signupForm")
+.addEventListener(
+"submit",
+async event => {
+
+event.preventDefault();
+
+
+const email =
+document
+.getElementById("signupEmail")
+.value
+.trim();
+
+
+const password =
+document
+.getElementById("signupPassword")
+.value;
+
+
+const confirm =
+document
+.getElementById("signupConfirm")
+.value;
+
+
+if(password !== confirm) {
+
+authMessage.className =
+"auth-message error";
+
+authMessage.textContent =
+"Les mots de passe ne correspondent pas.";
+
+return;
+
+}
+
+
+const button =
+document
+.getElementById("signupSubmit");
+
+button.disabled =
+true;
+
+button.textContent =
+"Création...";
+
+
+const {
+data,
+error
+} =
+await supabaseClient
+.auth
+.signUp({
+email,
+password
+});
+
+
+button.disabled =
+false;
+
+button.textContent =
+"Créer mon compte";
+
+
+if(error) {
+
+authMessage.className =
+"auth-message error";
+
+authMessage.textContent =
+error.message;
+
+return;
+
+}
+
+
+if(data.session) {
+
+authMessage.className =
+"auth-message success";
+
+authMessage.textContent =
+"Compte créé !";
+
+await applyStoredReferral();
+
+await refreshUser();
+
+setTimeout(
+closeAuth,
+700
+);
+
+}
+
+else {
+
+authMessage.className =
+"auth-message success";
+
+authMessage.textContent =
+"Compte créé ! Vérifie ton e-mail pour confirmer ton inscription.";
+
+}
+
+}
+);
+
+
+
+/* =========================================================
+   CONNEXION
+========================================================= */
+
+document
+.getElementById("loginForm")
+.addEventListener(
+"submit",
+async event => {
+
+event.preventDefault();
+
+
+const email =
+document
+.getElementById("loginEmail")
+.value
+.trim();
+
+
+const password =
+document
+.getElementById("loginPassword")
+.value;
+
+
+const button =
+document
+.getElementById("loginSubmit");
+
+button.disabled =
+true;
+
+button.textContent =
+"Connexion...";
+
+
+const {
+error
+} =
+await supabaseClient
+.auth
+.signInWithPassword({
+email,
+password
+});
+
+
+button.disabled =
+false;
+
+button.textContent =
+"Se connecter";
+
+
+if(error) {
+
+authMessage.className =
+"auth-message error";
+
+authMessage.textContent =
+"Adresse e-mail ou mot de passe incorrect.";
+
+return;
+
+}
+
+
+await applyStoredReferral();
+
+await refreshUser();
+
+closeAuth();
+
+}
+);
+
+
+
+/* =========================================================
+   DÉCONNEXION
+========================================================= */
+
+document
+.getElementById("logoutButton")
+.onclick =
+async () => {
+
+await supabaseClient
+.auth
+.signOut();
+
+currentUser = null;
+currentProfile = null;
+
+showLoggedOut();
+
+};
+
+
+
+/* =========================================================
+   PROFIL
+========================================================= */
+
+async function loadProfile() {
+
+if(!currentUser)
+return;
+
+
+const {
+data,
+error
+} =
+await supabaseClient
+.from("profiles")
+.select(
+"id, lootix_available, lootix_pending, level, current_streak, longest_streak, referral_code"
+)
+.eq(
+"id",
+currentUser.id
+)
+.single();
+
+
+if(error) {
+
+console.error(
+"Profile error",
+error
+);
+
+return;
+
+}
+
+
+currentProfile =
+data;
+
+
+const available =
+Number(
+data.lootix_available || 0
+);
+
+
+const pending =
+Number(
+data.lootix_pending || 0
+);
+
+
+const total =
+available + pending;
+
+
+document
+.getElementById("walletTotal")
+.textContent =
+formatLootix(total)
++ " LOOTIX";
+
+
+document
+.getElementById("walletEuros")
+.textContent =
+"= "
++ lootixToEuro(total);
+
+
+document
+.getElementById("availableLootix")
+.textContent =
+formatLootix(available)
++ " LOOTIX";
+
+
+document
+.getElementById("pendingLootix")
+.textContent =
+formatLootix(pending)
++ " LOOTIX";
+
+
+document
+.getElementById("walletStreak")
+.textContent =
+data.current_streak
++ (
+data.current_streak === 1
+? " jour"
+: " jours"
+);
+
+
+document
+.getElementById("streakNumber")
+.textContent =
+data.current_streak
++ (
+data.current_streak === 1
+? " jour"
+: " jours"
+);
+
+
+document
+.getElementById("profileLevel")
+.textContent =
+data.level;
+
+
+document
+.getElementById("profileLongestStreak")
+.textContent =
+data.longest_streak
++ (
+data.longest_streak === 1
+? " jour"
+: " jours"
+);
+
+
+document
+.getElementById("profileReferralCode")
+.textContent =
+data.referral_code;
+
+
+document
+.getElementById("headerBalance")
+.textContent =
+"🪙 "
++ formatLootix(available)
++ " LOOTIX";
+
+
+updateStreakVisual(
+data.current_streak
+);
+
+
+buildReferralLink(
+data.referral_code
+);
+
+}
+
+
+
+/* =========================================================
+   AFFICHAGE CONNECTÉ
+========================================================= */
+
+function showLoggedIn() {
+
+document
+.getElementById("loginButton")
+.style.display =
+"none";
+
+
+document
+.getElementById("logoutButton")
+.style.display =
+"block";
+
+
+document
+.getElementById("headerBalance")
+.style.display =
+"block";
+
+
+document
+.getElementById("topWallet")
+.style.display =
+"block";
+
+
+document
+.getElementById("historyBox")
+.style.display =
+"block";
+
+
+document
+.getElementById("profileBox")
+.style.display =
+"block";
+
+
+document
+.getElementById("mainCTA")
+.textContent =
+"Découvrir les missions";
+
+}
+
+
+function showLoggedOut() {
+
+document
+.getElementById("loginButton")
+.style.display =
+"block";
+
+
+document
+.getElementById("logoutButton")
+.style.display =
+"none";
+
+
+document
+.getElementById("headerBalance")
+.style.display =
+"none";
+
+
+document
+.getElementById("topWallet")
+.style.display =
+"none";
+
+
+document
+.getElementById("historyBox")
+.style.display =
+"none";
+
+
+document
+.getElementById("profileBox")
+.style.display =
+"none";
+
+
+document
+.getElementById("mainCTA")
+.textContent =
+"Commencer à gagner";
+
+}
+
+
+
+/* =========================================================
+   BOUTON PRINCIPAL
+========================================================= */
+
+document
+.getElementById("mainCTA")
+.onclick =
+async () => {
+
+if(!currentUser) {
+
+openAuth("signup");
+
+return;
+
+}
+
+
+document
+.getElementById("offersSection")
+.scrollIntoView({
+behavior:"smooth"
+});
+
+};
+
+
+
+/* =========================================================
+   OFFRES
+========================================================= */
+
+async function loadOffers(filter=null) {
+
+currentOfferFilter =
+filter;
+
+
+const container =
+document
+.getElementById("offersContainer");
+
+
+container.innerHTML =
+'<div class="loading">Chargement des missions...</div>';
+
+
+let query =
+supabaseClient
+.from("offers")
+.select(
+"id,title,description,category,user_reward_lootix,status"
+)
+.eq(
+"status",
+"active"
+)
+.order(
+"user_reward_lootix",
+{
+ascending:false
+}
+);
+
+
+if(filter) {
+
+query =
+query.ilike(
+"category",
+"%" + filter + "%"
+);
+
+}
+
+
+const {
+data,
+error
+} =
+await query;
+
+
+container.innerHTML =
+"";
+
+
+if(error) {
+
+container.innerHTML =
+'<div class="loading">Impossible de charger les missions.</div>';
+
+return;
+
+}
+
+
+if(!data || !data.length) {
+
+container.innerHTML =
+'<div class="loading">Aucune mission disponible dans cette catégorie pour le moment.</div>';
+
+return;
+
+}
+
+
+data.forEach(
+offer => {
+
+const card =
+document.createElement("div");
+
+card.className =
+"offer";
+
+
+const icon =
+document.createElement("div");
+
+icon.className =
+"offer-icon";
+
+icon.textContent =
+categoryIcon(
+offer.category
+);
+
+
+const category =
+document.createElement("div");
+
+category.className =
+"offer-category";
+
+category.textContent =
+categoryLabel(
+offer.category
+);
+
+
+const title =
+document.createElement("h3");
+
+title.textContent =
+offer.title;
+
+
+const description =
+document.createElement("p");
+
+description.textContent =
+offer.description
+||
+"Accomplis cette mission pour gagner des LOOTIX.";
+
+
+const reward =
+document.createElement("div");
+
+reward.className =
+"offer-reward";
+
+reward.textContent =
+"+"
++ formatLootix(
+offer.user_reward_lootix
+)
++ " LOOTIX";
+
+
+const euro =
+document.createElement("div");
+
+euro.className =
+"offer-euro";
+
+euro.textContent =
+"= "
++ lootixToEuro(
+offer.user_reward_lootix
+);
+
+
+const button =
+document.createElement("button");
+
+button.textContent =
+"Commencer la mission";
+
+
+button.onclick =
+() => {
+
+if(!currentUser) {
+
+openAuth("signup");
+
+return;
+
+}
+
+
+alert(
+"La connexion au fournisseur réel sera branchée à l'étape Torox."
+);
+
+};
+
+
+card.append(
+icon,
+category,
+title,
+description,
+reward,
+euro,
+button
+);
+
+
+container.appendChild(
+card
+);
+
+});
+
+}
+
+
+
+/* =========================================================
+   FILTRES CATÉGORIES
+========================================================= */
+
+document
+.querySelectorAll(
+"[data-filter]"
+)
+.forEach(
+button => {
+
+button.onclick =
+() => {
+
+const filter =
+button.dataset.filter;
+
+
+document
+.getElementById("offersTitle")
+.textContent =
+filter === "game"
+? "🎮 Missions de jeux"
+:
+filter === "video"
+? "📺 Vidéos disponibles"
+:
+"📝 Sondages disponibles";
+
+
+loadOffers(
+filter
+);
+
+
+document
+.getElementById("offersSection")
+.scrollIntoView({
+behavior:"smooth"
+});
+
+};
+
+}
+);
+
+
+
+/* =========================================================
+   BON PLAN DU JOUR
+========================================================= */
+
+async function loadDailyDeal() {
+
+const {
+data,
+error
+} =
+await supabaseClient
+.rpc(
+"get_daily_deal"
+);
+
+
+if(
+error
+||
+!data
+||
+!data.length
+) {
+
+return;
+
+}
+
+
+const deal =
+data[0];
+
+
+currentDailyDeal =
+deal;
+
+
+document
+.getElementById("dailyDeal")
+.style.display =
+"block";
+
+
+document
+.getElementById("dailyIcon")
+.textContent =
+categoryIcon(
+deal.category
+);
+
+
+document
+.getElementById("dailyTitle")
+.textContent =
+deal.title;
+
+
+document
+.getElementById("dailyDescription")
+.textContent =
+deal.description
+||
+"Notre sélection du jour.";
+
+
+document
+.getElementById("dailyReward")
+.textContent =
+"+"
++ formatLootix(
+deal.user_reward_lootix
+)
++ " LOOTIX";
+
+
+document
+.getElementById("dailyEuros")
+.textContent =
+"= "
++ lootixToEuro(
+deal.user_reward_lootix
+);
+
+}
+
+
+document
+.getElementById("dailyButton")
+.onclick =
+() => {
+
+if(!currentUser) {
+
+openAuth("signup");
+
+return;
+
+}
+
+
+alert(
+"Cette offre sera lancée automatiquement lorsque Torox sera connecté."
+);
+
+};
+
+
+
+/* =========================================================
+   HISTORIQUE
+========================================================= */
+
+async function loadHistory() {
+
+if(!currentUser)
+return;
+
+
+const {
+data,
+error
+} =
+await supabaseClient
+.from(
+"lootix_transactions"
+)
+.select(
+"amount,status,description,created_at"
+)
+.eq(
+"user_id",
+currentUser.id
+)
+.order(
+"created_at",
+{
+ascending:false
+}
+)
+.limit(30);
+
+
+const container =
+document
+.getElementById(
+"historyList"
+);
+
+
+container.innerHTML =
+"";
+
+
+if(
+error
+||
+!data
+||
+!data.length
+) {
+
+container.innerHTML =
+'<div class="loading">Aucune transaction pour le moment.</div>';
+
+return;
+
+}
+
+
+data.forEach(
+transaction => {
+
+const line =
+document.createElement("div");
+
+line.className =
+"history-item";
+
+
+const left =
+document.createElement("div");
+
+
+const title =
+document.createElement("div");
+
+title.className =
+"history-title";
+
+title.textContent =
+transaction.description
+||
+"Transaction Loot Up";
+
+
+const meta =
+document.createElement("div");
+
+meta.className =
+"history-meta";
+
+meta.textContent =
+new Date(
+transaction.created_at
+)
+.toLocaleString(
+"fr-FR"
+);
+
+
+const status =
+document.createElement("div");
+
+status.className =
+"history-status";
+
+
+if(
+transaction.status ===
+"confirmed"
+) {
+
+status.textContent =
+"✓ Confirmé";
+
+status.style.color =
+"#69e6a6";
+
+}
+
+else if(
+transaction.status ===
+"rejected"
+) {
+
+status.textContent =
+"✕ Refusé";
+
+status.style.color =
+"#ff7777";
+
+}
+
+else {
+
+status.textContent =
+"⏳ En attente";
+
+status.style.color =
+"#ffad75";
+
+}
+
+
+left.append(
+title,
+meta,
+status
+);
+
+
+const amount =
+document.createElement("div");
+
+amount.className =
+"history-amount";
+
+amount.textContent =
+(
+Number(
+transaction.amount
+) >= 0
+? "+"
+: ""
+)
++
+formatLootix(
+transaction.amount
+)
++
+" LOOTIX";
+
+
+line.append(
+left,
+amount
+);
+
+
+container.appendChild(
+line
+);
+
+});
+
+}
+
+
+
+/* =========================================================
+   DÉFIS DU JOUR
+========================================================= */
+
+async function loadChallenges() {
+
+const {
+data,
+error
+} =
+await supabaseClient
+.rpc(
+"get_daily_challenge_progress"
+);
+
+
+if(
+error
+||
+!data
+||
+!data.length
+)
+return;
+
+
+const info =
+data[0];
+
+
+const completed =
+Number(
+info.completed_count || 0
+);
+
+
+document
+.getElementById("challengeCount")
+.textContent =
+completed + " / 3";
+
+
+document
+.getElementById("challengeProgress")
+.style.width =
+(completed / 3 * 100)
++ "%";
+
+
+setChallenge(
+"challengeGame",
+info.game_done
+);
+
+
+setChallenge(
+"challengeVideo",
+info.video_done
+);
+
+
+setChallenge(
+"challengeSurvey",
+info.survey_done
+);
+
+
+document
+.getElementById("challengeBonus")
+.textContent =
+"+"
++
+formatLootix(
+info.bonus_lootix
+)
++
+" LOOTIX";
+
+
+document
+.getElementById("challengeBonusEuro")
+.textContent =
+"= "
++
+lootixToEuro(
+info.bonus_lootix
+);
+
+
+const claim =
+document
+.getElementById("claimBonus");
+
+
+if(
+currentUser
+&&
+completed === 3
+&&
+!info.bonus_claimed
+) {
+
+claim.style.display =
+"inline-block";
+
+}
+
+else {
+
+claim.style.display =
+"none";
+
+}
+
+}
+
+
+function setChallenge(
+id,
+done
+) {
+
+const element =
+document.getElementById(
+id
+);
+
+
+element.classList.toggle(
+"done",
+!!done
+);
+
+
+element
+.querySelector(
+".challenge-status"
+)
+.textContent =
+done
+? "✓ Terminé"
+: "À faire";
+
+}
+
+
+document
+.getElementById("claimBonus")
+.onclick =
+async () => {
+
+const {
+data,
+error
+} =
+await supabaseClient
+.rpc(
+"claim_daily_challenge_bonus"
+);
+
+
+if(error) {
+
+alert(
+"Le bonus n'est pas encore disponible."
+);
+
+return;
+
+}
+
+
+alert(
+"🎉 +"
++
+formatLootix(data)
++
+" LOOTIX !\n\nContinue et fais monter ta cagnotte."
+);
+
+
+await refreshUser();
+
+};
+
+
+
+/* =========================================================
+   SÉRIE
+========================================================= */
+
+function updateStreakVisual(
+value
+) {
+
+const days =
+document.querySelectorAll(
+".streak-day"
+);
+
+
+const displayed =
+Math.min(
+Number(value || 0),
+7
+);
+
+
+days.forEach(
+day => {
+
+day.classList.toggle(
+"active",
+Number(
+day.dataset.streak
+)
+<= displayed
+);
+
+});
+
+}
+
+
+document
+.getElementById("checkinButton")
+.onclick =
+async () => {
+
+if(!currentUser) {
+
+openAuth("login");
+
+return;
+
+}
+
+
+const {
+data,
+error
+} =
+await supabaseClient
+.rpc(
+"claim_daily_checkin"
+);
+
+
+if(error) {
+
+console.error(error);
+
+return;
+
+}
+
+
+if(
+data
+&&
+data.length
+) {
+
+const result =
+data[0];
+
+
+if(
+result.already_claimed
+) {
+
+alert(
+"Ta journée est déjà validée aujourd'hui 🔥"
+);
+
+}
+
+else {
+
+alert(
+"🔥 Série validée : "
++
+result.current_streak
++
+" jour(s) !"
+);
+
+}
+
+}
+
+
+await refreshUser();
+
+};
+
+
+
+/* =========================================================
+   PARRAINAGE
+========================================================= */
+
+function buildReferralLink(
+code
+) {
+
+if(!code)
+return;
+
+
+const link =
+window.location.origin
++
+window.location.pathname
++
+"?ref="
++
+encodeURIComponent(
+code
+);
+
+
+document
+.getElementById("referralLink")
+.textContent =
+link;
+
+
+document
+.getElementById("referralLink")
+.dataset.link =
+link;
+
+}
+
+
+document
+.getElementById("copyReferral")
+.onclick =
+async () => {
+
+const element =
+document.getElementById(
+"referralLink"
+);
+
+
+const link =
+element.dataset.link;
+
+
+if(!link) {
+
+openAuth("login");
+
+return;
+
+}
+
+
+await navigator
+.clipboard
+.writeText(
+link
+);
+
+
+alert(
+"Lien de parrainage copié !"
+);
+
+};
+
+
+document
+.getElementById("goReferral")
+.onclick =
+() => {
+
+if(!currentUser) {
+
+openAuth("signup");
+
+return;
+
+}
+
+
+document
+.getElementById(
+"referralSection"
+)
+.scrollIntoView({
+behavior:"smooth"
+});
+
+};
+
+
+
+async function loadReferralSummary() {
+
+if(!currentUser)
+return;
+
+
+const {
+data,
+error
+} =
+await supabaseClient
+.rpc(
+"get_referral_summary"
+);
+
+
+if(
+error
+||
+!data
+||
+!data.length
+)
+return;
+
+
+const item =
+data[0];
+
+
+document
+.getElementById("referralCount")
+.textContent =
+item.active_referrals;
+
+
+document
+.getElementById("referralPending")
+.textContent =
+formatLootix(
+item.pending_lootix
+)
++
+" LOOTIX";
+
+
+document
+.getElementById("referralConfirmed")
+.textContent =
+formatLootix(
+item.confirmed_lootix
+)
++
+" LOOTIX";
+
+}
+
+
+
+/* =========================================================
+   LIEN PARRAINAGE EN ENTRÉE
+========================================================= */
+
+function captureReferral() {
+
+const params =
+new URLSearchParams(
+window.location.search
+);
+
+
+const code =
+params.get("ref");
+
+
+if(code) {
+
+localStorage.setItem(
+"lootup_referral",
+code
+);
+
+}
+
+}
+
+
+async function applyStoredReferral() {
+
+const code =
+localStorage.getItem(
+"lootup_referral"
+);
+
+
+if(
+!code
+||
+!currentUser
+)
+return;
+
+
+await supabaseClient
+.rpc(
+"apply_referral_code",
+{
+p_referral_code:
+code
+}
+);
+
+
+localStorage.removeItem(
+"lootup_referral"
+);
+
+}
+
+
+
+/* =========================================================
+   RAFRAÎCHISSEMENT
+========================================================= */
+
+async function refreshUser() {
+
+const {
+data: {
+user
+}
+} =
+await supabaseClient
+.auth
+.getUser();
+
+
+currentUser =
+user;
+
+
+if(!currentUser) {
+
+showLoggedOut();
+
+return;
+
+}
+
+
+showLoggedIn();
+
+
+await loadProfile();
+
+await loadHistory();
+
+await loadChallenges();
+
+await loadReferralSummary();
+
+}
+
+
+
+/* =========================================================
+   INITIALISATION
+========================================================= */
+
+async function init() {
+
+captureReferral();
+
+
+await loadDailyDeal();
+
+await loadOffers();
+
+await loadChallenges();
+
+
+const {
+data: {
+session
+}
+} =
+await supabaseClient
+.auth
+.getSession();
+
+
+if(
+session
+&&
+session.user
+) {
+
+currentUser =
+session.user;
+
+
+await applyStoredReferral();
+
+await refreshUser();
+
+}
+
+else {
+
+showLoggedOut();
+
+}
+
+}
+
+
+supabaseClient
+.auth
+.onAuthStateChange(
+async (
+event,
+session
+) => {
+
+if(
+event ===
+"SIGNED_IN"
+&&
+session
+) {
+
+currentUser =
+session.user;
+
+await applyStoredReferral();
+
+await refreshUser();
+
+}
+
+
+if(
+event ===
+"SIGNED_OUT"
+) {
+
+currentUser =
+null;
+
+showLoggedOut();
+
+}
+
+}
+);
+
+
+init();
+
+</script>
+
+</body>
+</html>
