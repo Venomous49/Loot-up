@@ -6,7 +6,6 @@
 
   <title>LOOT UP — Multiplie les actions. Fais monter tes gains.</title>
 
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -32,10 +31,6 @@
       cursor: pointer;
     }
 
-    /* =========================
-       HEADER
-    ========================= */
-
     header {
       display: flex;
       justify-content: space-between;
@@ -43,7 +38,7 @@
       gap: 20px;
       padding: 22px 7%;
       border-bottom: 1px solid #222229;
-      background: rgba(11, 11, 15, 0.96);
+      background: #0b0b0f;
     }
 
     .logo {
@@ -67,7 +62,6 @@
       display: none;
       color: #b878ff;
       font-weight: 800;
-      white-space: nowrap;
     }
 
     .login-button,
@@ -80,18 +74,9 @@
       font-weight: 700;
     }
 
-    .login-button:hover,
-    .logout-button:hover {
-      background: #19191f;
-    }
-
     .logout-button {
       display: none;
     }
-
-    /* =========================
-       PAGE
-    ========================= */
 
     main {
       width: 86%;
@@ -106,7 +91,7 @@
 
     .hero h1 {
       font-size: clamp(42px, 7vw, 76px);
-      line-height: 1.02;
+      line-height: 1.04;
       margin-bottom: 22px;
       letter-spacing: -2px;
     }
@@ -134,10 +119,6 @@
       font-size: 16px;
     }
 
-    .cta:hover {
-      filter: brightness(1.08);
-    }
-
     .conversion {
       margin: 28px auto 0;
       display: table;
@@ -148,9 +129,7 @@
       background: #111116;
     }
 
-    /* =========================
-       CAGNOTTE
-    ========================= */
+    /* CAGNOTTE */
 
     .wallet {
       display: none;
@@ -204,9 +183,7 @@
       font-weight: 800;
     }
 
-    /* =========================
-       MISSIONS
-    ========================= */
+    /* MISSIONS */
 
     .section-title {
       font-size: 25px;
@@ -224,12 +201,6 @@
       border: 1px solid #24242d;
       border-radius: 16px;
       padding: 22px;
-      transition: transform 0.2s ease, border-color 0.2s ease;
-    }
-
-    .mission:hover {
-      transform: translateY(-3px);
-      border-color: #3a3a47;
     }
 
     .mission-icon {
@@ -265,10 +236,6 @@
       font-weight: 700;
     }
 
-    .mission button:hover {
-      background: #2a2a33;
-    }
-
     .info {
       margin-top: 55px;
       text-align: center;
@@ -277,9 +244,7 @@
       line-height: 1.7;
     }
 
-    /* =========================
-       MODALE AUTH
-    ========================= */
+    /* MODALE */
 
     .modal-overlay {
       position: fixed;
@@ -301,7 +266,6 @@
       border: 1px solid #30303a;
       border-radius: 18px;
       padding: 28px;
-      box-shadow: 0 20px 80px rgba(0,0,0,0.45);
     }
 
     .close-modal {
@@ -392,7 +356,6 @@
 
     .submit-auth:disabled {
       opacity: 0.55;
-      cursor: wait;
     }
 
     .auth-message {
@@ -409,10 +372,6 @@
     .message-success {
       color: #69e6a6;
     }
-
-    /* =========================
-       MOBILE
-    ========================= */
 
     @media (max-width: 700px) {
       header {
@@ -438,11 +397,6 @@
 
       .header-balance {
         display: none !important;
-      }
-
-      .login-button,
-      .logout-button {
-        padding: 9px 12px;
       }
     }
   </style>
@@ -474,10 +428,9 @@
 
 </header>
 
-
 <main>
 
-  <!-- HERO -->
+  <!-- ACCUEIL -->
 
   <section class="hero">
 
@@ -524,6 +477,7 @@
         <div class="wallet-detail-label">
           🟢 Disponible
         </div>
+
         <div class="wallet-detail-value" id="availableLootix">
           0 LOOTIX
         </div>
@@ -533,6 +487,7 @@
         <div class="wallet-detail-label">
           🟠 En attente
         </div>
+
         <div class="wallet-detail-value" id="pendingLootix">
           0 LOOTIX
         </div>
@@ -542,6 +497,7 @@
         <div class="wallet-detail-label">
           🔥 Série actuelle
         </div>
+
         <div class="wallet-detail-value" id="streak">
           0 jour
         </div>
@@ -563,14 +519,9 @@
     <div class="missions">
 
       <div class="mission">
+        <div class="mission-icon">🎮</div>
 
-        <div class="mission-icon">
-          🎮
-        </div>
-
-        <h3>
-          Joue à un jeu
-        </h3>
+        <h3>Joue à un jeu</h3>
 
         <p>
           Atteins le niveau demandé et récupère ta récompense.
@@ -583,19 +534,13 @@
         <button class="mission-action">
           Voir la mission
         </button>
-
       </div>
 
 
       <div class="mission">
+        <div class="mission-icon">📝</div>
 
-        <div class="mission-icon">
-          📝
-        </div>
-
-        <h3>
-          Réponds à un sondage
-        </h3>
+        <h3>Réponds à un sondage</h3>
 
         <p>
           Donne ton avis et gagne des LOOTIX.
@@ -608,19 +553,13 @@
         <button class="mission-action">
           Voir la mission
         </button>
-
       </div>
 
 
       <div class="mission">
+        <div class="mission-icon">📺</div>
 
-        <div class="mission-icon">
-          📺
-        </div>
-
-        <h3>
-          Regarde une vidéo
-        </h3>
+        <h3>Regarde une vidéo</h3>
 
         <p>
           Quelques secondes suffisent pour obtenir ta récompense.
@@ -633,19 +572,13 @@
         <button class="mission-action">
           Voir la mission
         </button>
-
       </div>
 
 
       <div class="mission">
+        <div class="mission-icon">👥</div>
 
-        <div class="mission-icon">
-          👥
-        </div>
-
-        <h3>
-          Invite tes amis
-        </h3>
+        <h3>Invite tes amis</h3>
 
         <p>
           Fais découvrir LOOT UP à tes amis et gagne grâce à leur activité.
@@ -658,7 +591,6 @@
         <button class="mission-action">
           Parrainer
         </button>
-
       </div>
 
     </div>
@@ -674,9 +606,7 @@
 </main>
 
 
-<!-- =========================
-     MODALE INSCRIPTION / CONNEXION
-========================= -->
+<!-- INSCRIPTION / CONNEXION -->
 
 <div class="modal-overlay" id="authModal">
 
@@ -693,7 +623,6 @@
     <div class="modal-subtitle">
       Crée ton compte et commence à faire monter ta cagnotte.
     </div>
-
 
     <div class="auth-tabs">
 
@@ -716,8 +645,6 @@
     </div>
 
 
-    <!-- INSCRIPTION -->
-
     <form class="auth-form active" id="signupForm">
 
       <label for="signupEmail">
@@ -732,7 +659,6 @@
         required
       >
 
-
       <label for="signupPassword">
         Mot de passe
       </label>
@@ -745,7 +671,6 @@
         autocomplete="new-password"
         required
       >
-
 
       <label for="signupPasswordConfirm">
         Confirme ton mot de passe
@@ -760,7 +685,6 @@
         required
       >
 
-
       <button
         class="submit-auth"
         id="signupSubmit"
@@ -771,8 +695,6 @@
 
     </form>
 
-
-    <!-- CONNEXION -->
 
     <form class="auth-form" id="loginForm">
 
@@ -788,7 +710,6 @@
         required
       >
 
-
       <label for="loginPassword">
         Mot de passe
       </label>
@@ -801,7 +722,6 @@
         required
       >
 
-
       <button
         class="submit-auth"
         id="loginSubmit"
@@ -812,7 +732,6 @@
 
     </form>
 
-
     <div class="auth-message" id="authMessage"></div>
 
   </div>
@@ -821,9 +740,10 @@
 
 
 <script>
-  /* =========================================
-     CONFIGURATION SUPABASE
-  ========================================= */
+
+  /* ==============================
+     SUPABASE
+  ============================== */
 
   const SUPABASE_URL =
     "https://dvvjujkpnpzerbjxjjsy.supabase.co";
@@ -837,9 +757,9 @@
   );
 
 
-  /* =========================================
-     ÉLÉMENTS DE LA PAGE
-  ========================================= */
+  /* ==============================
+     ÉLÉMENTS
+  ============================== */
 
   const authModal =
     document.getElementById("authModal");
@@ -902,39 +822,52 @@
     document.querySelectorAll(".mission-action");
 
 
-  /* =========================================
-     FONCTIONS D'AFFICHAGE
-  ========================================= */
+  /* ==============================
+     AFFICHAGE
+  ============================== */
 
   function openAuthModal(tabName = "signup") {
+
     authModal.style.display = "flex";
+
     switchAuthTab(tabName);
+
   }
 
 
   function closeAuthModal() {
+
     authModal.style.display = "none";
+
     clearAuthMessage();
+
   }
 
 
   function switchAuthTab(tabName) {
 
     authTabs.forEach((tab) => {
+
       tab.classList.toggle(
         "active",
         tab.dataset.tab === tabName
       );
+
     });
 
+
     authForms.forEach((form) => {
+
       form.classList.toggle(
         "active",
         form.id === tabName + "Form"
       );
+
     });
 
+
     clearAuthMessage();
+
   }
 
 
@@ -944,26 +877,38 @@
 
     authMessage.className =
       "auth-message " +
-      (type === "success"
-        ? "message-success"
-        : "message-error");
+      (
+        type === "success"
+          ? "message-success"
+          : "message-error"
+      );
+
   }
 
 
   function clearAuthMessage() {
+
     authMessage.textContent = "";
-    authMessage.className = "auth-message";
+
+    authMessage.className =
+      "auth-message";
+
   }
 
 
   function formatLootix(number) {
-    return new Intl.NumberFormat("fr-FR").format(number);
+
+    return new Intl.NumberFormat(
+      "fr-FR"
+    ).format(number);
+
   }
 
 
   function formatEurosFromLootix(number) {
 
-    const euros = number / 100;
+    const euros =
+      number / 100;
 
     return new Intl.NumberFormat(
       "fr-FR",
@@ -972,49 +917,95 @@
         currency: "EUR"
       }
     ).format(euros);
+
   }
 
 
-  /* =========================================
+  /* ==============================
      MODALE
-  ========================================= */
+  ============================== */
 
-  startButton.addEventListener("click", () => {
-    openAuthModal("signup");
-  });
+  loginButton.addEventListener(
+    "click",
+    () => {
 
+      openAuthModal("login");
 
-  loginButton.addEventListener("click", () => {
-    openAuthModal("login");
-  });
-
-
-  closeModalButton.addEventListener("click", () => {
-    closeAuthModal();
-  });
-
-
-  authModal.addEventListener("click", (event) => {
-
-    if (event.target === authModal) {
-      closeAuthModal();
     }
+  );
 
-  });
+
+  closeModalButton.addEventListener(
+    "click",
+    closeAuthModal
+  );
+
+
+  authModal.addEventListener(
+    "click",
+    (event) => {
+
+      if (event.target === authModal) {
+
+        closeAuthModal();
+
+      }
+
+    }
+  );
 
 
   authTabs.forEach((tab) => {
 
-    tab.addEventListener("click", () => {
-      switchAuthTab(tab.dataset.tab);
-    });
+    tab.addEventListener(
+      "click",
+      () => {
+
+        switchAuthTab(
+          tab.dataset.tab
+        );
+
+      }
+    );
 
   });
 
 
-  /* =========================================
+  /* ==============================
+     BOUTON PRINCIPAL
+  ============================== */
+
+  startButton.addEventListener(
+    "click",
+    async () => {
+
+      const {
+        data: { user }
+      } =
+        await supabaseClient.auth.getUser();
+
+
+      if (user) {
+
+        document
+          .querySelector(".missions")
+          .scrollIntoView({
+            behavior: "smooth"
+          });
+
+      } else {
+
+        openAuthModal("signup");
+
+      }
+
+    }
+  );
+
+
+  /* ==============================
      INSCRIPTION
-  ========================================= */
+  ============================== */
 
   signupForm.addEventListener(
     "submit",
@@ -1024,16 +1015,19 @@
 
       clearAuthMessage();
 
+
       const email =
         document
           .getElementById("signupEmail")
           .value
           .trim();
 
+
       const password =
         document
           .getElementById("signupPassword")
           .value;
+
 
       const confirmPassword =
         document
@@ -1041,7 +1035,9 @@
           .value;
 
 
-      if (password !== confirmPassword) {
+      if (
+        password !== confirmPassword
+      ) {
 
         showAuthMessage(
           "Les deux mots de passe ne correspondent pas.",
@@ -1049,10 +1045,13 @@
         );
 
         return;
+
       }
 
 
-      if (password.length < 6) {
+      if (
+        password.length < 6
+      ) {
 
         showAuthMessage(
           "Le mot de passe doit contenir au moins 6 caractères.",
@@ -1060,50 +1059,57 @@
         );
 
         return;
+
       }
 
 
       signupSubmit.disabled = true;
-      signupSubmit.textContent = "Création du compte...";
+
+      signupSubmit.textContent =
+        "Création du compte...";
 
 
       try {
 
-        const { data, error } =
+        const {
+          data,
+          error
+        } =
           await supabaseClient.auth.signUp({
-            email: email,
-            password: password
+            email,
+            password
           });
 
 
         if (error) {
+
           throw error;
+
         }
 
-
-        /*
-          Selon la configuration Supabase,
-          l'utilisateur peut devoir confirmer
-          son adresse e-mail avant de se connecter.
-        */
 
         if (data.session) {
 
           showAuthMessage(
-            "Compte créé avec succès ! Bienvenue sur LOOT UP.",
+            "Compte créé ! Bienvenue sur LOOT UP.",
             "success"
           );
 
-          await updateInterface(data.user);
 
-          setTimeout(() => {
-            closeAuthModal();
-          }, 1000);
+          await updateInterface(
+            data.user
+          );
+
+
+          setTimeout(
+            closeAuthModal,
+            900
+          );
 
         } else {
 
           showAuthMessage(
-            "Compte créé ! Vérifie maintenant ta boîte e-mail pour confirmer ton inscription.",
+            "Compte créé ! Vérifie ta boîte e-mail pour confirmer ton inscription.",
             "success"
           );
 
@@ -1114,14 +1120,18 @@
         console.error(error);
 
         showAuthMessage(
-          translateAuthError(error.message),
+          translateAuthError(
+            error.message
+          ),
           "error"
         );
 
       } finally {
 
         signupSubmit.disabled = false;
-        signupSubmit.textContent = "Créer mon compte";
+
+        signupSubmit.textContent =
+          "Créer mon compte";
 
       }
 
@@ -1129,9 +1139,9 @@
   );
 
 
-  /* =========================================
+  /* ==============================
      CONNEXION
-  ========================================= */
+  ============================== */
 
   loginForm.addEventListener(
     "submit",
@@ -1141,11 +1151,13 @@
 
       clearAuthMessage();
 
+
       const email =
         document
           .getElementById("loginEmail")
           .value
           .trim();
+
 
       const password =
         document
@@ -1154,20 +1166,27 @@
 
 
       loginSubmit.disabled = true;
-      loginSubmit.textContent = "Connexion...";
+
+      loginSubmit.textContent =
+        "Connexion...";
 
 
       try {
 
-        const { data, error } =
+        const {
+          data,
+          error
+        } =
           await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
+            email,
+            password
           });
 
 
         if (error) {
+
           throw error;
+
         }
 
 
@@ -1177,27 +1196,33 @@
         );
 
 
-        await updateInterface(data.user);
+        await updateInterface(
+          data.user
+        );
 
 
-        setTimeout(() => {
-          closeAuthModal();
-        }, 700);
-
+        setTimeout(
+          closeAuthModal,
+          700
+        );
 
       } catch (error) {
 
         console.error(error);
 
         showAuthMessage(
-          translateAuthError(error.message),
+          translateAuthError(
+            error.message
+          ),
           "error"
         );
 
       } finally {
 
         loginSubmit.disabled = false;
-        loginSubmit.textContent = "Se connecter";
+
+        loginSubmit.textContent =
+          "Se connecter";
 
       }
 
@@ -1205,9 +1230,9 @@
   );
 
 
-  /* =========================================
+  /* ==============================
      DÉCONNEXION
-  ========================================= */
+  ============================== */
 
   logoutButton.addEventListener(
     "click",
@@ -1226,6 +1251,7 @@
         );
 
         return;
+
       }
 
 
@@ -1235,45 +1261,55 @@
   );
 
 
-  /* =========================================
-     RÉCUPÉRATION DU PROFIL LOOT UP
-  ========================================= */
+  /* ==============================
+     PROFIL
+  ============================== */
 
   async function loadProfile(user) {
 
     if (!user) {
+
       return null;
+
     }
 
 
-    const { data, error } =
+    const {
+      data,
+      error
+    } =
       await supabaseClient
         .from("profiles")
         .select(
           "lootix_available, lootix_pending, current_streak, level, referral_code"
         )
-        .eq("id", user.id)
+        .eq(
+          "id",
+          user.id
+        )
         .single();
 
 
     if (error) {
 
       console.error(
-        "Erreur récupération profil :",
+        "Erreur profil :",
         error
       );
 
       return null;
+
     }
 
 
     return data;
+
   }
 
 
-  /* =========================================
-     INTERFACE CONNECTÉE
-  ========================================= */
+  /* ==============================
+     UTILISATEUR CONNECTÉ
+  ============================== */
 
   async function updateInterface(user) {
 
@@ -1282,60 +1318,98 @@
       showLoggedOutInterface();
 
       return;
+
     }
 
 
-    loginButton.style.display = "none";
-    logoutButton.style.display = "inline-block";
+    loginButton.style.display =
+      "none";
 
-    startButton.textContent = "Découvrir les missions";
+    logoutButton.style.display =
+      "inline-block";
 
-    wallet.style.display = "block";
+    startButton.textContent =
+      "Découvrir les missions";
+
+    wallet.style.display =
+      "block";
 
 
-    const profile = await loadProfile(user);
+    const profile =
+      await loadProfile(user);
 
 
     if (!profile) {
 
-      walletTotal.textContent = "0 LOOTIX";
-      walletEuros.textContent = "= 0,00 €";
-      availableLootix.textContent = "0 LOOTIX";
-      pendingLootix.textContent = "0 LOOTIX";
-      streak.textContent = "0 jour";
+      walletTotal.textContent =
+        "0 LOOTIX";
+
+      walletEuros.textContent =
+        "= 0,00 €";
+
+      availableLootix.textContent =
+        "0 LOOTIX";
+
+      pendingLootix.textContent =
+        "0 LOOTIX";
+
+      streak.textContent =
+        "0 jour";
 
       return;
+
     }
 
 
     const available =
-      Number(profile.lootix_available || 0);
+      Number(
+        profile.lootix_available || 0
+      );
+
 
     const pending =
-      Number(profile.lootix_pending || 0);
+      Number(
+        profile.lootix_pending || 0
+      );
+
 
     const total =
       available + pending;
 
+
     const streakDays =
-      Number(profile.current_streak || 0);
+      Number(
+        profile.current_streak || 0
+      );
 
 
     walletTotal.textContent =
-      formatLootix(total) + " LOOTIX";
+      formatLootix(total) +
+      " LOOTIX";
+
 
     walletEuros.textContent =
-      "= " + formatEurosFromLootix(total);
+      "= " +
+      formatEurosFromLootix(total);
+
 
     availableLootix.textContent =
-      formatLootix(available) + " LOOTIX";
+      formatLootix(available) +
+      " LOOTIX";
+
 
     pendingLootix.textContent =
-      formatLootix(pending) + " LOOTIX";
+      formatLootix(pending) +
+      " LOOTIX";
+
 
     streak.textContent =
       streakDays +
-      (streakDays > 1 ? " jours" : " jour");
+      (
+        streakDays > 1
+          ? " jours"
+          : " jour"
+      );
 
 
     headerBalance.textContent =
@@ -1343,23 +1417,30 @@
       formatLootix(available) +
       " LOOTIX";
 
-    headerBalance.style.display = "block";
+
+    headerBalance.style.display =
+      "block";
 
   }
 
 
-  /* =========================================
-     INTERFACE DÉCONNECTÉE
-  ========================================= */
+  /* ==============================
+     UTILISATEUR DÉCONNECTÉ
+  ============================== */
 
   function showLoggedOutInterface() {
 
-    loginButton.style.display = "inline-block";
-    logoutButton.style.display = "none";
+    loginButton.style.display =
+      "inline-block";
 
-    headerBalance.style.display = "none";
+    logoutButton.style.display =
+      "none";
 
-    wallet.style.display = "none";
+    headerBalance.style.display =
+      "none";
+
+    wallet.style.display =
+      "none";
 
     startButton.textContent =
       "Commencer à gagner";
@@ -1367,81 +1448,53 @@
   }
 
 
-  /* =========================================
-     BOUTONS DES MISSIONS
-  ========================================= */
+  /* ==============================
+     MISSIONS
+  ============================== */
 
-  missionButtons.forEach((button) => {
+  missionButtons.forEach(
+    (button) => {
 
-    button.addEventListener(
-      "click",
-      async () => {
+      button.addEventListener(
+        "click",
+        async () => {
 
-        const {
-          data: { user }
-        } =
-          await supabaseClient.auth.getUser();
+          const {
+            data: { user }
+          } =
+            await supabaseClient.auth.getUser();
 
 
-        if (!user) {
+          if (!user) {
 
-          openAuthModal("signup");
+            openAuthModal("signup");
 
-          return;
+            return;
+
+          }
+
+
+          alert(
+            "Les premières missions LOOT UP arrivent bientôt."
+          );
+
         }
+      );
 
-
-        alert(
-          "Les premières missions LOOT UP arrivent bientôt."
-        );
-
-      }
-    );
-
-  });
-
-
-  /*
-    Lorsque l'utilisateur est déjà connecté,
-    le bouton principal ne doit plus ouvrir
-    l'inscription.
-  */
-
-  startButton.addEventListener(
-    "click",
-    async (event) => {
-
-      const {
-        data: { user }
-      } =
-        await supabaseClient.auth.getUser();
-
-
-      if (user) {
-
-        event.stopImmediatePropagation();
-
-        document
-          .querySelector(".missions")
-          .scrollIntoView({
-            behavior: "smooth"
-          });
-
-      }
-
-    },
-    true
+    }
   );
 
 
-  /* =========================================
-     TRADUCTION DES ERREURS COURANTES
-  ========================================= */
+  /* ==============================
+     ERREURS
+  ============================== */
 
   function translateAuthError(message) {
 
     if (!message) {
+
       return "Une erreur est survenue.";
+
     }
 
 
@@ -1450,7 +1503,9 @@
 
 
     if (
-      lower.includes("invalid login credentials")
+      lower.includes(
+        "invalid login credentials"
+      )
     ) {
 
       return "Adresse e-mail ou mot de passe incorrect.";
@@ -1459,7 +1514,9 @@
 
 
     if (
-      lower.includes("email not confirmed")
+      lower.includes(
+        "email not confirmed"
+      )
     ) {
 
       return "Tu dois d'abord confirmer ton adresse e-mail.";
@@ -1468,7 +1525,9 @@
 
 
     if (
-      lower.includes("user already registered")
+      lower.includes(
+        "user already registered"
+      )
     ) {
 
       return "Un compte existe déjà avec cette adresse e-mail.";
@@ -1477,16 +1536,9 @@
 
 
     if (
-      lower.includes("password")
-    ) {
-
-      return "Le mot de passe choisi n'est pas accepté.";
-
-    }
-
-
-    if (
-      lower.includes("rate limit")
+      lower.includes(
+        "rate limit"
+      )
     ) {
 
       return "Trop de tentatives. Réessaie dans quelques instants.";
@@ -1495,12 +1547,13 @@
 
 
     return message;
+
   }
 
 
-  /* =========================================
-     ÉTAT DE CONNEXION AU CHARGEMENT
-  ========================================= */
+  /* ==============================
+     INITIALISATION
+  ============================== */
 
   async function initializeLootUp() {
 
@@ -1510,7 +1563,10 @@
       await supabaseClient.auth.getSession();
 
 
-    if (session && session.user) {
+    if (
+      session &&
+      session.user
+    ) {
 
       await updateInterface(
         session.user
@@ -1524,10 +1580,6 @@
 
   }
 
-
-  /* =========================================
-     CHANGEMENT AUTOMATIQUE DE SESSION
-  ========================================= */
 
   supabaseClient.auth.onAuthStateChange(
     async (event, session) => {
@@ -1545,7 +1597,9 @@
       }
 
 
-      if (event === "SIGNED_OUT") {
+      if (
+        event === "SIGNED_OUT"
+      ) {
 
         showLoggedOutInterface();
 
@@ -1554,10 +1608,6 @@
     }
   );
 
-
-  /* =========================================
-     LANCEMENT
-  ========================================= */
 
   initializeLootUp();
 
