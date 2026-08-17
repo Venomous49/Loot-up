@@ -1,25 +1,64 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>LOOT UP — Multiplie les actions. Fais monter tes gains.</title>
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>
+RiseLooter — Multiplie les actions. Fais monter tes gains.
+</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
+
+/* =========================================================
+   BASE
+========================================================= */
+
+*{
+box-sizing:border-box;
+margin:0;
+padding:0
+}
+
+html{
+scroll-behavior:smooth
+}
+
 body{
 font-family:Arial,Helvetica,sans-serif;
-background:#0b0b0f;
-color:#fff;
+background:#09090d;
+color:white;
 min-height:100vh
 }
-button,input{font-family:inherit}
-button{cursor:pointer}
-button:disabled{opacity:.5;cursor:not-allowed}
+
+button,
+input{
+font-family:inherit
+}
+
+button{
+cursor:pointer
+}
+
+button:disabled{
+opacity:.5;
+cursor:not-allowed
+}
+
+.hidden{
+display:none!important
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
 
 header{
 display:flex;
@@ -28,14 +67,25 @@ align-items:center;
 gap:18px;
 padding:18px 6%;
 border-bottom:1px solid #222229;
-background:rgba(11,11,15,.97);
+background:rgba(9,9,13,.97);
 position:sticky;
 top:0;
 z-index:50
 }
 
-.logo{font-size:28px;font-weight:900;letter-spacing:-1px}
-.logo span,.purple{color:#9d5cff}
+.logo{
+font-size:27px;
+font-weight:900;
+letter-spacing:-1px
+}
+
+.logo .rise{
+color:white
+}
+
+.logo .looter{
+color:#9d5cff
+}
 
 .header-actions{
 display:flex;
@@ -51,7 +101,7 @@ font-weight:900
 }
 
 .header-btn{
-color:#fff;
+color:white;
 background:transparent;
 border:1px solid #444450;
 padding:10px 14px;
@@ -59,31 +109,72 @@ border-radius:10px;
 font-weight:700
 }
 
-#logoutButton,#adminButton{display:none}
+#logoutButton,
+#adminButton{
+display:none
+}
+
+
+/* =========================================================
+   LAYOUT
+========================================================= */
 
 main{
 width:88%;
-max-width:1150px;
+max-width:1180px;
 margin:30px auto 70px
 }
 
-.section{margin-bottom:52px}
-.section-title{font-size:27px;margin-bottom:8px}
+.section{
+margin-bottom:54px
+}
+
+.section-title{
+font-size:27px;
+margin-bottom:8px
+}
+
 .section-subtitle{
 color:#92929d;
 line-height:1.5;
 margin-bottom:20px
 }
 
-/* CAGNOTTE */
+.primary-button{
+background:#9d5cff;
+color:white;
+border:0;
+padding:12px 18px;
+border-radius:10px;
+font-weight:800
+}
+
+.secondary-button{
+background:#202027;
+color:white;
+border:1px solid #30303a;
+padding:11px 16px;
+border-radius:9px;
+font-weight:700
+}
+
+
+/* =========================================================
+   CAGNOTTE
+========================================================= */
 
 .top-wallet{
 display:none;
-background:linear-gradient(135deg,rgba(157,92,255,.18),#111116 58%);
+background:
+linear-gradient(
+135deg,
+rgba(157,92,255,.18),
+#111116 58%
+);
 border:1px solid #49336a;
 border-radius:20px;
 padding:24px;
-margin-bottom:34px
+margin-bottom:24px
 }
 
 .wallet-header{
@@ -93,13 +184,21 @@ align-items:flex-start;
 gap:20px
 }
 
-.wallet-small-title{color:#b8b8c2;margin-bottom:7px}
+.wallet-small-title{
+color:#b8b8c2;
+margin-bottom:7px
+}
+
 .wallet-total{
 font-size:40px;
 color:#b878ff;
 font-weight:900
 }
-.wallet-euros{color:#c9c9d1;margin-top:4px}
+
+.wallet-euros{
+color:#c9c9d1;
+margin-top:4px
+}
 
 .wallet-actions{
 display:flex;
@@ -117,15 +216,6 @@ color:#c7c7d0;
 font-size:14px
 }
 
-.primary-button{
-background:#9d5cff;
-color:#fff;
-border:0;
-padding:12px 18px;
-border-radius:9px;
-font-weight:800
-}
-
 .wallet-details{
 display:grid;
 grid-template-columns:repeat(3,1fr);
@@ -133,30 +223,555 @@ gap:10px;
 margin-top:20px
 }
 
-.wallet-detail,.stat-card{
-background:rgba(17,17,22,.8);
+.wallet-detail{
+background:rgba(17,17,22,.82);
 border:1px solid #292932;
 padding:13px;
 border-radius:12px
 }
 
-.wallet-label,.stat-label{
+.wallet-label{
 color:#8e8e99;
 font-size:12px;
 margin-bottom:5px
 }
-.wallet-value,.stat-value{font-weight:800}
 
-/* HERO */
+.wallet-value{
+font-weight:800
+}
 
-.hero{text-align:center;padding:35px 0 60px}
+
+/* =========================================================
+   LOOTER DASHBOARD
+========================================================= */
+
+.looter-dashboard{
+display:none;
+grid-template-columns:minmax(280px,1fr) minmax(280px,.85fr);
+gap:18px;
+margin-bottom:38px
+}
+
+.looter-card{
+position:relative;
+overflow:hidden;
+min-height:470px;
+border:1px solid #333341;
+border-radius:22px;
+background:#111116
+}
+
+.environment{
+position:absolute;
+inset:0;
+transition:1s ease
+}
+
+.environment::before{
+content:"";
+position:absolute;
+inset:0;
+background:
+linear-gradient(
+to top,
+rgba(8,8,12,.96),
+rgba(8,8,12,.12) 65%
+)
+}
+
+.stage-1 .environment{
+background:
+linear-gradient(160deg,#252128,#121216 55%,#09090d)
+}
+
+.stage-2 .environment{
+background:
+linear-gradient(160deg,#303039,#17171d 50%,#0b0b10)
+}
+
+.stage-3 .environment{
+background:
+linear-gradient(150deg,#292d3a,#161823 58%,#090a10)
+}
+
+.stage-4 .environment{
+background:
+linear-gradient(145deg,#332d45,#171523 55%,#09090e)
+}
+
+.stage-5 .environment{
+background:
+linear-gradient(145deg,#22364a,#111824 60%,#07090e)
+}
+
+.stage-6 .environment{
+background:
+linear-gradient(140deg,#372a4a,#101826 60%,#07080d)
+}
+
+.stage-7 .environment{
+background:
+radial-gradient(circle at 70% 25%,#273b5b,#171225 45%,#08090d 80%)
+}
+
+.stage-8 .environment{
+background:
+radial-gradient(circle at 50% 25%,#455a82,#27183f 35%,#080b12 75%)
+}
+
+
+/* =========================================================
+   CSS CHARACTER
+========================================================= */
+
+.character{
+position:absolute;
+left:50%;
+bottom:22px;
+transform:translateX(-50%);
+width:190px;
+height:330px;
+transition:.8s ease
+}
+
+.character-head{
+position:absolute;
+top:5px;
+left:50%;
+transform:translateX(-50%);
+width:78px;
+height:88px;
+border-radius:46% 46% 44% 44%;
+background:#b78e7c
+}
+
+.character-hair{
+position:absolute;
+top:-4px;
+left:-4px;
+right:-4px;
+height:40px;
+border-radius:50% 50% 30% 25%;
+background:#272128
+}
+
+.stage-1 .character-hair{
+transform:rotate(-7deg);
+height:46px
+}
+
+.character-body{
+position:absolute;
+top:84px;
+left:50%;
+transform:translateX(-50%);
+width:122px;
+height:155px;
+border-radius:25px 25px 16px 16px;
+background:#56515a
+}
+
+.character-leg{
+position:absolute;
+top:228px;
+width:43px;
+height:92px;
+background:#36343a;
+border-radius:8px
+}
+
+.character-leg.left{
+left:46px
+}
+
+.character-leg.right{
+right:46px
+}
+
+.character-arm{
+position:absolute;
+top:100px;
+width:32px;
+height:132px;
+background:#4d4951;
+border-radius:16px
+}
+
+.character-arm.left{
+left:15px;
+transform:rotate(8deg)
+}
+
+.character-arm.right{
+right:15px;
+transform:rotate(-8deg)
+}
+
+.character-shoe{
+position:absolute;
+bottom:0;
+width:58px;
+height:22px;
+background:#25252b;
+border-radius:15px 18px 7px 7px
+}
+
+.character-shoe.left{
+left:31px
+}
+
+.character-shoe.right{
+right:31px
+}
+
+
+/* STAGE CLOTHING */
+
+.stage-1 .character-body{
+background:#49464b;
+border:2px dashed #67626a
+}
+
+.stage-1 .character-leg{
+background:#343237
+}
+
+.stage-2 .character-body{
+background:#505461
+}
+
+.stage-2 .character-leg{
+background:#333740
+}
+
+.stage-3 .character-body{
+background:#293447;
+border:1px solid #44566e
+}
+
+.stage-3 .character-leg{
+background:#1d2735
+}
+
+.stage-4 .character-body{
+background:#362a46;
+box-shadow:0 0 15px rgba(157,92,255,.15)
+}
+
+.stage-4 .character-leg{
+background:#211d2c
+}
+
+.stage-5 .character-body{
+background:#1e3446;
+border:1px solid #507594
+}
+
+.stage-5 .character-body::after{
+content:"";
+position:absolute;
+left:19px;
+right:19px;
+top:22px;
+height:4px;
+background:#72a5c8;
+border-radius:20px;
+box-shadow:0 35px 0 #4b7897
+}
+
+.stage-6 .character-body{
+background:#211b32;
+border:1px solid #6e4c9a;
+box-shadow:0 0 23px rgba(157,92,255,.24)
+}
+
+.stage-6 .character-body::after{
+content:"";
+position:absolute;
+left:15px;
+right:15px;
+top:20px;
+height:5px;
+background:#9d5cff;
+border-radius:10px;
+box-shadow:
+0 36px 0 #7150a0,
+0 72px 0 #47335f
+}
+
+.stage-7 .character-head{
+background:#1d2635;
+border:2px solid #667fa3
+}
+
+.stage-7 .character-hair{
+display:none
+}
+
+.stage-7 .character-head::after{
+content:"";
+position:absolute;
+left:10px;
+right:10px;
+top:31px;
+height:12px;
+border-radius:20px;
+background:#8ab8e9;
+box-shadow:0 0 20px #8ab8e9
+}
+
+.stage-7 .character-body{
+background:#141d2b;
+border:2px solid #536e91;
+box-shadow:0 0 30px rgba(96,151,214,.35)
+}
+
+.stage-7 .character-arm,
+.stage-7 .character-leg{
+background:#111925;
+border:1px solid #435b78
+}
+
+.stage-8 .character-head{
+background:#161d2b;
+border:2px solid #9e8be8;
+box-shadow:0 0 28px rgba(157,92,255,.55)
+}
+
+.stage-8 .character-hair{
+display:none
+}
+
+.stage-8 .character-head::after{
+content:"";
+position:absolute;
+left:8px;
+right:8px;
+top:30px;
+height:14px;
+border-radius:20px;
+background:linear-gradient(90deg,#75d7ff,#be8aff);
+box-shadow:0 0 25px #9d7aff
+}
+
+.stage-8 .character-body{
+background:linear-gradient(145deg,#131b2d,#271b3c);
+border:2px solid #9f81de;
+box-shadow:
+0 0 35px rgba(157,92,255,.48),
+inset 0 0 18px rgba(117,215,255,.14)
+}
+
+.stage-8 .character-body::after{
+content:"";
+position:absolute;
+left:14px;
+right:14px;
+top:22px;
+height:5px;
+background:linear-gradient(90deg,#75d7ff,#c58cff);
+border-radius:20px;
+box-shadow:
+0 40px 0 #7d72c8,
+0 80px 0 #75d7ff
+}
+
+.stage-8 .character-arm,
+.stage-8 .character-leg{
+background:#121a29;
+border:1px solid #7865ad;
+box-shadow:0 0 12px rgba(157,92,255,.25)
+}
+
+
+/* CHARACTER META */
+
+.looter-meta{
+position:absolute;
+left:22px;
+right:22px;
+top:20px;
+z-index:5
+}
+
+.looter-level{
+font-size:13px;
+font-weight:900;
+letter-spacing:.6px;
+color:#c6b5ef
+}
+
+.looter-title{
+font-size:31px;
+font-weight:900;
+margin-top:5px
+}
+
+.looter-environment-label{
+color:#9a9aa6;
+font-size:12px;
+margin-top:5px
+}
+
+
+/* =========================================================
+   PROGRESS PANEL
+========================================================= */
+
+.progress-panel{
+border:1px solid #292932;
+background:#111116;
+border-radius:22px;
+padding:24px
+}
+
+.progress-level-row{
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:15px
+}
+
+.big-level{
+font-size:38px;
+font-weight:900;
+color:#b878ff
+}
+
+.xp-description{
+color:#9999a5;
+font-size:13px
+}
+
+.xp-bar{
+height:13px;
+background:#202027;
+border-radius:999px;
+overflow:hidden;
+margin:16px 0 8px
+}
+
+.xp-fill{
+height:100%;
+width:0%;
+background:linear-gradient(90deg,#8650e8,#bc87ff);
+border-radius:999px;
+transition:.7s ease
+}
+
+.xp-values{
+display:flex;
+justify-content:space-between;
+color:#8e8e99;
+font-size:12px
+}
+
+
+/* NEXT EVOLUTION */
+
+.next-evolution{
+margin-top:25px;
+border:1px solid #3b2c52;
+background:
+linear-gradient(
+145deg,
+rgba(157,92,255,.09),
+#16151b
+);
+border-radius:17px;
+padding:18px
+}
+
+.next-evolution-label{
+font-size:11px;
+font-weight:900;
+color:#b9a0e6;
+letter-spacing:.7px
+}
+
+.next-evolution-level{
+font-size:21px;
+font-weight:900;
+margin-top:6px
+}
+
+.next-evolution-title{
+color:#aaaab5;
+font-size:13px;
+margin-top:4px
+}
+
+.next-preview{
+height:120px;
+position:relative;
+margin-top:14px;
+overflow:hidden;
+border-radius:12px;
+background:#0c0c11
+}
+
+.next-silhouette{
+position:absolute;
+left:50%;
+bottom:-40px;
+transform:translateX(-50%);
+width:75px;
+height:145px;
+border-radius:35px 35px 15px 15px;
+background:#020204;
+filter:blur(.5px);
+box-shadow:0 0 25px rgba(157,92,255,.15)
+}
+
+.next-silhouette::before{
+content:"";
+position:absolute;
+left:50%;
+top:-52px;
+transform:translateX(-50%);
+width:55px;
+height:58px;
+border-radius:50%;
+background:#020204
+}
+
+.next-lock{
+position:absolute;
+inset:0;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:27px;
+background:rgba(0,0,0,.18)
+}
+
+.max-evolution{
+font-weight:900;
+color:#b878ff;
+margin-top:20px
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.hero{
+text-align:center;
+padding:30px 0 58px
+}
+
 .hero h1{
 font-size:clamp(42px,7vw,75px);
 line-height:1.04;
 letter-spacing:-2px;
 margin-bottom:22px
 }
-.hero h1 span{color:#9d5cff}
+
+.hero h1 span{
+color:#9d5cff
+}
+
 .hero p{
 color:#a5a5b0;
 max-width:720px;
@@ -164,16 +779,21 @@ margin:auto;
 font-size:18px;
 line-height:1.6
 }
-.hero-actions{margin-top:26px}
+
+.hero-actions{
+margin-top:26px
+}
+
 .main-cta{
 border:0;
 background:#9d5cff;
-color:#fff;
+color:white;
 padding:15px 25px;
 border-radius:11px;
 font-weight:900;
 font-size:15px
 }
+
 .conversion{
 margin:18px auto 0;
 display:table;
@@ -184,15 +804,24 @@ padding:9px 13px;
 border-radius:9px
 }
 
-/* BON PLAN */
+
+/* =========================================================
+   DAILY DEAL
+========================================================= */
 
 .daily-deal{
 display:none;
-background:linear-gradient(135deg,rgba(157,92,255,.17),#111116 60%);
+background:
+linear-gradient(
+135deg,
+rgba(157,92,255,.17),
+#111116 60%
+);
 border:1px solid #49336a;
 border-radius:19px;
 padding:26px
 }
+
 .daily-badge{
 display:inline-block;
 background:#9d5cff;
@@ -202,59 +831,99 @@ border-radius:999px;
 padding:7px 11px;
 margin-bottom:15px
 }
-.daily-icon{font-size:35px;margin-bottom:10px}
-.daily-title{font-size:25px;margin-bottom:8px}
+
+.daily-icon{
+font-size:35px;
+margin-bottom:10px
+}
+
+.daily-title{
+font-size:25px;
+margin-bottom:8px
+}
+
 .daily-description{
 color:#a5a5b0;
 line-height:1.5;
 margin-bottom:18px
 }
+
 .daily-reward{
 color:#b878ff;
 font-size:28px;
 font-weight:900
 }
-.daily-euros{color:#aaaab4;margin:3px 0 18px}
 
-/* CATÉGORIES */
+.daily-euros{
+color:#aaaab4;
+margin:3px 0 18px
+}
+
+
+/* =========================================================
+   CATEGORIES
+========================================================= */
 
 .categories{
 display:grid;
 grid-template-columns:repeat(4,1fr);
 gap:14px
 }
-.category-card,.offer,.box{
+
+.category-card,
+.offer,
+.box{
 background:#111116;
 border:1px solid #25252e;
 border-radius:15px;
 padding:20px
 }
-.category-icon,.offer-icon{font-size:30px;margin-bottom:12px}
-.category-card h3,.offer h3{margin-bottom:7px}
-.category-card p,.offer p{
+
+.category-icon,
+.offer-icon{
+font-size:30px;
+margin-bottom:12px
+}
+
+.category-card h3,
+.offer h3{
+margin-bottom:7px
+}
+
+.category-card p,
+.offer p{
 color:#91919c;
 line-height:1.45;
 font-size:13px
 }
-.category-card p{min-height:57px}
-.category-card button,.offer button{
+
+.category-card p{
+min-height:57px
+}
+
+.category-card button,
+.offer button{
 width:100%;
 margin-top:15px;
 border:0;
 background:#202027;
-color:#fff;
+color:white;
 padding:10px;
 border-radius:8px;
 font-weight:700
 }
 
-/* OFFRES */
+
+/* =========================================================
+   OFFERS
+========================================================= */
 
 .offers{
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
 gap:14px
 }
+
 .offer-category{
 display:inline-block;
 background:#1b1b21;
@@ -264,18 +933,22 @@ border-radius:999px;
 font-size:11px;
 margin-bottom:10px
 }
+
 .offer-reward{
 color:#b878ff;
 font-size:19px;
 font-weight:900;
 margin-top:14px
 }
+
 .offer-euro{
 color:#91919c;
 font-size:12px;
 margin-top:4px
 }
-.loading,.empty{
+
+.loading,
+.empty{
 grid-column:1/-1;
 background:#111116;
 border:1px solid #25252e;
@@ -285,10 +958,18 @@ text-align:center;
 color:#90909a
 }
 
-/* DÉFIS */
 
-.challenge-box,.streak-box,.referral-box,.history-box,
-.profile-box,.withdrawals-box,.admin-panel{
+/* =========================================================
+   CHALLENGES
+========================================================= */
+
+.challenge-box,
+.streak-box,
+.referral-box,
+.history-box,
+.profile-box,
+.withdrawals-box,
+.admin-panel{
 background:#111116;
 border:1px solid #292932;
 border-radius:18px;
@@ -301,21 +982,32 @@ justify-content:space-between;
 gap:15px;
 margin-bottom:15px
 }
-.challenge-count{color:#b878ff;font-weight:900}
-.progress{
+
+.challenge-count{
+color:#b878ff;
+font-weight:900
+}
+
+.challenge-progress{
 height:10px;
 background:#202027;
 border-radius:999px;
 overflow:hidden;
 margin-bottom:18px
 }
-.progress-fill{
+
+.challenge-progress-fill{
 height:100%;
 width:0;
 background:#9d5cff;
 transition:.3s
 }
-.challenge-list{display:grid;gap:9px}
+
+.challenge-list{
+display:grid;
+gap:9px
+}
+
 .challenge{
 background:#17171d;
 border:1px solid #272730;
@@ -325,9 +1017,19 @@ display:flex;
 justify-content:space-between;
 gap:10px
 }
-.challenge.done{border-color:#446f5a}
-.challenge-status{color:#858590}
-.challenge.done .challenge-status{color:#69e6a6}
+
+.challenge.done{
+border-color:#446f5a
+}
+
+.challenge-status{
+color:#858590
+}
+
+.challenge.done .challenge-status{
+color:#69e6a6
+}
+
 .challenge-bonus{
 margin-top:16px;
 background:rgba(157,92,255,.12);
@@ -336,15 +1038,23 @@ padding:16px;
 border-radius:12px;
 text-align:center
 }
+
 .challenge-bonus-value{
 font-size:22px;
 font-weight:900;
 color:#b878ff;
 margin:5px
 }
-#claimBonus{display:none;margin-top:10px}
 
-/* SÉRIE */
+#claimBonus{
+display:none;
+margin-top:10px
+}
+
+
+/* =========================================================
+   STREAK
+========================================================= */
 
 .streak-number{
 color:#b878ff;
@@ -352,13 +1062,19 @@ font-size:32px;
 font-weight:900;
 margin-bottom:5px
 }
-.streak-description{color:#91919c;margin-bottom:16px}
+
+.streak-description{
+color:#91919c;
+margin-bottom:16px
+}
+
 .streak-days{
 display:grid;
 grid-template-columns:repeat(7,1fr);
 gap:7px;
 margin-bottom:17px
 }
+
 .streak-day{
 background:#17171d;
 border:1px solid #272730;
@@ -368,19 +1084,24 @@ padding:11px 3px;
 color:#858590;
 font-size:11px
 }
+
 .streak-day.active{
-color:#fff;
+color:white;
 border-color:#654296;
 background:rgba(157,92,255,.15)
 }
 
-/* PARRAINAGE */
+
+/* =========================================================
+   REFERRALS
+========================================================= */
 
 .referral-link-box{
 display:flex;
 gap:8px;
 margin:17px 0
 }
+
 .referral-link{
 flex:1;
 background:#17171d;
@@ -392,37 +1113,61 @@ overflow:hidden;
 white-space:nowrap;
 text-overflow:ellipsis
 }
+
 .referral-link-box button{
 border:0;
 background:#9d5cff;
-color:#fff;
+color:white;
 padding:10px 14px;
 border-radius:9px;
 font-weight:800
 }
-.referral-stats,.profile-grid,.admin-stats{
+
+.referral-stats,
+.profile-grid,
+.admin-stats{
 display:grid;
 grid-template-columns:repeat(3,1fr);
 gap:9px
 }
-.referral-stat,.profile-stat{
+
+.referral-stat,
+.profile-stat,
+.admin-stat{
 background:#17171d;
 border:1px solid #272730;
 border-radius:10px;
 padding:13px
 }
-.referral-stat-label,.profile-label{
+
+.referral-stat-label,
+.profile-label,
+.admin-label{
 color:#898994;
 font-size:11px;
 margin-bottom:5px
 }
-.referral-stat-value,.profile-value{font-weight:900}
 
-/* HISTORIQUES */
+.referral-stat-value,
+.profile-value,
+.admin-value{
+font-weight:900
+}
 
-.history-box,.profile-box,.withdrawals-box{display:none}
 
-.history-item,.withdrawal-item,.admin-withdrawal{
+/* =========================================================
+   HISTORY & WITHDRAWALS
+========================================================= */
+
+.history-box,
+.profile-box,
+.withdrawals-box{
+display:none
+}
+
+.history-item,
+.withdrawal-item,
+.admin-withdrawal{
 display:flex;
 justify-content:space-between;
 align-items:center;
@@ -430,17 +1175,30 @@ gap:15px;
 padding:14px 0;
 border-bottom:1px solid #25252e
 }
+
 .history-item:last-child,
 .withdrawal-item:last-child,
-.admin-withdrawal:last-child{border-bottom:0}
+.admin-withdrawal:last-child{
+border-bottom:0
+}
 
-.item-title{font-weight:700;margin-bottom:4px}
-.item-meta{color:#83838e;font-size:11px;margin-top:3px}
+.item-title{
+font-weight:700;
+margin-bottom:4px
+}
+
+.item-meta{
+color:#83838e;
+font-size:11px;
+margin-top:3px
+}
+
 .item-amount{
 color:#b878ff;
 font-weight:900;
 white-space:nowrap
 }
+
 .status{
 display:inline-block;
 font-size:11px;
@@ -448,34 +1206,62 @@ padding:5px 8px;
 border-radius:999px;
 margin-top:6px
 }
-.status-pending{background:#382b1c;color:#ffb86b}
-.status-processing{background:#202f45;color:#7ab8ff}
-.status-paid{background:#1d3a2c;color:#69e6a6}
-.status-rejected{background:#402020;color:#ff7777}
-.status-cancelled{background:#29292f;color:#aaaab4}
+
+.status-pending{
+background:#382b1c;
+color:#ffb86b
+}
+
+.status-processing{
+background:#202f45;
+color:#7ab8ff
+}
+
+.status-paid{
+background:#1d3a2c;
+color:#69e6a6
+}
+
+.status-rejected{
+background:#402020;
+color:#ff7777
+}
+
+.status-cancelled{
+background:#29292f;
+color:#aaaab4
+}
 
 .small-button{
 border:1px solid #383842;
 background:#1c1c22;
-color:#fff;
+color:white;
 padding:7px 10px;
 border-radius:7px;
 font-size:11px;
 font-weight:700;
 margin-top:7px
 }
-.danger-button{
-border-color:#643636;
-color:#ff8b8b
+
+
+/* =========================================================
+   ADMIN
+========================================================= */
+
+#adminSection{
+display:none
 }
 
-/* ADMIN */
-
-#adminSection{display:none}
 .admin-panel{
 border-color:#513779;
-background:linear-gradient(135deg,rgba(157,92,255,.10),#111116 45%)
+background:
+linear-gradient(
+135deg,
+rgba(157,92,255,.10),
+#111116 45%
+)
 }
+
 .admin-heading{
 display:flex;
 justify-content:space-between;
@@ -483,6 +1269,7 @@ align-items:center;
 gap:15px;
 margin-bottom:20px
 }
+
 .admin-badge{
 background:#9d5cff;
 padding:6px 10px;
@@ -490,17 +1277,24 @@ border-radius:999px;
 font-size:11px;
 font-weight:900
 }
+
 .admin-stats{
 grid-template-columns:repeat(4,1fr);
 margin-bottom:25px
 }
-.admin-subtitle{font-size:20px;margin:25px 0 10px}
+
+.admin-subtitle{
+font-size:20px;
+margin:25px 0 10px
+}
+
 .admin-actions{
 display:flex;
 gap:6px;
 flex-wrap:wrap;
 justify-content:flex-end
 }
+
 .admin-actions button{
 border:0;
 padding:7px 9px;
@@ -508,22 +1302,38 @@ border-radius:7px;
 font-size:11px;
 font-weight:800
 }
-.process-btn{background:#31578b;color:#fff}
-.paid-btn{background:#2d7551;color:#fff}
-.reject-btn{background:#823f3f;color:#fff}
 
-/* MODALES */
+.process-btn{
+background:#31578b;
+color:white
+}
+
+.paid-btn{
+background:#2d7551;
+color:white
+}
+
+.reject-btn{
+background:#823f3f;
+color:white
+}
+
+
+/* =========================================================
+   MODALS
+========================================================= */
 
 .modal-overlay{
 display:none;
 position:fixed;
 inset:0;
 z-index:100;
-background:rgba(0,0,0,.82);
+background:rgba(0,0,0,.84);
 align-items:center;
 justify-content:center;
 padding:20px
 }
+
 .modal{
 width:100%;
 max-width:430px;
@@ -533,6 +1343,7 @@ padding:25px;
 border-radius:17px;
 position:relative
 }
+
 .close-modal{
 position:absolute;
 right:15px;
@@ -542,75 +1353,380 @@ background:transparent;
 color:#aaaab4;
 font-size:25px
 }
-.modal h2{margin-bottom:7px}
+
+.modal h2{
+margin-bottom:7px
+}
+
 .modal-subtitle{
 color:#92929d;
 margin-bottom:18px;
 line-height:1.45
 }
-.auth-tabs{display:flex;gap:7px;margin-bottom:18px}
+
+.auth-tabs{
+display:flex;
+gap:7px;
+margin-bottom:18px
+}
+
 .auth-tab{
 flex:1;
 border:1px solid #30303a;
 background:transparent;
-color:#fff;
+color:white;
 padding:9px;
 border-radius:8px;
 font-weight:700
 }
-.auth-tab.active{background:#9d5cff;border-color:#9d5cff}
-.auth-form{display:none}
-.auth-form.active{display:block}
+
+.auth-tab.active{
+background:#9d5cff;
+border-color:#9d5cff
+}
+
+.auth-form{
+display:none
+}
+
+.auth-form.active{
+display:block
+}
+
 label{
 display:block;
 color:#c0c0c8;
 font-size:13px;
 margin-bottom:6px
 }
+
 input{
 width:100%;
 background:#0b0b0f;
 border:1px solid #30303a;
 border-radius:8px;
-color:#fff;
+color:white;
 padding:12px;
 margin-bottom:13px
 }
+
 .auth-submit{
 width:100%;
 border:0;
 background:#9d5cff;
-color:#fff;
+color:white;
 padding:12px;
 border-radius:9px;
 font-weight:900
 }
+
 .message{
 margin-top:12px;
 min-height:18px;
 font-size:12px
 }
-.success{color:#69e6a6}
-.error{color:#ff7777}
 
-.withdrawal-summary{
-background:#18181e;
-border:1px solid #292932;
-padding:14px;
-border-radius:10px;
-margin-bottom:17px
+.success{
+color:#69e6a6
 }
-.withdrawal-preview{
-font-size:25px;
-font-weight:900;
-color:#b878ff;
-margin:6px 0
+
+.error{
+color:#ff7777
 }
-.info{
+
+
+/* =========================================================
+   EVOLUTION CINEMATIC
+========================================================= */
+
+.evolution-overlay{
+display:none;
+position:fixed;
+inset:0;
+z-index:1000;
+background:#010103;
+overflow:hidden;
+align-items:center;
+justify-content:center
+}
+
+.evolution-overlay.active{
+display:flex
+}
+
+.evolution-bg{
+position:absolute;
+inset:-20%;
+background:
+radial-gradient(
+circle at 50% 55%,
+rgba(157,92,255,.25),
+rgba(20,15,34,.08) 30%,
+#010103 65%
+);
+opacity:0;
+animation:evoBackground 5.6s forwards
+}
+
+.evo-particles{
+position:absolute;
+inset:0;
+overflow:hidden
+}
+
+.evo-particle{
+position:absolute;
+width:4px;
+height:4px;
+border-radius:50%;
+background:white;
+opacity:0;
+animation:evoParticle 2.5s infinite
+}
+
+.evolution-scene{
+position:relative;
+width:100%;
+max-width:650px;
+text-align:center;
+z-index:4
+}
+
+.evolution-small{
 font-size:12px;
-color:#94949e;
-line-height:1.5
+font-weight:900;
+letter-spacing:3px;
+color:#a693d5;
+opacity:0;
+animation:evoTextIn .6s 1s forwards
 }
+
+.evolution-heading{
+font-size:clamp(38px,8vw,82px);
+font-weight:1000;
+letter-spacing:-2px;
+margin-top:9px;
+opacity:0;
+transform:scale(.92);
+animation:evoHeading 1s 3.4s forwards
+}
+
+.evolution-subtitle{
+color:#b8adc9;
+font-size:17px;
+margin-top:7px;
+opacity:0;
+animation:evoTextIn .7s 4.2s forwards
+}
+
+.evo-character-wrap{
+height:340px;
+position:relative;
+margin:0 auto
+}
+
+.evo-silhouette{
+position:absolute;
+left:50%;
+bottom:10px;
+transform:translateX(-50%);
+width:145px;
+height:235px;
+border-radius:70px 70px 25px 25px;
+background:#000;
+filter:brightness(0);
+box-shadow:0 0 0 rgba(157,92,255,0);
+animation:evoSilhouette 4.3s forwards
+}
+
+.evo-silhouette::before{
+content:"";
+position:absolute;
+left:50%;
+top:-80px;
+transform:translateX(-50%);
+width:92px;
+height:98px;
+border-radius:50%;
+background:#000
+}
+
+.evo-ring{
+position:absolute;
+left:50%;
+top:50%;
+transform:translate(-50%,-50%) scale(.1);
+width:400px;
+height:400px;
+border:2px solid rgba(157,92,255,.8);
+border-radius:50%;
+opacity:0;
+animation:evoRing 1.1s 2.7s forwards
+}
+
+.evo-flash{
+position:absolute;
+inset:0;
+background:white;
+opacity:0;
+pointer-events:none;
+animation:evoFlash .45s 3.25s forwards
+}
+
+.evolution-rewards{
+display:flex;
+justify-content:center;
+gap:10px;
+flex-wrap:wrap;
+margin-top:20px;
+opacity:0;
+animation:evoTextIn .7s 4.5s forwards
+}
+
+.evolution-reward{
+background:#17131f;
+border:1px solid #49336a;
+padding:9px 13px;
+border-radius:10px;
+font-size:12px
+}
+
+.evolution-close{
+margin-top:23px;
+opacity:0;
+animation:evoTextIn .7s 4.8s forwards
+}
+
+@keyframes evoBackground{
+
+0%{
+opacity:0
+}
+
+40%{
+opacity:.7
+}
+
+70%{
+opacity:1
+}
+
+100%{
+opacity:1
+}
+
+}
+
+@keyframes evoSilhouette{
+
+0%{
+transform:translateX(-50%) scale(.8);
+filter:brightness(0);
+box-shadow:0 0 0 rgba(157,92,255,0)
+}
+
+35%{
+transform:translateX(-50%) scale(.88);
+filter:brightness(0);
+box-shadow:0 0 35px rgba(157,92,255,.2)
+}
+
+60%{
+transform:translateX(-50%) scale(.94);
+filter:brightness(0);
+box-shadow:0 0 90px rgba(157,92,255,.55)
+}
+
+76%{
+transform:translateX(-50%) scale(1.02);
+filter:brightness(0)
+}
+
+84%{
+filter:brightness(6);
+transform:translateX(-50%) scale(1.12)
+}
+
+100%{
+filter:brightness(1);
+transform:translateX(-50%) scale(1)
+}
+
+}
+
+@keyframes evoRing{
+
+0%{
+opacity:0;
+transform:translate(-50%,-50%) scale(.1)
+}
+
+30%{
+opacity:1
+}
+
+100%{
+opacity:0;
+transform:translate(-50%,-50%) scale(1.5)
+}
+
+}
+
+@keyframes evoFlash{
+
+0%{
+opacity:0
+}
+
+30%{
+opacity:.9
+}
+
+100%{
+opacity:0
+}
+
+}
+
+@keyframes evoTextIn{
+
+to{
+opacity:1
+}
+
+}
+
+@keyframes evoHeading{
+
+to{
+opacity:1;
+transform:scale(1)
+}
+
+}
+
+@keyframes evoParticle{
+
+0%{
+opacity:0;
+transform:translateY(40px) scale(.3)
+}
+
+30%{
+opacity:.8
+}
+
+100%{
+opacity:0;
+transform:translateY(-200px) scale(1.3)
+}
+
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
 
 footer{
 border-top:1px solid #222229;
@@ -621,102 +1737,393 @@ font-size:12px;
 line-height:1.6
 }
 
-@media(max-width:850px){
-.categories{grid-template-columns:repeat(2,1fr)}
-.admin-stats{grid-template-columns:repeat(2,1fr)}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:900px){
+
+.looter-dashboard{
+grid-template-columns:1fr
+}
+
+.categories{
+grid-template-columns:repeat(2,1fr)
+}
+
+.admin-stats{
+grid-template-columns:repeat(2,1fr)
+}
+
 }
 
 @media(max-width:650px){
-header{padding:15px 5%}
-.logo{font-size:22px}
-main{width:91%}
-.wallet-header{display:block}
-.wallet-actions{align-items:stretch;margin-top:15px}
-.wallet-details,.referral-stats,.profile-grid,.admin-stats{
+
+header{
+padding:15px 5%
+}
+
+.logo{
+font-size:21px
+}
+
+main{
+width:91%
+}
+
+.wallet-header{
+display:block
+}
+
+.wallet-actions{
+align-items:stretch;
+margin-top:15px
+}
+
+.wallet-details,
+.referral-stats,
+.profile-grid,
+.admin-stats{
 grid-template-columns:1fr
 }
-.categories{grid-template-columns:1fr}
-.streak-days{grid-template-columns:repeat(4,1fr)}
-.header-balance{display:none!important}
-.history-item,.withdrawal-item,.admin-withdrawal{
+
+.categories{
+grid-template-columns:1fr
+}
+
+.streak-days{
+grid-template-columns:repeat(4,1fr)
+}
+
+.header-balance{
+display:none!important
+}
+
+.history-item,
+.withdrawal-item,
+.admin-withdrawal{
 align-items:flex-start;
 flex-direction:column
 }
-.admin-actions{justify-content:flex-start}
+
+.admin-actions{
+justify-content:flex-start
 }
+
+.looter-card{
+min-height:430px
+}
+
+}
+
 </style>
+
 </head>
 
 <body>
 
+
+<!-- =========================================================
+     HEADER
+========================================================= -->
+
 <header>
-<div class="logo">LOOT <span>UP</span></div>
+
+<div class="logo">
+<span class="rise">RISE</span><span class="looter">LOOTER</span>
+</div>
 
 <div class="header-actions">
-<div class="header-balance" id="headerBalance">🪙 0 LOOTIX</div>
 
-<button class="header-btn" id="adminButton">
+<div
+class="header-balance"
+id="headerBalance">
+🪙 0 RL Coins
+</div>
+
+<button
+class="header-btn"
+id="adminButton">
 ⚙️ Administration
 </button>
 
-<button class="header-btn" id="loginButton">
+<button
+class="header-btn"
+id="loginButton">
 Se connecter
 </button>
 
-<button class="header-btn" id="logoutButton">
+<button
+class="header-btn"
+id="logoutButton">
 Déconnexion
 </button>
+
 </div>
+
 </header>
+
 
 <main>
 
-<!-- CAGNOTTE -->
 
-<section class="top-wallet" id="topWallet">
+<!-- =========================================================
+     CAGNOTTE
+========================================================= -->
+
+<section
+class="top-wallet"
+id="topWallet">
 
 <div class="wallet-header">
 
 <div>
-<div class="wallet-small-title">💰 Ta cagnotte</div>
-<div class="wallet-total" id="walletTotal">0 LOOTIX</div>
-<div class="wallet-euros" id="walletEuros">= 0,00 €</div>
+
+<div class="wallet-small-title">
+💰 Ta cagnotte
 </div>
 
+<div
+class="wallet-total"
+id="walletTotal">
+0 RL Coins
+</div>
+
+<div
+class="wallet-euros"
+id="walletEuros">
+= 0,00 €
+</div>
+
+</div>
+
+
 <div class="wallet-actions">
+
 <div class="wallet-motivation">
 Continue et fais monter ta cagnotte.
 </div>
 
-<button class="primary-button" id="withdrawButton">
+<button
+class="primary-button"
+id="withdrawButton">
 💸 Retirer mes gains
 </button>
+
 </div>
 
 </div>
+
 
 <div class="wallet-details">
 
 <div class="wallet-detail">
-<div class="wallet-label">🟢 Disponible</div>
-<div class="wallet-value" id="availableLootix">0 LOOTIX</div>
+
+<div class="wallet-label">
+🟢 Disponible
 </div>
 
-<div class="wallet-detail">
-<div class="wallet-label">🟠 En attente</div>
-<div class="wallet-value" id="pendingLootix">0 LOOTIX</div>
+<div
+class="wallet-value"
+id="availableCoins">
+0 RL Coins
 </div>
 
+</div>
+
+
 <div class="wallet-detail">
-<div class="wallet-label">🔥 Série actuelle</div>
-<div class="wallet-value" id="walletStreak">0 jour</div>
+
+<div class="wallet-label">
+🟠 En attente
+</div>
+
+<div
+class="wallet-value"
+id="pendingCoins">
+0 RL Coins
+</div>
+
+</div>
+
+
+<div class="wallet-detail">
+
+<div class="wallet-label">
+🔥 Série actuelle
+</div>
+
+<div
+class="wallet-value"
+id="walletStreak">
+0 jour
+</div>
+
 </div>
 
 </div>
 
 </section>
 
-<!-- HERO -->
+
+
+<!-- =========================================================
+     LOOTER / XP
+========================================================= -->
+
+<section
+class="looter-dashboard"
+id="looterDashboard">
+
+
+<div
+class="looter-card stage-1"
+id="looterCard">
+
+<div class="environment"></div>
+
+
+<div class="looter-meta">
+
+<div class="looter-level" id="looterLevelLabel">
+NIVEAU 1
+</div>
+
+<div class="looter-title" id="looterTitle">
+Le Débutant
+</div>
+
+<div
+class="looter-environment-label"
+id="environmentLabel">
+Départ difficile
+</div>
+
+</div>
+
+
+<div class="character">
+
+<div class="character-head">
+<div class="character-hair"></div>
+</div>
+
+<div class="character-arm left"></div>
+<div class="character-arm right"></div>
+
+<div class="character-body"></div>
+
+<div class="character-leg left"></div>
+<div class="character-leg right"></div>
+
+<div class="character-shoe left"></div>
+<div class="character-shoe right"></div>
+
+</div>
+
+</div>
+
+
+
+<div class="progress-panel">
+
+<div class="progress-level-row">
+
+<div>
+
+<div class="xp-description">
+PROGRESSION DU LOOTER
+</div>
+
+<div
+class="big-level"
+id="bigLevel">
+Niveau 1
+</div>
+
+</div>
+
+<div
+class="xp-description"
+id="totalXp">
+0 XP
+</div>
+
+</div>
+
+
+<div class="xp-bar">
+
+<div
+class="xp-fill"
+id="xpFill">
+</div>
+
+</div>
+
+
+<div class="xp-values">
+
+<span id="xpCurrent">
+0 XP
+</span>
+
+<span id="xpNeeded">
+100 XP
+</span>
+
+</div>
+
+
+<div
+class="next-evolution"
+id="nextEvolutionBox">
+
+<div class="next-evolution-label">
+🔒 PROCHAINE ÉVOLUTION
+</div>
+
+<div
+class="next-evolution-level"
+id="nextEvolutionLevel">
+Niveau 5
+</div>
+
+<div
+class="next-evolution-title"
+id="nextEvolutionTitle">
+Le Débrouillard
+</div>
+
+<div class="next-preview">
+
+<div class="next-silhouette"></div>
+
+<div class="next-lock">
+🔒
+</div>
+
+</div>
+
+</div>
+
+
+<div
+class="max-evolution hidden"
+id="maxEvolution">
+👑 ÉVOLUTION ULTIME ATTEINTE
+</div>
+
+</div>
+
+</section>
+
+
+
+<!-- =========================================================
+     HERO
+========================================================= -->
 
 <section class="hero">
 
@@ -726,41 +2133,83 @@ Multiplie les actions.<br>
 </h1>
 
 <p>
-Joue, regarde, réponds à des sondages, relève des défis et
-parraine tes amis pour accumuler des LOOTIX.
+Joue, regarde, réponds à des sondages, relève des défis,
+parraine tes amis et fais évoluer ton Looter
+tout en accumulant des RL Coins.
 </p>
 
 <div class="hero-actions">
-<button class="main-cta" id="mainCTA">
+
+<button
+class="main-cta"
+id="mainCTA">
 Commencer à gagner
 </button>
+
 </div>
 
 <div class="conversion">
-🪙 100 LOOTIX = 1 €
+🪙 100 RL Coins = 1 €
 </div>
 
 </section>
 
-<!-- BON PLAN -->
+
+
+<!-- =========================================================
+     BON PLAN DU JOUR
+========================================================= -->
 
 <section class="section">
 
-<h2 class="section-title">🔥 Le bon plan du jour</h2>
+<h2 class="section-title">
+🔥 Le bon plan du jour
+</h2>
+
 <div class="section-subtitle">
 Notre sélection pour faire monter ta cagnotte aujourd'hui.
 </div>
 
-<div class="daily-deal" id="dailyDeal">
+<div
+class="daily-deal"
+id="dailyDeal">
 
-<div class="daily-badge">⭐ Sélection Loot Up</div>
-<div class="daily-icon" id="dailyIcon">🎯</div>
-<div class="daily-title" id="dailyTitle">Chargement...</div>
-<div class="daily-description" id="dailyDescription"></div>
-<div class="daily-reward" id="dailyReward">0 LOOTIX</div>
-<div class="daily-euros" id="dailyEuros">= 0,00 €</div>
+<div class="daily-badge">
+⭐ Sélection RiseLooter
+</div>
 
-<button class="primary-button" id="dailyButton">
+<div
+class="daily-icon"
+id="dailyIcon">
+🎯
+</div>
+
+<div
+class="daily-title"
+id="dailyTitle">
+Chargement...
+</div>
+
+<div
+class="daily-description"
+id="dailyDescription">
+</div>
+
+<div
+class="daily-reward"
+id="dailyReward">
+0 RL Coins
+</div>
+
+<div
+class="daily-euros"
+id="dailyEuros">
+= 0,00 €
+</div>
+
+<button
+class="primary-button"
+id="dailyButton">
 Profiter de l'offre
 </button>
 
@@ -768,114 +2217,256 @@ Profiter de l'offre
 
 </section>
 
-<!-- CATÉGORIES -->
+
+
+<!-- =========================================================
+     CATÉGORIES
+========================================================= -->
 
 <section class="section">
 
-<h2 class="section-title">⚡ Gagne comme tu veux</h2>
-<div class="section-subtitle">Choisis la manière qui te convient.</div>
+<h2 class="section-title">
+⚡ Gagne comme tu veux
+</h2>
+
+<div class="section-subtitle">
+Choisis la manière qui te convient.
+</div>
+
 
 <div class="categories">
 
 <div class="category-card">
-<div class="category-icon">🎮</div>
-<h3>Joue</h3>
-<p>Découvre les missions de jeux et atteins les objectifs proposés.</p>
-<button data-filter="game">Voir les jeux</button>
+
+<div class="category-icon">
+🎮
 </div>
 
-<div class="category-card">
-<div class="category-icon">📺</div>
-<h3>Regarde</h3>
-<p>Regarde les contenus rémunérés disponibles sur Loot Up.</p>
-<button data-filter="video">Voir les vidéos</button>
+<h3>
+Joue
+</h3>
+
+<p>
+Découvre les missions de jeux et atteins les objectifs proposés.
+</p>
+
+<button data-filter="game">
+Voir les jeux
+</button>
+
 </div>
 
-<div class="category-card">
-<div class="category-icon">📝</div>
-<h3>Sondages</h3>
-<p>Partage ton avis et gagne des LOOTIX grâce aux sondages.</p>
-<button data-filter="survey">Voir les sondages</button>
-</div>
+
 
 <div class="category-card">
-<div class="category-icon">👥</div>
-<h3>Parrainage</h3>
-<p>Invite tes amis et gagne lorsque leur activité devient éligible.</p>
-<button id="goReferral">Parrainer un ami</button>
+
+<div class="category-icon">
+📺
+</div>
+
+<h3>
+Regarde
+</h3>
+
+<p>
+Regarde les contenus rémunérés disponibles sur RiseLooter.
+</p>
+
+<button data-filter="video">
+Voir les vidéos
+</button>
+
+</div>
+
+
+
+<div class="category-card">
+
+<div class="category-icon">
+📝
+</div>
+
+<h3>
+Sondages
+</h3>
+
+<p>
+Partage ton avis et gagne des RL Coins grâce aux sondages.
+</p>
+
+<button data-filter="survey">
+Voir les sondages
+</button>
+
+</div>
+
+
+
+<div class="category-card">
+
+<div class="category-icon">
+👥
+</div>
+
+<h3>
+Parrainage
+</h3>
+
+<p>
+Invite tes amis et gagne lorsque leur activité devient éligible.
+</p>
+
+<button id="goReferral">
+Parrainer un ami
+</button>
+
 </div>
 
 </div>
 
 </section>
 
-<!-- MISSIONS -->
 
-<section class="section" id="offersSection">
 
-<h2 class="section-title" id="offersTitle">
+<!-- =========================================================
+     OFFRES
+========================================================= -->
+
+<section
+class="section"
+id="offersSection">
+
+<h2
+class="section-title"
+id="offersTitle">
 🎯 Missions disponibles
 </h2>
 
-<div class="offers" id="offersContainer">
-<div class="loading">Chargement des missions...</div>
+<div
+class="offers"
+id="offersContainer">
+
+<div class="loading">
+Chargement des missions...
+</div>
+
 </div>
 
 </section>
 
-<!-- DÉFIS -->
+
+
+<!-- =========================================================
+     DÉFIS
+========================================================= -->
 
 <section class="section">
 
-<h2 class="section-title">🎯 Défis du jour</h2>
+<h2 class="section-title">
+🎯 Défis du jour
+</h2>
 
 <div class="section-subtitle">
 Complète les trois actions pour débloquer ton bonus.
 </div>
 
+
 <div class="challenge-box">
 
 <div class="challenge-head">
-<strong>Progression du jour</strong>
-<div class="challenge-count" id="challengeCount">0 / 3</div>
+
+<strong>
+Progression du jour
+</strong>
+
+<div
+class="challenge-count"
+id="challengeCount">
+0 / 3
 </div>
 
-<div class="progress">
-<div class="progress-fill" id="challengeProgress"></div>
 </div>
+
+
+<div class="challenge-progress">
+
+<div
+class="challenge-progress-fill"
+id="challengeProgress">
+</div>
+
+</div>
+
 
 <div class="challenge-list">
 
-<div class="challenge" id="challengeGame">
-<span>🎮 Termine une mission de jeu</span>
-<span class="challenge-status">À faire</span>
-</div>
+<div
+class="challenge"
+id="challengeGame">
 
-<div class="challenge" id="challengeVideo">
-<span>📺 Réalise une action vidéo</span>
-<span class="challenge-status">À faire</span>
-</div>
+<span>
+🎮 Termine une mission de jeu
+</span>
 
-<div class="challenge" id="challengeSurvey">
-<span>📝 Termine un sondage</span>
-<span class="challenge-status">À faire</span>
-</div>
+<span class="challenge-status">
+À faire
+</span>
 
 </div>
+
+
+<div
+class="challenge"
+id="challengeVideo">
+
+<span>
+📺 Réalise une action vidéo
+</span>
+
+<span class="challenge-status">
+À faire
+</span>
+
+</div>
+
+
+<div
+class="challenge"
+id="challengeSurvey">
+
+<span>
+📝 Termine un sondage
+</span>
+
+<span class="challenge-status">
+À faire
+</span>
+
+</div>
+
+</div>
+
 
 <div class="challenge-bonus">
 
-<div>🎁 BONUS DU JOUR</div>
-
-<div class="challenge-bonus-value" id="challengeBonus">
-+100 LOOTIX
+<div>
+🎁 BONUS DU JOUR
 </div>
 
-<div id="challengeBonusEuro">
+<div
+class="challenge-bonus-value"
+id="challengeBonus">
++100 RL Coins
+</div>
+
+<div
+id="challengeBonusEuro">
 = 1,00 €
 </div>
 
-<button class="primary-button" id="claimBonus">
+<button
+class="primary-button"
+id="claimBonus">
 Récupérer mon bonus
 </button>
 
@@ -885,35 +2476,73 @@ Récupérer mon bonus
 
 </section>
 
-<!-- SÉRIE -->
+
+
+<!-- =========================================================
+     SÉRIE
+========================================================= -->
 
 <section class="section">
 
-<h2 class="section-title">🔥 Ta série</h2>
+<h2 class="section-title">
+🔥 Ta série
+</h2>
 
 <div class="section-subtitle">
-Reviens régulièrement pour conserver ta progression.
+Reviens régulièrement pour conserver ta progression
+et gagner de l'XP.
 </div>
+
 
 <div class="streak-box">
 
-<div class="streak-number" id="streakNumber">0 jour</div>
+<div
+class="streak-number"
+id="streakNumber">
+0 jour
+</div>
 
 <div class="streak-description">
-Valide ta présence quotidienne pour faire progresser ta série.
+Valide ta présence quotidienne pour faire progresser ton Looter.
 </div>
+
 
 <div class="streak-days">
-<div class="streak-day" data-streak="1">Jour 1</div>
-<div class="streak-day" data-streak="2">Jour 2</div>
-<div class="streak-day" data-streak="3">Jour 3</div>
-<div class="streak-day" data-streak="4">Jour 4</div>
-<div class="streak-day" data-streak="5">Jour 5</div>
-<div class="streak-day" data-streak="6">Jour 6</div>
-<div class="streak-day" data-streak="7">🔥 Jour 7</div>
+
+<div class="streak-day" data-streak="1">
+Jour 1
 </div>
 
-<button class="primary-button" id="checkinButton">
+<div class="streak-day" data-streak="2">
+Jour 2
+</div>
+
+<div class="streak-day" data-streak="3">
+Jour 3
+</div>
+
+<div class="streak-day" data-streak="4">
+Jour 4
+</div>
+
+<div class="streak-day" data-streak="5">
+Jour 5
+</div>
+
+<div class="streak-day" data-streak="6">
+Jour 6
+</div>
+
+<div class="streak-day" data-streak="7">
+🔥 Jour 7
+</div>
+
+</div>
+
+
+<button
+class="primary-button"
+id="checkinButton">
 Valider ma journée
 </button>
 
@@ -921,45 +2550,91 @@ Valider ma journée
 
 </section>
 
-<!-- PARRAINAGE -->
 
-<section class="section" id="referralSection">
 
-<h2 class="section-title">👥 Parrainage</h2>
+<!-- =========================================================
+     PARRAINAGE
+========================================================= -->
+
+<section
+class="section"
+id="referralSection">
+
+<h2 class="section-title">
+👥 Parrainage
+</h2>
 
 <div class="section-subtitle">
 Invite tes amis et suis les gains générés par leur activité.
 </div>
 
+
 <div class="referral-box">
 
-<strong>Ton lien personnel</strong>
+<strong>
+Ton lien personnel
+</strong>
+
 
 <div class="referral-link-box">
 
-<div class="referral-link" id="referralLink">
+<div
+class="referral-link"
+id="referralLink">
 Connecte-toi pour obtenir ton lien.
 </div>
 
-<button id="copyReferral">Copier</button>
+<button id="copyReferral">
+Copier
+</button>
 
 </div>
+
 
 <div class="referral-stats">
 
 <div class="referral-stat">
-<div class="referral-stat-label">👥 Filleuls</div>
-<div class="referral-stat-value" id="referralCount">0</div>
+
+<div class="referral-stat-label">
+👥 Filleuls
 </div>
 
-<div class="referral-stat">
-<div class="referral-stat-label">🟠 Gains en attente</div>
-<div class="referral-stat-value" id="referralPending">0 LOOTIX</div>
+<div
+class="referral-stat-value"
+id="referralCount">
+0
 </div>
 
+</div>
+
+
 <div class="referral-stat">
-<div class="referral-stat-label">🟢 Gains validés</div>
-<div class="referral-stat-value" id="referralConfirmed">0 LOOTIX</div>
+
+<div class="referral-stat-label">
+🟠 Gains en attente
+</div>
+
+<div
+class="referral-stat-value"
+id="referralPending">
+0 RL Coins
+</div>
+
+</div>
+
+
+<div class="referral-stat">
+
+<div class="referral-stat-label">
+🟢 Gains validés
+</div>
+
+<div
+class="referral-stat-value"
+id="referralConfirmed">
+0 RL Coins
+</div>
+
 </div>
 
 </div>
@@ -968,57 +2643,129 @@ Connecte-toi pour obtenir ton lien.
 
 </section>
 
-<!-- RETRAITS -->
+
+
+<!-- =========================================================
+     RETRAITS
+========================================================= -->
 
 <section class="section">
 
-<h2 class="section-title">💸 Mes retraits</h2>
+<h2 class="section-title">
+💸 Mes retraits
+</h2>
 
 <div class="section-subtitle">
 Suis ici tes demandes de paiement.
 </div>
 
-<div class="withdrawals-box" id="withdrawalsBox">
+<div
+class="withdrawals-box"
+id="withdrawalsBox">
+
 <div id="withdrawalsList"></div>
+
 </div>
 
 </section>
 
-<!-- HISTORIQUE -->
+
+
+<!-- =========================================================
+     HISTORIQUE
+========================================================= -->
 
 <section class="section">
 
-<h2 class="section-title">🧾 Historique des gains</h2>
+<h2 class="section-title">
+🧾 Historique des gains
+</h2>
 
-<div class="history-box" id="historyBox">
+<div
+class="history-box"
+id="historyBox">
+
 <div id="historyList"></div>
+
 </div>
 
 </section>
 
-<!-- PROFIL -->
+
+
+<!-- =========================================================
+     PROFIL
+========================================================= -->
 
 <section class="section">
 
-<h2 class="section-title">👤 Mon profil</h2>
+<h2 class="section-title">
+👤 Mon profil
+</h2>
 
-<div class="profile-box" id="profileBox">
+<div
+class="profile-box"
+id="profileBox">
 
 <div class="profile-grid">
 
 <div class="profile-stat">
-<div class="profile-label">🏆 Niveau</div>
-<div class="profile-value" id="profileLevel">1</div>
+
+<div class="profile-label">
+🏆 Niveau
 </div>
 
-<div class="profile-stat">
-<div class="profile-label">🔥 Meilleure série</div>
-<div class="profile-value" id="profileLongestStreak">0 jour</div>
+<div
+class="profile-value"
+id="profileLevel">
+1
 </div>
 
+</div>
+
+
 <div class="profile-stat">
-<div class="profile-label">👥 Code parrainage</div>
-<div class="profile-value" id="profileReferralCode">-</div>
+
+<div class="profile-label">
+⚡ XP total
+</div>
+
+<div
+class="profile-value"
+id="profileXp">
+0
+</div>
+
+</div>
+
+
+<div class="profile-stat">
+
+<div class="profile-label">
+🔥 Meilleure série
+</div>
+
+<div
+class="profile-value"
+id="profileLongestStreak">
+0 jour
+</div>
+
+</div>
+
+
+<div class="profile-stat">
+
+<div class="profile-label">
+👥 Code parrainage
+</div>
+
+<div
+class="profile-value"
+id="profileReferralCode">
+-
+</div>
+
 </div>
 
 </div>
@@ -1027,1269 +2774,16 @@ Suis ici tes demandes de paiement.
 
 </section>
 
-<!-- ADMINISTRATION -->
 
-<section class="section" id="adminSection">
+
+<!-- =========================================================
+     ADMIN
+========================================================= -->
+
+<section
+class="section"
+id="adminSection">
 
 <div class="admin-panel">
 
-<div class="admin-heading">
-<div>
-<h2 class="section-title">⚙️ Administration Loot Up</h2>
-<div class="section-subtitle">
-Tableau de bord réservé à l'administrateur.
-</div>
-</div>
-
-<div class="admin-badge">ADMIN</div>
-</div>
-
-<div class="admin-stats">
-
-<div class="stat-card">
-<div class="stat-label">👥 Utilisateurs</div>
-<div class="stat-value" id="adminUsers">0</div>
-</div>
-
-<div class="stat-card">
-<div class="stat-label">🟢 LOOTIX disponibles</div>
-<div class="stat-value" id="adminAvailable">0</div>
-</div>
-
-<div class="stat-card">
-<div class="stat-label">🟠 LOOTIX en attente</div>
-<div class="stat-value" id="adminPendingLootix">0</div>
-</div>
-
-<div class="stat-card">
-<div class="stat-label">💸 Retraits en attente</div>
-<div class="stat-value" id="adminPendingWithdrawals">0</div>
-</div>
-
-<div class="stat-card">
-<div class="stat-label">💶 À payer</div>
-<div class="stat-value" id="adminToPay">0,00 €</div>
-</div>
-
-<div class="stat-card">
-<div class="stat-label">💰 Revenus partenaires</div>
-<div class="stat-value" id="adminRevenue">0,00 €</div>
-</div>
-
-<div class="stat-card">
-<div class="stat-label">📈 Marge plateforme</div>
-<div class="stat-value" id="adminMargin">0,00 €</div>
-</div>
-
-<div class="stat-card">
-<div class="stat-label">🎯 Offres actives</div>
-<div class="stat-value" id="adminOffers">0</div>
-</div>
-
-</div>
-
-<h3 class="admin-subtitle">💸 Demandes de retrait</h3>
-
-<div id="adminWithdrawals">
-<div class="empty">Chargement...</div>
-</div>
-
-</div>
-
-</section>
-
-<footer>
-LOOT UP — 100 LOOTIX = 1 €<br>
-Les récompenses dépendent des conditions et de la validation de chaque mission.
-</footer>
-
-</main>
-
-<!-- AUTH -->
-
-<div class="modal-overlay" id="authModal">
-
-<div class="modal">
-
-<button class="close-modal" id="closeAuth">×</button>
-
-<h2>Bienvenue sur LOOT UP</h2>
-
-<div class="modal-subtitle">
-Crée ton compte et commence à faire monter ta cagnotte.
-</div>
-
-<div class="auth-tabs">
-<button class="auth-tab active" data-tab="signup">Créer un compte</button>
-<button class="auth-tab" data-tab="login">Se connecter</button>
-</div>
-
-<form class="auth-form active" id="signupForm">
-
-<label>Adresse e-mail</label>
-<input id="signupEmail" type="email" required>
-
-<label>Mot de passe</label>
-<input id="signupPassword" type="password" minlength="6" required>
-
-<label>Confirme ton mot de passe</label>
-<input id="signupConfirm" type="password" minlength="6" required>
-
-<button class="auth-submit" id="signupSubmit" type="submit">
-Créer mon compte
-</button>
-
-</form>
-
-<form class="auth-form" id="loginForm">
-
-<label>Adresse e-mail</label>
-<input id="loginEmail" type="email" required>
-
-<label>Mot de passe</label>
-<input id="loginPassword" type="password" required>
-
-<button class="auth-submit" id="loginSubmit" type="submit">
-Se connecter
-</button>
-
-</form>
-
-<div class="message" id="authMessage"></div>
-
-</div>
-</div>
-
-<!-- RETRAIT -->
-
-<div class="modal-overlay" id="withdrawModal">
-
-<div class="modal">
-
-<button class="close-modal" id="closeWithdraw">×</button>
-
-<h2>💸 Retirer mes gains</h2>
-
-<div class="modal-subtitle">
-Transforme tes LOOTIX disponibles en paiement PayPal.
-</div>
-
-<div class="withdrawal-summary">
-
-<div class="info">Disponible</div>
-
-<div class="withdrawal-preview" id="withdrawAvailable">
-0 LOOTIX
-</div>
-
-<div id="withdrawAvailableEuro">
-0,00 €
-</div>
-
-</div>
-
-<form id="withdrawForm">
-
-<label>Nombre de LOOTIX à retirer</label>
-
-<input
-id="withdrawAmount"
-type="number"
-min="500"
-step="1"
-placeholder="Exemple : 500"
-required>
-
-<div class="info" id="withdrawConversion">
-Minimum : 500 LOOTIX = 5 €
-</div>
-
-<br>
-
-<label>Adresse e-mail PayPal</label>
-
-<input
-id="paypalEmail"
-type="email"
-placeholder="tonadresse@email.com"
-required>
-
-<button class="auth-submit" id="withdrawSubmit" type="submit">
-Demander le retrait
-</button>
-
-</form>
-
-<div class="message" id="withdrawMessage"></div>
-
-</div>
-</div>
-
-<script>
-
-const SUPABASE_URL =
-"https://dvvjujkpnpzerbjxjjsy.supabase.co";
-
-const SUPABASE_KEY =
-"sb_publishable_HvsPthhIg2aTGnluSJ9R5w_4InrkBOo";
-
-const supabaseClient =
-window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-
-let currentUser=null;
-let currentProfile=null;
-let withdrawalMinimum=500;
-let isAdmin=false;
-
-/* OUTILS */
-
-const $=id=>document.getElementById(id);
-
-function formatLootix(value){
-return new Intl.NumberFormat("fr-FR").format(Number(value||0));
-}
-
-function lootixToEuro(value){
-return new Intl.NumberFormat("fr-FR",{
-style:"currency",
-currency:"EUR"
-}).format(Number(value||0)/100);
-}
-
-function formatEuro(value){
-return new Intl.NumberFormat("fr-FR",{
-style:"currency",
-currency:"EUR"
-}).format(Number(value||0));
-}
-
-function categoryIcon(category){
-const c=String(category||"").toLowerCase();
-if(c.includes("game"))return"🎮";
-if(c.includes("survey"))return"📝";
-if(c.includes("video"))return"📺";
-if(c.includes("app"))return"📱";
-return"🎯";
-}
-
-function categoryLabel(category){
-const c=String(category||"").toLowerCase();
-if(c.includes("game"))return"Jeu";
-if(c.includes("survey"))return"Sondage";
-if(c.includes("video"))return"Vidéo";
-if(c.includes("app"))return"Application";
-return"Mission";
-}
-
-function statusLabel(status){
-const map={
-pending:"En attente",
-processing:"En traitement",
-paid:"Payé",
-rejected:"Refusé",
-cancelled:"Annulé"
-};
-return map[status]||status;
-}
-
-function statusClass(status){
-return "status status-"+status;
-}
-
-/* AUTH */
-
-function openAuth(tab="signup"){
-$("authModal").style.display="flex";
-switchAuth(tab);
-}
-
-function closeAuth(){
-$("authModal").style.display="none";
-$("authMessage").textContent="";
-}
-
-function switchAuth(tabName){
-document.querySelectorAll(".auth-tab").forEach(tab=>{
-tab.classList.toggle("active",tab.dataset.tab===tabName);
-});
-document.querySelectorAll(".auth-form").forEach(form=>{
-form.classList.toggle("active",form.id===tabName+"Form");
-});
-}
-
-$("closeAuth").onclick=closeAuth;
-$("loginButton").onclick=()=>openAuth("login");
-
-document.querySelectorAll(".auth-tab").forEach(tab=>{
-tab.onclick=()=>switchAuth(tab.dataset.tab);
-});
-
-$("authModal").onclick=e=>{
-if(e.target===$("authModal"))closeAuth();
-};
-
-$("signupForm").addEventListener("submit",async e=>{
-e.preventDefault();
-
-const email=$("signupEmail").value.trim();
-const password=$("signupPassword").value;
-const confirm=$("signupConfirm").value;
-
-if(password!==confirm){
-$("authMessage").className="message error";
-$("authMessage").textContent="Les mots de passe ne correspondent pas.";
-return;
-}
-
-$("signupSubmit").disabled=true;
-$("signupSubmit").textContent="Création...";
-
-const {data,error}=await supabaseClient.auth.signUp({email,password});
-
-$("signupSubmit").disabled=false;
-$("signupSubmit").textContent="Créer mon compte";
-
-if(error){
-$("authMessage").className="message error";
-$("authMessage").textContent=error.message;
-return;
-}
-
-if(data.session){
-currentUser=data.user;
-await applyStoredReferral();
-await refreshUser();
-closeAuth();
-}else{
-$("authMessage").className="message success";
-$("authMessage").textContent=
-"Compte créé. Vérifie ton e-mail pour confirmer ton inscription.";
-}
-});
-
-$("loginForm").addEventListener("submit",async e=>{
-e.preventDefault();
-
-$("loginSubmit").disabled=true;
-$("loginSubmit").textContent="Connexion...";
-
-const {error}=await supabaseClient.auth.signInWithPassword({
-email:$("loginEmail").value.trim(),
-password:$("loginPassword").value
-});
-
-$("loginSubmit").disabled=false;
-$("loginSubmit").textContent="Se connecter";
-
-if(error){
-$("authMessage").className="message error";
-$("authMessage").textContent="Adresse e-mail ou mot de passe incorrect.";
-return;
-}
-
-await applyStoredReferral();
-await refreshUser();
-closeAuth();
-});
-
-$("logoutButton").onclick=async()=>{
-await supabaseClient.auth.signOut();
-currentUser=null;
-currentProfile=null;
-isAdmin=false;
-showLoggedOut();
-};
-
-/* ÉTAT UI */
-
-function showLoggedIn(){
-$("loginButton").style.display="none";
-$("logoutButton").style.display="block";
-$("headerBalance").style.display="block";
-$("topWallet").style.display="block";
-$("historyBox").style.display="block";
-$("profileBox").style.display="block";
-$("withdrawalsBox").style.display="block";
-$("mainCTA").textContent="Découvrir les missions";
-}
-
-function showLoggedOut(){
-$("loginButton").style.display="block";
-$("logoutButton").style.display="none";
-$("headerBalance").style.display="none";
-$("adminButton").style.display="none";
-$("adminSection").style.display="none";
-$("topWallet").style.display="none";
-$("historyBox").style.display="none";
-$("profileBox").style.display="none";
-$("withdrawalsBox").style.display="none";
-$("mainCTA").textContent="Commencer à gagner";
-}
-
-/* PARAMÈTRES */
-
-async function loadSettings(){
-const {data}=await supabaseClient
-.from("app_settings")
-.select("withdrawal_minimum_lootix")
-.eq("id",1)
-.single();
-
-if(data){
-withdrawalMinimum=Number(data.withdrawal_minimum_lootix||500);
-$("withdrawAmount").min=withdrawalMinimum;
-$("withdrawConversion").textContent=
-"Minimum : "+formatLootix(withdrawalMinimum)+
-" LOOTIX = "+lootixToEuro(withdrawalMinimum);
-}
-}
-
-/* PROFIL */
-
-async function loadProfile(){
-if(!currentUser)return;
-
-const {data,error}=await supabaseClient
-.from("profiles")
-.select(`
-id,
-lootix_available,
-lootix_pending,
-level,
-current_streak,
-longest_streak,
-referral_code,
-is_admin
-`)
-.eq("id",currentUser.id)
-.single();
-
-if(error||!data){
-console.error(error);
-return;
-}
-
-currentProfile=data;
-isAdmin=!!data.is_admin;
-
-const available=Number(data.lootix_available||0);
-const pending=Number(data.lootix_pending||0);
-const total=available+pending;
-
-$("walletTotal").textContent=formatLootix(total)+" LOOTIX";
-$("walletEuros").textContent="= "+lootixToEuro(total);
-$("availableLootix").textContent=formatLootix(available)+" LOOTIX";
-$("pendingLootix").textContent=formatLootix(pending)+" LOOTIX";
-$("headerBalance").textContent="🪙 "+formatLootix(available)+" LOOTIX";
-
-$("walletStreak").textContent=
-data.current_streak+(data.current_streak===1?" jour":" jours");
-
-$("streakNumber").textContent=
-data.current_streak+(data.current_streak===1?" jour":" jours");
-
-$("profileLevel").textContent=data.level;
-$("profileLongestStreak").textContent=
-data.longest_streak+(data.longest_streak===1?" jour":" jours");
-
-$("profileReferralCode").textContent=data.referral_code||"-";
-
-$("withdrawAvailable").textContent=
-formatLootix(available)+" LOOTIX";
-
-$("withdrawAvailableEuro").textContent=
-lootixToEuro(available);
-
-updateStreakVisual(data.current_streak);
-buildReferralLink(data.referral_code);
-
-$("adminButton").style.display=isAdmin?"block":"none";
-
-if(isAdmin){
-await loadAdminDashboard();
-}
-}
-
-/* CTA */
-
-$("mainCTA").onclick=()=>{
-if(!currentUser){
-openAuth("signup");
-return;
-}
-$("offersSection").scrollIntoView({behavior:"smooth"});
-};
-
-/* OFFRES */
-
-async function loadOffers(filter=null){
-
-$("offersContainer").innerHTML=
-'<div class="loading">Chargement des missions...</div>';
-
-let query=supabaseClient
-.from("offers")
-.select("id,title,description,category,user_reward_lootix,status")
-.eq("status","active")
-.order("user_reward_lootix",{ascending:false});
-
-if(filter){
-query=query.ilike("category","%"+filter+"%");
-}
-
-const {data,error}=await query;
-
-$("offersContainer").innerHTML="";
-
-if(error){
-$("offersContainer").innerHTML=
-'<div class="empty">Impossible de charger les missions.</div>';
-return;
-}
-
-if(!data||!data.length){
-$("offersContainer").innerHTML=
-'<div class="empty">Aucune mission disponible pour le moment.</div>';
-return;
-}
-
-data.forEach(offer=>{
-
-const card=document.createElement("div");
-card.className="offer";
-
-card.innerHTML=`
-<div class="offer-icon">${categoryIcon(offer.category)}</div>
-<div class="offer-category">${categoryLabel(offer.category)}</div>
-<h3></h3>
-<p></p>
-<div class="offer-reward">
-+${formatLootix(offer.user_reward_lootix)} LOOTIX
-</div>
-<div class="offer-euro">
-= ${lootixToEuro(offer.user_reward_lootix)}
-</div>
-<button>Commencer la mission</button>
-`;
-
-card.querySelector("h3").textContent=offer.title;
-card.querySelector("p").textContent=
-offer.description||"Accomplis cette mission pour gagner des LOOTIX.";
-
-card.querySelector("button").onclick=()=>{
-if(!currentUser){
-openAuth("signup");
-return;
-}
-alert("La mission réelle sera ouverte lorsque Torox sera connecté.");
-};
-
-$("offersContainer").appendChild(card);
-});
-}
-
-document.querySelectorAll("[data-filter]").forEach(button=>{
-button.onclick=()=>{
-const filter=button.dataset.filter;
-
-$("offersTitle").textContent=
-filter==="game"?"🎮 Missions de jeux":
-filter==="video"?"📺 Vidéos disponibles":
-"📝 Sondages disponibles";
-
-loadOffers(filter);
-$("offersSection").scrollIntoView({behavior:"smooth"});
-};
-});
-
-/* BON PLAN */
-
-async function loadDailyDeal(){
-
-const {data,error}=await supabaseClient.rpc("get_daily_deal");
-
-if(error||!data||!data.length)return;
-
-const deal=data[0];
-
-$("dailyDeal").style.display="block";
-$("dailyIcon").textContent=categoryIcon(deal.category);
-$("dailyTitle").textContent=deal.title;
-$("dailyDescription").textContent=
-deal.description||"Notre sélection du jour.";
-
-$("dailyReward").textContent=
-"+"+formatLootix(deal.user_reward_lootix)+" LOOTIX";
-
-$("dailyEuros").textContent=
-"= "+lootixToEuro(deal.user_reward_lootix);
-}
-
-$("dailyButton").onclick=()=>{
-if(!currentUser){
-openAuth("signup");
-return;
-}
-alert("Cette offre sera activée lorsque Torox sera connecté.");
-};
-
-/* HISTORIQUE */
-
-async function loadHistory(){
-if(!currentUser)return;
-
-const {data,error}=await supabaseClient
-.from("lootix_transactions")
-.select("amount,status,description,created_at")
-.eq("user_id",currentUser.id)
-.order("created_at",{ascending:false})
-.limit(30);
-
-$("historyList").innerHTML="";
-
-if(error||!data||!data.length){
-$("historyList").innerHTML='<div class="empty">Aucun gain pour le moment.</div>';
-return;
-}
-
-data.forEach(t=>{
-const line=document.createElement("div");
-line.className="history-item";
-
-line.innerHTML=`
-<div>
-<div class="item-title"></div>
-<div class="item-meta"></div>
-<div class="item-meta"></div>
-</div>
-<div class="item-amount"></div>
-`;
-
-line.querySelector(".item-title").textContent=
-t.description||"Transaction Loot Up";
-
-const metas=line.querySelectorAll(".item-meta");
-metas[0].textContent=new Date(t.created_at).toLocaleString("fr-FR");
-metas[1].textContent=
-t.status==="confirmed"?"✓ Confirmé":
-t.status==="pending"?"⏳ En attente":
-t.status==="withdrawal"?"💸 Retrait":
-t.status;
-
-line.querySelector(".item-amount").textContent=
-(Number(t.amount)>=0?"+":"")+
-formatLootix(t.amount)+" LOOTIX";
-
-$("historyList").appendChild(line);
-});
-}
-
-/* DÉFIS */
-
-async function loadChallenges(){
-
-const {data,error}=
-await supabaseClient.rpc("get_daily_challenge_progress");
-
-if(error||!data||!data.length)return;
-
-const info=data[0];
-const completed=Number(info.completed_count||0);
-
-$("challengeCount").textContent=completed+" / 3";
-$("challengeProgress").style.width=(completed/3*100)+"%";
-
-setChallenge("challengeGame",info.game_done);
-setChallenge("challengeVideo",info.video_done);
-setChallenge("challengeSurvey",info.survey_done);
-
-$("challengeBonus").textContent=
-"+"+formatLootix(info.bonus_lootix)+" LOOTIX";
-
-$("challengeBonusEuro").textContent=
-"= "+lootixToEuro(info.bonus_lootix);
-
-$("claimBonus").style.display=
-currentUser&&completed===3&&!info.bonus_claimed
-?"inline-block":"none";
-}
-
-function setChallenge(id,done){
-const element=$(id);
-element.classList.toggle("done",!!done);
-element.querySelector(".challenge-status").textContent=
-done?"✓ Terminé":"À faire";
-}
-
-$("claimBonus").onclick=async()=>{
-
-const {data,error}=
-await supabaseClient.rpc("claim_daily_challenge_bonus");
-
-if(error){
-alert("Le bonus n'est pas encore disponible.");
-return;
-}
-
-alert("🎉 +"+formatLootix(data)+" LOOTIX !");
-await refreshUser();
-};
-
-/* SÉRIE */
-
-function updateStreakVisual(value){
-const displayed=Math.min(Number(value||0),7);
-
-document.querySelectorAll(".streak-day").forEach(day=>{
-day.classList.toggle(
-"active",
-Number(day.dataset.streak)<=displayed
-);
-});
-}
-
-$("checkinButton").onclick=async()=>{
-
-if(!currentUser){
-openAuth("login");
-return;
-}
-
-const {data,error}=await supabaseClient.rpc("claim_daily_checkin");
-
-if(error){
-alert("Impossible de valider la journée.");
-return;
-}
-
-if(data&&data.length){
-const r=data[0];
-
-alert(
-r.already_claimed
-?"Ta journée est déjà validée aujourd'hui 🔥"
-:"🔥 Série validée : "+r.current_streak+" jour(s) !"
-);
-}
-
-await refreshUser();
-};
-
-/* PARRAINAGE */
-
-function buildReferralLink(code){
-if(!code)return;
-
-const link=
-window.location.origin+
-window.location.pathname+
-"?ref="+encodeURIComponent(code);
-
-$("referralLink").textContent=link;
-$("referralLink").dataset.link=link;
-}
-
-$("copyReferral").onclick=async()=>{
-
-const link=$("referralLink").dataset.link;
-
-if(!link){
-openAuth("login");
-return;
-}
-
-await navigator.clipboard.writeText(link);
-alert("Lien de parrainage copié !");
-};
-
-$("goReferral").onclick=()=>{
-
-if(!currentUser){
-openAuth("signup");
-return;
-}
-
-$("referralSection").scrollIntoView({behavior:"smooth"});
-};
-
-async function loadReferralSummary(){
-
-if(!currentUser)return;
-
-const {data,error}=
-await supabaseClient.rpc("get_referral_summary");
-
-if(error||!data||!data.length)return;
-
-const item=data[0];
-
-$("referralCount").textContent=item.active_referrals;
-$("referralPending").textContent=
-formatLootix(item.pending_lootix)+" LOOTIX";
-
-$("referralConfirmed").textContent=
-formatLootix(item.confirmed_lootix)+" LOOTIX";
-}
-
-function captureReferral(){
-const code=new URLSearchParams(window.location.search).get("ref");
-if(code)localStorage.setItem("lootup_referral",code);
-}
-
-async function applyStoredReferral(){
-const code=localStorage.getItem("lootup_referral");
-
-if(!code||!currentUser)return;
-
-await supabaseClient.rpc("apply_referral_code",{
-p_referral_code:code
-});
-
-localStorage.removeItem("lootup_referral");
-}
-
-/* RETRAITS */
-
-function openWithdraw(){
-if(!currentUser){
-openAuth("login");
-return;
-}
-
-$("withdrawMessage").textContent="";
-$("withdrawModal").style.display="flex";
-}
-
-function closeWithdraw(){
-$("withdrawModal").style.display="none";
-$("withdrawMessage").textContent="";
-}
-
-$("withdrawButton").onclick=openWithdraw;
-$("closeWithdraw").onclick=closeWithdraw;
-
-$("withdrawModal").onclick=e=>{
-if(e.target===$("withdrawModal"))closeWithdraw();
-};
-
-$("withdrawAmount").addEventListener("input",()=>{
-
-const amount=Number($("withdrawAmount").value||0);
-
-if(amount){
-$("withdrawConversion").textContent=
-formatLootix(amount)+" LOOTIX = "+lootixToEuro(amount)+
-" • Minimum "+formatLootix(withdrawalMinimum)+" LOOTIX";
-}else{
-$("withdrawConversion").textContent=
-"Minimum : "+formatLootix(withdrawalMinimum)+
-" LOOTIX = "+lootixToEuro(withdrawalMinimum);
-}
-});
-
-$("withdrawForm").addEventListener("submit",async e=>{
-e.preventDefault();
-
-const amount=Number($("withdrawAmount").value);
-const paypal=$("paypalEmail").value.trim();
-
-if(amount<withdrawalMinimum){
-$("withdrawMessage").className="message error";
-$("withdrawMessage").textContent=
-"Le minimum est de "+formatLootix(withdrawalMinimum)+" LOOTIX.";
-return;
-}
-
-if(!currentProfile||amount>Number(currentProfile.lootix_available||0)){
-$("withdrawMessage").className="message error";
-$("withdrawMessage").textContent=
-"Tu n'as pas assez de LOOTIX disponibles.";
-return;
-}
-
-const confirmation=confirm(
-"Confirmer le retrait de "+
-formatLootix(amount)+" LOOTIX ("+
-lootixToEuro(amount)+") vers "+paypal+" ?"
-);
-
-if(!confirmation)return;
-
-$("withdrawSubmit").disabled=true;
-$("withdrawSubmit").textContent="Création de la demande...";
-
-const {error}=await supabaseClient.rpc("request_withdrawal",{
-p_amount_lootix:amount,
-p_payment_method:"paypal",
-p_payout_destination:paypal
-});
-
-$("withdrawSubmit").disabled=false;
-$("withdrawSubmit").textContent="Demander le retrait";
-
-if(error){
-console.error(error);
-$("withdrawMessage").className="message error";
-$("withdrawMessage").textContent=
-"Impossible de créer le retrait. Vérifie ton solde et le montant.";
-return;
-}
-
-$("withdrawMessage").className="message success";
-$("withdrawMessage").textContent=
-"✓ Demande créée. Ton retrait est maintenant en attente.";
-
-$("withdrawForm").reset();
-
-await refreshUser();
-
-setTimeout(closeWithdraw,1200);
-});
-
-async function loadWithdrawals(){
-
-if(!currentUser)return;
-
-const {data,error}=await supabaseClient
-.from("withdrawals")
-.select(`
-id,
-amount_lootix,
-amount_eur,
-payment_method,
-payout_destination,
-status,
-created_at
-`)
-.eq("user_id",currentUser.id)
-.order("created_at",{ascending:false});
-
-$("withdrawalsList").innerHTML="";
-
-if(error||!data||!data.length){
-$("withdrawalsList").innerHTML=
-'<div class="empty">Aucun retrait pour le moment.</div>';
-return;
-}
-
-data.forEach(w=>{
-
-const line=document.createElement("div");
-line.className="withdrawal-item";
-
-const left=document.createElement("div");
-
-left.innerHTML=`
-<div class="item-title">
-💸 ${formatLootix(w.amount_lootix)} LOOTIX — ${formatEuro(w.amount_eur)}
-</div>
-<div class="item-meta"></div>
-<div class="${statusClass(w.status)}">
-${statusLabel(w.status)}
-</div>
-`;
-
-left.querySelector(".item-meta").textContent=
-new Date(w.created_at).toLocaleString("fr-FR")+
-" • PayPal : "+w.payout_destination;
-
-if(w.status==="pending"){
-
-const cancel=document.createElement("button");
-cancel.className="small-button danger-button";
-cancel.textContent="Annuler la demande";
-
-cancel.onclick=async()=>{
-
-if(!confirm("Annuler ce retrait et récupérer les LOOTIX ?"))return;
-
-const {error}=await supabaseClient.rpc("cancel_withdrawal",{
-p_withdrawal_id:w.id
-});
-
-if(error){
-alert("Impossible d'annuler ce retrait.");
-return;
-}
-
-await refreshUser();
-};
-
-left.appendChild(cancel);
-}
-
-const amount=document.createElement("div");
-amount.className="item-amount";
-amount.textContent=formatEuro(w.amount_eur);
-
-line.append(left,amount);
-$("withdrawalsList").appendChild(line);
-});
-}
-
-/* ADMIN */
-
-$("adminButton").onclick=async()=>{
-
-if(!isAdmin)return;
-
-$("adminSection").style.display="block";
-
-await loadAdminDashboard();
-
-$("adminSection").scrollIntoView({behavior:"smooth"});
-};
-
-async function loadAdminDashboard(){
-
-if(!isAdmin)return;
-
-$("adminSection").style.display="block";
-
-const [dashboard,economics]=await Promise.all([
-supabaseClient.rpc("get_admin_dashboard"),
-supabaseClient.rpc("get_admin_economics")
-]);
-
-if(!dashboard.error&&dashboard.data&&dashboard.data.length){
-
-const d=dashboard.data[0];
-
-$("adminUsers").textContent=formatLootix(d.total_users);
-$("adminAvailable").textContent=
-formatLootix(d.total_lootix_available);
-
-$("adminPendingLootix").textContent=
-formatLootix(d.total_lootix_pending);
-
-$("adminPendingWithdrawals").textContent=
-formatLootix(d.pending_withdrawals);
-
-$("adminToPay").textContent=
-lootixToEuro(d.pending_withdrawals_lootix);
-}
-
-if(!economics.error&&economics.data&&economics.data.length){
-
-const e=economics.data[0];
-
-$("adminRevenue").textContent=
-formatEuro(e.partner_revenue_eur);
-
-$("adminMargin").textContent=
-formatEuro(e.platform_margin_eur);
-
-$("adminOffers").textContent=
-formatLootix(e.active_offers);
-}
-
-await loadAdminWithdrawals();
-}
-
-async function loadAdminWithdrawals(){
-
-if(!isAdmin)return;
-
-const {data,error}=await supabaseClient
-.from("withdrawals")
-.select(`
-id,
-user_id,
-amount_lootix,
-amount_eur,
-payout_destination,
-status,
-created_at
-`)
-.in("status",["pending","processing"])
-.order("created_at",{ascending:true});
-
-$("adminWithdrawals").innerHTML="";
-
-if(error||!data||!data.length){
-$("adminWithdrawals").innerHTML=
-'<div class="empty">Aucun retrait à traiter. 🎉</div>';
-return;
-}
-
-data.forEach(w=>{
-
-const line=document.createElement("div");
-line.className="admin-withdrawal";
-
-const info=document.createElement("div");
-
-info.innerHTML=`
-<div class="item-title">
-${formatLootix(w.amount_lootix)} LOOTIX — ${formatEuro(w.amount_eur)}
-</div>
-<div class="item-meta"></div>
-<div class="${statusClass(w.status)}">
-${statusLabel(w.status)}
-</div>
-`;
-
-info.querySelector(".item-meta").textContent=
-"PayPal : "+w.payout_destination+
-" • "+new Date(w.created_at).toLocaleString("fr-FR");
-
-const actions=document.createElement("div");
-actions.className="admin-actions";
-
-if(w.status==="pending"){
-
-const process=document.createElement("button");
-process.className="process-btn";
-process.textContent="Prendre en charge";
-
-process.onclick=async()=>{
-
-const {error}=await supabaseClient.rpc(
-"admin_process_withdrawal",
-{p_withdrawal_id:w.id}
-);
-
-if(error){
-alert("Erreur lors du traitement.");
-return;
-}
-
-await loadAdminDashboard();
-};
-
-actions.appendChild(process);
-}
-
-const paid=document.createElement("button");
-paid.className="paid-btn";
-paid.textContent="Marquer payé";
-
-paid.onclick=async()=>{
-
-if(!confirm(
-"Confirmer que le paiement PayPal a réellement été effectué ?"
-))return;
-
-const {error}=await supabaseClient.rpc(
-"admin_mark_withdrawal_paid",
-{p_withdrawal_id:w.id}
-);
-
-if(error){
-alert("Impossible de marquer ce retrait comme payé.");
-return;
-}
-
-await refreshUser();
-};
-
-const reject=document.createElement("button");
-reject.className="reject-btn";
-reject.textContent="Refuser";
-
-reject.onclick=async()=>{
-
-const reason=prompt("Motif du refus :");
-
-if(reason===null)return;
-
-const {error}=await supabaseClient.rpc(
-"admin_reject_withdrawal",
-{
-p_withdrawal_id:w.id,
-p_reason:reason||"Retrait refusé"
-}
-);
-
-if(error){
-alert("Impossible de refuser ce retrait.");
-return;
-}
-
-await refreshUser();
-};
-
-actions.append(paid,reject);
-
-line.append(info,actions);
-$("adminWithdrawals").appendChild(line);
-});
-}
-
-/* REFRESH */
-
-async function refreshUser(){
-
-const {data:{user}}=
-await supabaseClient.auth.getUser();
-
-currentUser=user;
-
-if(!currentUser){
-showLoggedOut();
-return;
-}
-
-showLoggedIn();
-
-await loadProfile();
-
-await Promise.all([
-loadHistory(),
-loadChallenges(),
-loadReferralSummary(),
-loadWithdrawals()
-]);
-}
-
-/* INIT */
-
-async function init(){
-
-captureReferral();
-
-await Promise.all([
-loadSettings(),
-loadDailyDeal(),
-loadOffers(),
-loadChallenges()
-]);
-
-const {data:{session}}=
-await supabaseClient.auth.getSession();
-
-if(session&&session.user){
-
-currentUser=session.user;
-
-await applyStoredReferral();
-await refreshUser();
-
-}else{
-showLoggedOut();
-}
-}
-
-supabaseClient.auth.onAuthStateChange(async(event,session)=>{
-
-if(event==="SIGNED_IN"&&session){
-currentUser=session.user;
-await applyStoredReferral();
-await refreshUser();
-}
-
-if(event==="SIGNED_OUT"){
-currentUser=null;
-currentProfile=null;
-isAdmin=false;
-showLoggedOut();
-}
-
-});
-
-init();
-
-</script>
-
-</body>
-</html>
+<div
