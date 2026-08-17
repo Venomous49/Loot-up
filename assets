@@ -1,0 +1,14 @@
+assets/
+└── characters/
+    └── male/
+        └── medium/
+            └── brown/
+                └── male_textured/
+                    ├── 01-debutant.webp
+                    ├── 05-debrouillard.webp
+                    ├── 10-chasseur.webp
+                    ├── 15-hustler.webp
+                    ├── 20-pro.webp
+                    ├── 30-elite.webp
+                    ├── 40-cyber-looter.webp
+                    └── 50-rise-looter.webp
