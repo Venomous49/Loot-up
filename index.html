@@ -6,6 +6,7 @@
 
   <title>LOOT UP — Multiplie les actions. Fais monter tes gains.</title>
 
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -16,24 +17,40 @@
     }
 
     body {
-      font-family: Arial, sans-serif;
+      font-family: Arial, Helvetica, sans-serif;
       background: #0b0b0f;
       color: #ffffff;
       min-height: 100vh;
     }
 
+    button,
+    input {
+      font-family: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    /* =========================
+       HEADER
+    ========================= */
+
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 20px;
       padding: 22px 7%;
       border-bottom: 1px solid #222229;
+      background: rgba(11, 11, 15, 0.96);
     }
 
     .logo {
       font-size: 28px;
       font-weight: 900;
       letter-spacing: -1px;
+      white-space: nowrap;
     }
 
     .logo span {
@@ -46,26 +63,35 @@
       gap: 12px;
     }
 
-    .login,
-    .logout {
+    .header-balance {
+      display: none;
+      color: #b878ff;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .login-button,
+    .logout-button {
       border: 1px solid #444450;
       background: transparent;
       color: white;
       padding: 10px 18px;
       border-radius: 10px;
-      cursor: pointer;
       font-weight: 700;
     }
 
-    .logout {
+    .login-button:hover,
+    .logout-button:hover {
+      background: #19191f;
+    }
+
+    .logout-button {
       display: none;
     }
 
-    .user-balance {
-      display: none;
-      font-weight: 800;
-      color: #b878ff;
-    }
+    /* =========================
+       PAGE
+    ========================= */
 
     main {
       width: 86%;
@@ -79,9 +105,10 @@
     }
 
     .hero h1 {
-      font-size: clamp(42px, 7vw, 78px);
-      line-height: 1;
-      margin-bottom: 20px;
+      font-size: clamp(42px, 7vw, 76px);
+      line-height: 1.02;
+      margin-bottom: 22px;
+      letter-spacing: -2px;
     }
 
     .hero h1 span {
@@ -91,24 +118,29 @@
     .hero p {
       color: #a7a7b2;
       font-size: 19px;
-      margin-bottom: 30px;
+      line-height: 1.6;
+      max-width: 700px;
+      margin: 0 auto 28px;
     }
 
     .cta {
       display: inline-block;
+      border: none;
       background: #9d5cff;
       color: white;
       padding: 15px 28px;
       border-radius: 12px;
-      border: none;
       font-weight: 800;
-      cursor: pointer;
       font-size: 16px;
     }
 
+    .cta:hover {
+      filter: brightness(1.08);
+    }
+
     .conversion {
-      margin: 35px auto 0;
-      display: inline-block;
+      margin: 28px auto 0;
+      display: table;
       padding: 10px 16px;
       border: 1px solid #292932;
       border-radius: 10px;
@@ -116,41 +148,65 @@
       background: #111116;
     }
 
-    .welcome-box {
+    /* =========================
+       CAGNOTTE
+    ========================= */
+
+    .wallet {
       display: none;
-      margin: 0 auto 45px;
-      max-width: 650px;
-      padding: 25px;
-      border-radius: 16px;
+      max-width: 720px;
+      margin: 0 auto 55px;
       background: #111116;
       border: 1px solid #292932;
+      border-radius: 18px;
+      padding: 28px;
       text-align: center;
     }
 
-    .welcome-box h2 {
-      margin-bottom: 10px;
+    .wallet-title {
+      font-size: 22px;
+      margin-bottom: 5px;
     }
 
     .wallet-total {
       color: #b878ff;
-      font-size: 34px;
+      font-size: 38px;
       font-weight: 900;
-      margin: 15px 0 5px;
+      margin-top: 18px;
     }
 
-    .wallet-euro {
+    .wallet-euros {
       color: #a7a7b2;
-      margin-bottom: 15px;
+      margin-top: 5px;
+      margin-bottom: 24px;
     }
 
     .wallet-details {
-      display: flex;
-      justify-content: center;
-      gap: 25px;
-      flex-wrap: wrap;
-      color: #c9c9d3;
-      font-size: 14px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
     }
+
+    .wallet-detail {
+      background: #17171d;
+      border: 1px solid #25252e;
+      padding: 15px 10px;
+      border-radius: 12px;
+    }
+
+    .wallet-detail-label {
+      color: #92929e;
+      font-size: 13px;
+      margin-bottom: 7px;
+    }
+
+    .wallet-detail-value {
+      font-weight: 800;
+    }
+
+    /* =========================
+       MISSIONS
+    ========================= */
 
     .section-title {
       font-size: 25px;
@@ -168,6 +224,12 @@
       border: 1px solid #24242d;
       border-radius: 16px;
       padding: 22px;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .mission:hover {
+      transform: translateY(-3px);
+      border-color: #3a3a47;
     }
 
     .mission-icon {
@@ -201,7 +263,10 @@
       background: #202027;
       color: white;
       font-weight: 700;
-      cursor: pointer;
+    }
+
+    .mission button:hover {
+      background: #2a2a33;
     }
 
     .info {
@@ -209,67 +274,73 @@
       text-align: center;
       color: #777783;
       font-size: 14px;
-      line-height: 1.6;
+      line-height: 1.7;
     }
 
-    /* MODALE */
+    /* =========================
+       MODALE AUTH
+    ========================= */
 
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.75);
+      z-index: 999;
       display: none;
       align-items: center;
       justify-content: center;
       padding: 20px;
-      z-index: 999;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(5px);
     }
 
     .modal {
+      position: relative;
       width: 100%;
-      max-width: 420px;
+      max-width: 430px;
       background: #111116;
-      border: 1px solid #2d2d37;
+      border: 1px solid #30303a;
       border-radius: 18px;
       padding: 28px;
-      position: relative;
-    }
-
-    .modal h2 {
-      margin-bottom: 8px;
-    }
-
-    .modal-subtitle {
-      color: #9999a5;
-      font-size: 14px;
-      margin-bottom: 22px;
+      box-shadow: 0 20px 80px rgba(0,0,0,0.45);
     }
 
     .close-modal {
       position: absolute;
       right: 18px;
-      top: 16px;
+      top: 15px;
+      border: none;
       background: transparent;
       color: #aaaab5;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
+      font-size: 26px;
+    }
+
+    .modal h2 {
+      font-size: 25px;
+      margin-bottom: 8px;
+      padding-right: 30px;
+    }
+
+    .modal-subtitle {
+      color: #9999a5;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 22px;
     }
 
     .auth-tabs {
       display: flex;
       gap: 8px;
-      margin-bottom: 20px;
+      margin-bottom: 22px;
     }
 
     .auth-tab {
       flex: 1;
-      border: 1px solid #30303a;
-      padding: 10px;
+      padding: 11px 8px;
       border-radius: 9px;
+      border: 1px solid #30303a;
       background: transparent;
       color: white;
-      cursor: pointer;
+      font-weight: 700;
     }
 
     .auth-tab.active {
@@ -287,9 +358,9 @@
 
     label {
       display: block;
-      margin-bottom: 7px;
-      font-size: 14px;
       color: #c9c9d3;
+      font-size: 14px;
+      margin-bottom: 7px;
     }
 
     input {
@@ -301,6 +372,7 @@
       background: #0b0b0f;
       color: white;
       outline: none;
+      font-size: 15px;
     }
 
     input:focus {
@@ -309,33 +381,46 @@
 
     .submit-auth {
       width: 100%;
+      padding: 13px;
       border: none;
       border-radius: 10px;
-      padding: 13px;
       background: #9d5cff;
       color: white;
       font-weight: 800;
-      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .submit-auth:disabled {
+      opacity: 0.55;
+      cursor: wait;
     }
 
     .auth-message {
+      min-height: 20px;
       margin-top: 15px;
       font-size: 14px;
       line-height: 1.5;
-      min-height: 20px;
     }
 
-    .success {
-      color: #67e8a5;
+    .message-error {
+      color: #ff7777;
     }
 
-    .error {
-      color: #ff7676;
+    .message-success {
+      color: #69e6a6;
     }
 
-    @media (max-width: 600px) {
+    /* =========================
+       MOBILE
+    ========================= */
+
+    @media (max-width: 700px) {
       header {
-        padding: 18px 5%;
+        padding: 17px 5%;
+      }
+
+      .logo {
+        font-size: 23px;
       }
 
       main {
@@ -343,8 +428,21 @@
         margin-top: 45px;
       }
 
-      .user-balance {
+      .hero h1 {
+        letter-spacing: -1px;
+      }
+
+      .wallet-details {
+        grid-template-columns: 1fr;
+      }
+
+      .header-balance {
         display: none !important;
+      }
+
+      .login-button,
+      .logout-button {
+        padding: 9px 12px;
       }
     }
   </style>
@@ -353,22 +451,33 @@
 <body>
 
 <header>
-  <div class="logo">LOOT <span>UP</span></div>
+
+  <div class="logo">
+    LOOT <span>UP</span>
+  </div>
 
   <div class="header-actions">
-    <div class="user-balance" id="headerBalance"></div>
 
-    <button class="login" id="loginButton">
+    <div class="header-balance" id="headerBalance">
+      0 LOOTIX
+    </div>
+
+    <button class="login-button" id="loginButton">
       Se connecter
     </button>
 
-    <button class="logout" id="logoutButton">
+    <button class="logout-button" id="logoutButton">
       Déconnexion
     </button>
+
   </div>
+
 </header>
 
+
 <main>
+
+  <!-- HERO -->
 
   <section class="hero">
 
@@ -378,14 +487,13 @@
     </h1>
 
     <p>
-      Joue, réponds à des sondages, accomplis des missions et gagne des LOOTIX.
+      Joue, réponds à des sondages, accomplis des missions
+      et gagne des LOOTIX.
     </p>
 
     <button class="cta" id="startButton">
       Commencer à gagner
     </button>
-
-    <br>
 
     <div class="conversion">
       🪙 100 LOOTIX = 1 €
@@ -393,38 +501,58 @@
 
   </section>
 
-  <section class="welcome-box" id="welcomeBox">
 
-    <h2>💰 Ta cagnotte</h2>
+  <!-- CAGNOTTE -->
+
+  <section class="wallet" id="wallet">
+
+    <div class="wallet-title">
+      💰 Ta cagnotte
+    </div>
 
     <div class="wallet-total" id="walletTotal">
       0 LOOTIX
     </div>
 
-    <div class="wallet-euro" id="walletEuro">
+    <div class="wallet-euros" id="walletEuros">
       = 0,00 €
     </div>
 
     <div class="wallet-details">
 
-      <div>
-        🟢 Disponible :
-        <strong id="availableLootix">0 LOOTIX</strong>
+      <div class="wallet-detail">
+        <div class="wallet-detail-label">
+          🟢 Disponible
+        </div>
+        <div class="wallet-detail-value" id="availableLootix">
+          0 LOOTIX
+        </div>
       </div>
 
-      <div>
-        🟠 En attente :
-        <strong id="pendingLootix">0 LOOTIX</strong>
+      <div class="wallet-detail">
+        <div class="wallet-detail-label">
+          🟠 En attente
+        </div>
+        <div class="wallet-detail-value" id="pendingLootix">
+          0 LOOTIX
+        </div>
       </div>
 
-      <div>
-        🔥 Série :
-        <strong id="streakValue">0 jour</strong>
+      <div class="wallet-detail">
+        <div class="wallet-detail-label">
+          🔥 Série actuelle
+        </div>
+        <div class="wallet-detail-value" id="streak">
+          0 jour
+        </div>
       </div>
 
     </div>
 
   </section>
+
+
+  <!-- MISSIONS -->
 
   <section>
 
@@ -435,9 +563,14 @@
     <div class="missions">
 
       <div class="mission">
-        <div class="mission-icon">🎮</div>
 
-        <h3>Joue à un jeu</h3>
+        <div class="mission-icon">
+          🎮
+        </div>
+
+        <h3>
+          Joue à un jeu
+        </h3>
 
         <p>
           Atteins le niveau demandé et récupère ta récompense.
@@ -447,15 +580,22 @@
           +2 500 LOOTIX
         </div>
 
-        <button>
+        <button class="mission-action">
           Voir la mission
         </button>
+
       </div>
 
-      <div class="mission">
-        <div class="mission-icon">📝</div>
 
-        <h3>Réponds à un sondage</h3>
+      <div class="mission">
+
+        <div class="mission-icon">
+          📝
+        </div>
+
+        <h3>
+          Réponds à un sondage
+        </h3>
 
         <p>
           Donne ton avis et gagne des LOOTIX.
@@ -465,15 +605,22 @@
           +800 LOOTIX
         </div>
 
-        <button>
+        <button class="mission-action">
           Voir la mission
         </button>
+
       </div>
 
-      <div class="mission">
-        <div class="mission-icon">📺</div>
 
-        <h3>Regarde une vidéo</h3>
+      <div class="mission">
+
+        <div class="mission-icon">
+          📺
+        </div>
+
+        <h3>
+          Regarde une vidéo
+        </h3>
 
         <p>
           Quelques secondes suffisent pour obtenir ta récompense.
@@ -483,15 +630,22 @@
           +50 LOOTIX
         </div>
 
-        <button>
+        <button class="mission-action">
           Voir la mission
         </button>
+
       </div>
 
-      <div class="mission">
-        <div class="mission-icon">👥</div>
 
-        <h3>Invite tes amis</h3>
+      <div class="mission">
+
+        <div class="mission-icon">
+          👥
+        </div>
+
+        <h3>
+          Invite tes amis
+        </h3>
 
         <p>
           Fais découvrir LOOT UP à tes amis et gagne grâce à leur activité.
@@ -501,14 +655,16 @@
           Gains supplémentaires
         </div>
 
-        <button>
+        <button class="mission-action">
           Parrainer
         </button>
+
       </div>
 
     </div>
 
   </section>
+
 
   <div class="info">
     LOOT UP — 100 LOOTIX = 1 €<br>
@@ -518,7 +674,9 @@
 </main>
 
 
-<!-- MODALE CONNEXION / INSCRIPTION -->
+<!-- =========================
+     MODALE INSCRIPTION / CONNEXION
+========================= -->
 
 <div class="modal-overlay" id="authModal">
 
@@ -528,19 +686,30 @@
       ×
     </button>
 
-    <h2>Bienvenue sur LOOT UP</h2>
+    <h2>
+      Bienvenue sur LOOT UP
+    </h2>
 
     <div class="modal-subtitle">
       Crée ton compte et commence à faire monter ta cagnotte.
     </div>
 
+
     <div class="auth-tabs">
 
-      <button class="auth-tab active" data-tab="signup">
+      <button
+        type="button"
+        class="auth-tab active"
+        data-tab="signup"
+      >
         Créer un compte
       </button>
 
-      <button class="auth-tab" data-tab="login">
+      <button
+        type="button"
+        class="auth-tab"
+        data-tab="login"
+      >
         Se connecter
       </button>
 
@@ -559,8 +728,10 @@
         id="signupEmail"
         type="email"
         placeholder="ton@email.fr"
+        autocomplete="email"
         required
       >
+
 
       <label for="signupPassword">
         Mot de passe
@@ -571,8 +742,10 @@
         type="password"
         placeholder="Minimum 6 caractères"
         minlength="6"
+        autocomplete="new-password"
         required
       >
+
 
       <label for="signupPasswordConfirm">
         Confirme ton mot de passe
@@ -583,10 +756,16 @@
         type="password"
         placeholder="Retape ton mot de passe"
         minlength="6"
+        autocomplete="new-password"
         required
       >
 
-      <button class="submit-auth" type="submit">
+
+      <button
+        class="submit-auth"
+        id="signupSubmit"
+        type="submit"
+      >
         Créer mon compte
       </button>
 
@@ -605,8 +784,10 @@
         id="loginEmail"
         type="email"
         placeholder="ton@email.fr"
+        autocomplete="email"
         required
       >
+
 
       <label for="loginPassword">
         Mot de passe
@@ -616,14 +797,21 @@
         id="loginPassword"
         type="password"
         placeholder="Ton mot de passe"
+        autocomplete="current-password"
         required
       >
 
-      <button class="submit-auth" type="submit">
+
+      <button
+        class="submit-auth"
+        id="loginSubmit"
+        type="submit"
+      >
         Se connecter
       </button>
 
     </form>
+
 
     <div class="auth-message" id="authMessage"></div>
 
@@ -633,10 +821,9 @@
 
 
 <script>
-
-  // ==========================================
-  // SUPABASE
-  // ==========================================
+  /* =========================================
+     CONFIGURATION SUPABASE
+  ========================================= */
 
   const SUPABASE_URL =
     "https://dvvjujkpnpzerbjxjjsy.supabase.co";
@@ -650,124 +837,731 @@
   );
 
 
-  // ==========================================
-  // ÉLÉMENTS
-  // ==========================================
+  /* =========================================
+     ÉLÉMENTS DE LA PAGE
+  ========================================= */
 
-  const authModal = document.getElementById("authModal");
-  const loginButton = document.getElementById("loginButton");
-  const logoutButton = document.getElementById("logoutButton");
-  const startButton = document.getElementById("startButton");
-  const closeModal = document.getElementById("closeModal");
+  const authModal =
+    document.getElementById("authModal");
 
-  const signupForm = document.getElementById("signupForm");
-  const loginForm = document.getElementById("loginForm");
+  const closeModalButton =
+    document.getElementById("closeModal");
 
-  const authMessage = document.getElementById("authMessage");
+  const loginButton =
+    document.getElementById("loginButton");
 
-  const welcomeBox = document.getElementById("welcomeBox");
+  const logoutButton =
+    document.getElementById("logoutButton");
 
-  const walletTotal = document.getElementById("walletTotal");
-  const walletEuro = document.getElementById("walletEuro");
-  const availableLootix = document.getElementById("availableLootix");
-  const pendingLootix = document.getElementById("pendingLootix");
-  const streakValue = document.getElementById("streakValue");
+  const startButton =
+    document.getElementById("startButton");
 
-  const headerBalance = document.getElementById("headerBalance");
+  const signupForm =
+    document.getElementById("signupForm");
+
+  const loginForm =
+    document.getElementById("loginForm");
+
+  const signupSubmit =
+    document.getElementById("signupSubmit");
+
+  const loginSubmit =
+    document.getElementById("loginSubmit");
+
+  const authMessage =
+    document.getElementById("authMessage");
+
+  const wallet =
+    document.getElementById("wallet");
+
+  const walletTotal =
+    document.getElementById("walletTotal");
+
+  const walletEuros =
+    document.getElementById("walletEuros");
+
+  const availableLootix =
+    document.getElementById("availableLootix");
+
+  const pendingLootix =
+    document.getElementById("pendingLootix");
+
+  const streak =
+    document.getElementById("streak");
+
+  const headerBalance =
+    document.getElementById("headerBalance");
+
+  const authTabs =
+    document.querySelectorAll(".auth-tab");
+
+  const authForms =
+    document.querySelectorAll(".auth-form");
+
+  const missionButtons =
+    document.querySelectorAll(".mission-action");
 
 
-  // ==========================================
-  // MODALE
-  // ==========================================
+  /* =========================================
+     FONCTIONS D'AFFICHAGE
+  ========================================= */
 
-  function openModal(tab = "signup") {
+  function openAuthModal(tabName = "signup") {
     authModal.style.display = "flex";
-    switchTab(tab);
+    switchAuthTab(tabName);
   }
+
 
   function closeAuthModal() {
     authModal.style.display = "none";
-    authMessage.innerHTML = "";
+    clearAuthMessage();
   }
 
-  loginButton.addEventListener("click", () => {
-    openModal("login");
-  });
 
-  startButton.addEventListener("click", () => {
-    openModal("signup");
-  });
+  function switchAuthTab(tabName) {
 
-  closeModal.addEventListener("click", closeAuthModal);
-
-  authModal.addEventListener("click", (event) => {
-    if (event.target === authModal) {
-      closeAuthModal();
-    }
-  });
-
-
-  // ==========================================
-  // ONGLETS
-  // ==========================================
-
-  const tabs = document.querySelectorAll(".auth-tab");
-  const forms = document.querySelectorAll(".auth-form");
-
-  tabs.forEach(tab => {
-
-    tab.addEventListener("click", () => {
-
-      switchTab(tab.dataset.tab);
-
-    });
-
-  });
-
-  function switchTab(tabName) {
-
-    tabs.forEach(tab => {
-
+    authTabs.forEach((tab) => {
       tab.classList.toggle(
         "active",
         tab.dataset.tab === tabName
       );
-
     });
 
-    forms.forEach(form => {
-
+    authForms.forEach((form) => {
       form.classList.toggle(
         "active",
         form.id === tabName + "Form"
       );
-
     });
 
-    authMessage.innerHTML = "";
+    clearAuthMessage();
+  }
+
+
+  function showAuthMessage(message, type) {
+
+    authMessage.textContent = message;
+
+    authMessage.className =
+      "auth-message " +
+      (type === "success"
+        ? "message-success"
+        : "message-error");
+  }
+
+
+  function clearAuthMessage() {
+    authMessage.textContent = "";
+    authMessage.className = "auth-message";
+  }
+
+
+  function formatLootix(number) {
+    return new Intl.NumberFormat("fr-FR").format(number);
+  }
+
+
+  function formatEurosFromLootix(number) {
+
+    const euros = number / 100;
+
+    return new Intl.NumberFormat(
+      "fr-FR",
+      {
+        style: "currency",
+        currency: "EUR"
+      }
+    ).format(euros);
+  }
+
+
+  /* =========================================
+     MODALE
+  ========================================= */
+
+  startButton.addEventListener("click", () => {
+    openAuthModal("signup");
+  });
+
+
+  loginButton.addEventListener("click", () => {
+    openAuthModal("login");
+  });
+
+
+  closeModalButton.addEventListener("click", () => {
+    closeAuthModal();
+  });
+
+
+  authModal.addEventListener("click", (event) => {
+
+    if (event.target === authModal) {
+      closeAuthModal();
+    }
+
+  });
+
+
+  authTabs.forEach((tab) => {
+
+    tab.addEventListener("click", () => {
+      switchAuthTab(tab.dataset.tab);
+    });
+
+  });
+
+
+  /* =========================================
+     INSCRIPTION
+  ========================================= */
+
+  signupForm.addEventListener(
+    "submit",
+    async (event) => {
+
+      event.preventDefault();
+
+      clearAuthMessage();
+
+      const email =
+        document
+          .getElementById("signupEmail")
+          .value
+          .trim();
+
+      const password =
+        document
+          .getElementById("signupPassword")
+          .value;
+
+      const confirmPassword =
+        document
+          .getElementById("signupPasswordConfirm")
+          .value;
+
+
+      if (password !== confirmPassword) {
+
+        showAuthMessage(
+          "Les deux mots de passe ne correspondent pas.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      if (password.length < 6) {
+
+        showAuthMessage(
+          "Le mot de passe doit contenir au moins 6 caractères.",
+          "error"
+        );
+
+        return;
+      }
+
+
+      signupSubmit.disabled = true;
+      signupSubmit.textContent = "Création du compte...";
+
+
+      try {
+
+        const { data, error } =
+          await supabaseClient.auth.signUp({
+            email: email,
+            password: password
+          });
+
+
+        if (error) {
+          throw error;
+        }
+
+
+        /*
+          Selon la configuration Supabase,
+          l'utilisateur peut devoir confirmer
+          son adresse e-mail avant de se connecter.
+        */
+
+        if (data.session) {
+
+          showAuthMessage(
+            "Compte créé avec succès ! Bienvenue sur LOOT UP.",
+            "success"
+          );
+
+          await updateInterface(data.user);
+
+          setTimeout(() => {
+            closeAuthModal();
+          }, 1000);
+
+        } else {
+
+          showAuthMessage(
+            "Compte créé ! Vérifie maintenant ta boîte e-mail pour confirmer ton inscription.",
+            "success"
+          );
+
+        }
+
+      } catch (error) {
+
+        console.error(error);
+
+        showAuthMessage(
+          translateAuthError(error.message),
+          "error"
+        );
+
+      } finally {
+
+        signupSubmit.disabled = false;
+        signupSubmit.textContent = "Créer mon compte";
+
+      }
+
+    }
+  );
+
+
+  /* =========================================
+     CONNEXION
+  ========================================= */
+
+  loginForm.addEventListener(
+    "submit",
+    async (event) => {
+
+      event.preventDefault();
+
+      clearAuthMessage();
+
+      const email =
+        document
+          .getElementById("loginEmail")
+          .value
+          .trim();
+
+      const password =
+        document
+          .getElementById("loginPassword")
+          .value;
+
+
+      loginSubmit.disabled = true;
+      loginSubmit.textContent = "Connexion...";
+
+
+      try {
+
+        const { data, error } =
+          await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+          });
+
+
+        if (error) {
+          throw error;
+        }
+
+
+        showAuthMessage(
+          "Connexion réussie !",
+          "success"
+        );
+
+
+        await updateInterface(data.user);
+
+
+        setTimeout(() => {
+          closeAuthModal();
+        }, 700);
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        showAuthMessage(
+          translateAuthError(error.message),
+          "error"
+        );
+
+      } finally {
+
+        loginSubmit.disabled = false;
+        loginSubmit.textContent = "Se connecter";
+
+      }
+
+    }
+  );
+
+
+  /* =========================================
+     DÉCONNEXION
+  ========================================= */
+
+  logoutButton.addEventListener(
+    "click",
+    async () => {
+
+      const { error } =
+        await supabaseClient.auth.signOut();
+
+
+      if (error) {
+
+        console.error(error);
+
+        alert(
+          "Impossible de te déconnecter pour le moment."
+        );
+
+        return;
+      }
+
+
+      showLoggedOutInterface();
+
+    }
+  );
+
+
+  /* =========================================
+     RÉCUPÉRATION DU PROFIL LOOT UP
+  ========================================= */
+
+  async function loadProfile(user) {
+
+    if (!user) {
+      return null;
+    }
+
+
+    const { data, error } =
+      await supabaseClient
+        .from("profiles")
+        .select(
+          "lootix_available, lootix_pending, current_streak, level, referral_code"
+        )
+        .eq("id", user.id)
+        .single();
+
+
+    if (error) {
+
+      console.error(
+        "Erreur récupération profil :",
+        error
+      );
+
+      return null;
+    }
+
+
+    return data;
+  }
+
+
+  /* =========================================
+     INTERFACE CONNECTÉE
+  ========================================= */
+
+  async function updateInterface(user) {
+
+    if (!user) {
+
+      showLoggedOutInterface();
+
+      return;
+    }
+
+
+    loginButton.style.display = "none";
+    logoutButton.style.display = "inline-block";
+
+    startButton.textContent = "Découvrir les missions";
+
+    wallet.style.display = "block";
+
+
+    const profile = await loadProfile(user);
+
+
+    if (!profile) {
+
+      walletTotal.textContent = "0 LOOTIX";
+      walletEuros.textContent = "= 0,00 €";
+      availableLootix.textContent = "0 LOOTIX";
+      pendingLootix.textContent = "0 LOOTIX";
+      streak.textContent = "0 jour";
+
+      return;
+    }
+
+
+    const available =
+      Number(profile.lootix_available || 0);
+
+    const pending =
+      Number(profile.lootix_pending || 0);
+
+    const total =
+      available + pending;
+
+    const streakDays =
+      Number(profile.current_streak || 0);
+
+
+    walletTotal.textContent =
+      formatLootix(total) + " LOOTIX";
+
+    walletEuros.textContent =
+      "= " + formatEurosFromLootix(total);
+
+    availableLootix.textContent =
+      formatLootix(available) + " LOOTIX";
+
+    pendingLootix.textContent =
+      formatLootix(pending) + " LOOTIX";
+
+    streak.textContent =
+      streakDays +
+      (streakDays > 1 ? " jours" : " jour");
+
+
+    headerBalance.textContent =
+      "🪙 " +
+      formatLootix(available) +
+      " LOOTIX";
+
+    headerBalance.style.display = "block";
 
   }
 
 
-  // ==========================================
-  // INSCRIPTION
-  // ==========================================
+  /* =========================================
+     INTERFACE DÉCONNECTÉE
+  ========================================= */
 
-  signupForm.addEventListener("submit", async event => {
+  function showLoggedOutInterface() {
 
-    event.preventDefault();
+    loginButton.style.display = "inline-block";
+    logoutButton.style.display = "none";
 
-    const email =
-      document.getElementById("signupEmail").value.trim();
+    headerBalance.style.display = "none";
 
-    const password =
-      document.getElementById("signupPassword").value;
+    wallet.style.display = "none";
 
-    const confirmPassword =
-      document.getElementById("signupPasswordConfirm").value;
+    startButton.textContent =
+      "Commencer à gagner";
+
+  }
 
 
-    if (password !== confirmPassword) {
+  /* =========================================
+     BOUTONS DES MISSIONS
+  ========================================= */
 
-      showAuthMessage(
-        "Les deux mots
+  missionButtons.forEach((button) => {
+
+    button.addEventListener(
+      "click",
+      async () => {
+
+        const {
+          data: { user }
+        } =
+          await supabaseClient.auth.getUser();
+
+
+        if (!user) {
+
+          openAuthModal("signup");
+
+          return;
+        }
+
+
+        alert(
+          "Les premières missions LOOT UP arrivent bientôt."
+        );
+
+      }
+    );
+
+  });
+
+
+  /*
+    Lorsque l'utilisateur est déjà connecté,
+    le bouton principal ne doit plus ouvrir
+    l'inscription.
+  */
+
+  startButton.addEventListener(
+    "click",
+    async (event) => {
+
+      const {
+        data: { user }
+      } =
+        await supabaseClient.auth.getUser();
+
+
+      if (user) {
+
+        event.stopImmediatePropagation();
+
+        document
+          .querySelector(".missions")
+          .scrollIntoView({
+            behavior: "smooth"
+          });
+
+      }
+
+    },
+    true
+  );
+
+
+  /* =========================================
+     TRADUCTION DES ERREURS COURANTES
+  ========================================= */
+
+  function translateAuthError(message) {
+
+    if (!message) {
+      return "Une erreur est survenue.";
+    }
+
+
+    const lower =
+      message.toLowerCase();
+
+
+    if (
+      lower.includes("invalid login credentials")
+    ) {
+
+      return "Adresse e-mail ou mot de passe incorrect.";
+
+    }
+
+
+    if (
+      lower.includes("email not confirmed")
+    ) {
+
+      return "Tu dois d'abord confirmer ton adresse e-mail.";
+
+    }
+
+
+    if (
+      lower.includes("user already registered")
+    ) {
+
+      return "Un compte existe déjà avec cette adresse e-mail.";
+
+    }
+
+
+    if (
+      lower.includes("password")
+    ) {
+
+      return "Le mot de passe choisi n'est pas accepté.";
+
+    }
+
+
+    if (
+      lower.includes("rate limit")
+    ) {
+
+      return "Trop de tentatives. Réessaie dans quelques instants.";
+
+    }
+
+
+    return message;
+  }
+
+
+  /* =========================================
+     ÉTAT DE CONNEXION AU CHARGEMENT
+  ========================================= */
+
+  async function initializeLootUp() {
+
+    const {
+      data: { session }
+    } =
+      await supabaseClient.auth.getSession();
+
+
+    if (session && session.user) {
+
+      await updateInterface(
+        session.user
+      );
+
+    } else {
+
+      showLoggedOutInterface();
+
+    }
+
+  }
+
+
+  /* =========================================
+     CHANGEMENT AUTOMATIQUE DE SESSION
+  ========================================= */
+
+  supabaseClient.auth.onAuthStateChange(
+    async (event, session) => {
+
+      if (
+        event === "SIGNED_IN" &&
+        session &&
+        session.user
+      ) {
+
+        await updateInterface(
+          session.user
+        );
+
+      }
+
+
+      if (event === "SIGNED_OUT") {
+
+        showLoggedOutInterface();
+
+      }
+
+    }
+  );
+
+
+  /* =========================================
+     LANCEMENT
+  ========================================= */
+
+  initializeLootUp();
+
+</script>
+
+</body>
+</html>
