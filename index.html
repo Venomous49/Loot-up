@@ -129,7 +129,9 @@
       background: #111116;
     }
 
-    /* CAGNOTTE */
+    /* ==========================
+       CAGNOTTE
+    ========================== */
 
     .wallet {
       display: none;
@@ -145,6 +147,7 @@
     .wallet-title {
       font-size: 22px;
       margin-bottom: 5px;
+      font-weight: 700;
     }
 
     .wallet-total {
@@ -183,7 +186,71 @@
       font-weight: 800;
     }
 
-    /* MISSIONS */
+    /* ==========================
+       HISTORIQUE
+    ========================== */
+
+    .history-box {
+      display: none;
+      max-width: 720px;
+      margin: -25px auto 55px;
+      background: #111116;
+      border: 1px solid #292932;
+      border-radius: 18px;
+      padding: 28px;
+    }
+
+    .history-title {
+      font-size: 22px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      padding: 17px 0;
+      border-bottom: 1px solid #262630;
+    }
+
+    .history-item:last-child {
+      border-bottom: none;
+    }
+
+    .history-description {
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .history-date {
+      font-size: 13px;
+      color: #888894;
+    }
+
+    .history-status {
+      font-size: 13px;
+      margin-top: 5px;
+    }
+
+    .history-amount {
+      font-weight: 900;
+      color: #b878ff;
+      white-space: nowrap;
+      font-size: 17px;
+    }
+
+    .history-empty {
+      text-align: center;
+      color: #888894;
+      padding: 20px 0;
+    }
+
+    /* ==========================
+       MISSIONS
+    ========================== */
 
     .section-title {
       font-size: 25px;
@@ -244,7 +311,9 @@
       line-height: 1.7;
     }
 
-    /* MODALE */
+    /* ==========================
+       MODALE
+    ========================== */
 
     .modal-overlay {
       position: fixed;
@@ -398,6 +467,10 @@
       .header-balance {
         display: none !important;
       }
+
+      .history-item {
+        align-items: flex-start;
+      }
     }
   </style>
 </head>
@@ -430,7 +503,9 @@
 
 <main>
 
-  <!-- ACCUEIL -->
+  <!-- ==========================
+       ACCUEIL
+  ========================== -->
 
   <section class="hero">
 
@@ -455,7 +530,9 @@
   </section>
 
 
-  <!-- CAGNOTTE -->
+  <!-- ==========================
+       CAGNOTTE
+  ========================== -->
 
   <section class="wallet" id="wallet">
 
@@ -474,6 +551,7 @@
     <div class="wallet-details">
 
       <div class="wallet-detail">
+
         <div class="wallet-detail-label">
           🟢 Disponible
         </div>
@@ -481,9 +559,12 @@
         <div class="wallet-detail-value" id="availableLootix">
           0 LOOTIX
         </div>
+
       </div>
 
+
       <div class="wallet-detail">
+
         <div class="wallet-detail-label">
           🟠 En attente
         </div>
@@ -491,9 +572,12 @@
         <div class="wallet-detail-value" id="pendingLootix">
           0 LOOTIX
         </div>
+
       </div>
 
+
       <div class="wallet-detail">
+
         <div class="wallet-detail-label">
           🔥 Série actuelle
         </div>
@@ -501,6 +585,7 @@
         <div class="wallet-detail-value" id="streak">
           0 jour
         </div>
+
       </div>
 
     </div>
@@ -508,7 +593,24 @@
   </section>
 
 
-  <!-- MISSIONS -->
+  <!-- ==========================
+       HISTORIQUE
+  ========================== -->
+
+  <section class="history-box" id="historyBox">
+
+    <div class="history-title">
+      🧾 Historique de tes gains
+    </div>
+
+    <div id="historyList"></div>
+
+  </section>
+
+
+  <!-- ==========================
+       MISSIONS
+  ========================== -->
 
   <section>
 
@@ -519,9 +621,14 @@
     <div class="missions">
 
       <div class="mission">
-        <div class="mission-icon">🎮</div>
 
-        <h3>Joue à un jeu</h3>
+        <div class="mission-icon">
+          🎮
+        </div>
+
+        <h3>
+          Joue à un jeu
+        </h3>
 
         <p>
           Atteins le niveau demandé et récupère ta récompense.
@@ -534,13 +641,19 @@
         <button class="mission-action">
           Voir la mission
         </button>
+
       </div>
 
 
       <div class="mission">
-        <div class="mission-icon">📝</div>
 
-        <h3>Réponds à un sondage</h3>
+        <div class="mission-icon">
+          📝
+        </div>
+
+        <h3>
+          Réponds à un sondage
+        </h3>
 
         <p>
           Donne ton avis et gagne des LOOTIX.
@@ -553,13 +666,19 @@
         <button class="mission-action">
           Voir la mission
         </button>
+
       </div>
 
 
       <div class="mission">
-        <div class="mission-icon">📺</div>
 
-        <h3>Regarde une vidéo</h3>
+        <div class="mission-icon">
+          📺
+        </div>
+
+        <h3>
+          Regarde une vidéo
+        </h3>
 
         <p>
           Quelques secondes suffisent pour obtenir ta récompense.
@@ -572,13 +691,19 @@
         <button class="mission-action">
           Voir la mission
         </button>
+
       </div>
 
 
       <div class="mission">
-        <div class="mission-icon">👥</div>
 
-        <h3>Invite tes amis</h3>
+        <div class="mission-icon">
+          👥
+        </div>
+
+        <h3>
+          Invite tes amis
+        </h3>
 
         <p>
           Fais découvrir LOOT UP à tes amis et gagne grâce à leur activité.
@@ -591,6 +716,7 @@
         <button class="mission-action">
           Parrainer
         </button>
+
       </div>
 
     </div>
@@ -606,7 +732,9 @@
 </main>
 
 
-<!-- INSCRIPTION / CONNEXION -->
+<!-- ==========================
+     CONNEXION / INSCRIPTION
+========================== -->
 
 <div class="modal-overlay" id="authModal">
 
@@ -659,6 +787,7 @@
         required
       >
 
+
       <label for="signupPassword">
         Mot de passe
       </label>
@@ -672,6 +801,7 @@
         required
       >
 
+
       <label for="signupPasswordConfirm">
         Confirme ton mot de passe
       </label>
@@ -684,6 +814,7 @@
         autocomplete="new-password"
         required
       >
+
 
       <button
         class="submit-auth"
@@ -710,6 +841,7 @@
         required
       >
 
+
       <label for="loginPassword">
         Mot de passe
       </label>
@@ -722,6 +854,7 @@
         required
       >
 
+
       <button
         class="submit-auth"
         id="loginSubmit"
@@ -731,6 +864,7 @@
       </button>
 
     </form>
+
 
     <div class="auth-message" id="authMessage"></div>
 
@@ -751,10 +885,11 @@
   const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_HvsPthhIg2aTGnluSJ9R5w_4InrkBOo";
 
-  const supabaseClient = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
-  );
+  const supabaseClient =
+    window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
 
 
   /* ==============================
@@ -812,6 +947,12 @@
   const headerBalance =
     document.getElementById("headerBalance");
 
+  const historyBox =
+    document.getElementById("historyBox");
+
+  const historyList =
+    document.getElementById("historyList");
+
   const authTabs =
     document.querySelectorAll(".auth-tab");
 
@@ -823,7 +964,36 @@
 
 
   /* ==============================
-     AFFICHAGE
+     OUTILS
+  ============================== */
+
+  function formatLootix(number) {
+
+    return new Intl.NumberFormat(
+      "fr-FR"
+    ).format(number);
+
+  }
+
+
+  function formatEurosFromLootix(number) {
+
+    const euros =
+      Number(number) / 100;
+
+    return new Intl.NumberFormat(
+      "fr-FR",
+      {
+        style: "currency",
+        currency: "EUR"
+      }
+    ).format(euros);
+
+  }
+
+
+  /* ==============================
+     MODALE
   ============================== */
 
   function openAuthModal(tabName = "signup") {
@@ -896,42 +1066,9 @@
   }
 
 
-  function formatLootix(number) {
-
-    return new Intl.NumberFormat(
-      "fr-FR"
-    ).format(number);
-
-  }
-
-
-  function formatEurosFromLootix(number) {
-
-    const euros =
-      number / 100;
-
-    return new Intl.NumberFormat(
-      "fr-FR",
-      {
-        style: "currency",
-        currency: "EUR"
-      }
-    ).format(euros);
-
-  }
-
-
-  /* ==============================
-     MODALE
-  ============================== */
-
   loginButton.addEventListener(
     "click",
-    () => {
-
-      openAuthModal("login");
-
-    }
+    () => openAuthModal("login")
   );
 
 
@@ -946,9 +1083,7 @@
     (event) => {
 
       if (event.target === authModal) {
-
         closeAuthModal();
-
       }
 
     }
@@ -1035,9 +1170,7 @@
           .value;
 
 
-      if (
-        password !== confirmPassword
-      ) {
+      if (password !== confirmPassword) {
 
         showAuthMessage(
           "Les deux mots de passe ne correspondent pas.",
@@ -1049,9 +1182,7 @@
       }
 
 
-      if (
-        password.length < 6
-      ) {
+      if (password.length < 6) {
 
         showAuthMessage(
           "Le mot de passe doit contenir au moins 6 caractères.",
@@ -1082,9 +1213,7 @@
 
 
         if (error) {
-
           throw error;
-
         }
 
 
@@ -1184,9 +1313,7 @@
 
 
         if (error) {
-
           throw error;
-
         }
 
 
@@ -1268,9 +1395,7 @@
   async function loadProfile(user) {
 
     if (!user) {
-
       return null;
-
     }
 
 
@@ -1308,7 +1433,251 @@
 
 
   /* ==============================
-     UTILISATEUR CONNECTÉ
+     HISTORIQUE
+  ============================== */
+
+  async function loadTransactionHistory(user) {
+
+    if (!user) {
+      return;
+    }
+
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from("lootix_transactions")
+        .select(
+          "amount, status, description, transaction_type, created_at"
+        )
+        .eq(
+          "user_id",
+          user.id
+        )
+        .order(
+          "created_at",
+          { ascending: false }
+        )
+        .limit(20);
+
+
+    if (error) {
+
+      console.error(
+        "Erreur historique :",
+        error
+      );
+
+      historyBox.style.display =
+        "none";
+
+      return;
+
+    }
+
+
+    historyList.innerHTML = "";
+
+
+    if (!data || data.length === 0) {
+
+      historyList.innerHTML =
+        '<div class="history-empty">Aucune transaction pour le moment.</div>';
+
+      historyBox.style.display =
+        "block";
+
+      return;
+
+    }
+
+
+    data.forEach(
+      (transaction) => {
+
+        let statusText =
+          "En attente";
+
+        let statusColor =
+          "#ff9b6a";
+
+
+        if (
+          transaction.status ===
+          "confirmed"
+        ) {
+
+          statusText =
+            "✓ Confirmé";
+
+          statusColor =
+            "#69e6a6";
+
+        }
+
+
+        if (
+          transaction.status ===
+          "rejected"
+        ) {
+
+          statusText =
+            "✕ Refusé";
+
+          statusColor =
+            "#ff7777";
+
+        }
+
+
+        if (
+          transaction.status ===
+          "withdrawal"
+        ) {
+
+          statusText =
+            "Retrait";
+
+          statusColor =
+            "#a7a7b2";
+
+        }
+
+
+        const date =
+          new Date(
+            transaction.created_at
+          )
+            .toLocaleString(
+              "fr-FR",
+              {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+              }
+            );
+
+
+        const line =
+          document.createElement(
+            "div"
+          );
+
+
+        line.className =
+          "history-item";
+
+
+        const left =
+          document.createElement(
+            "div"
+          );
+
+
+        const description =
+          document.createElement(
+            "div"
+          );
+
+        description.className =
+          "history-description";
+
+        description.textContent =
+          transaction.description ||
+          "Transaction LOOT UP";
+
+
+        const dateElement =
+          document.createElement(
+            "div"
+          );
+
+        dateElement.className =
+          "history-date";
+
+        dateElement.textContent =
+          date;
+
+
+        const statusElement =
+          document.createElement(
+            "div"
+          );
+
+        statusElement.className =
+          "history-status";
+
+        statusElement.style.color =
+          statusColor;
+
+        statusElement.textContent =
+          statusText;
+
+
+        left.appendChild(
+          description
+        );
+
+        left.appendChild(
+          dateElement
+        );
+
+        left.appendChild(
+          statusElement
+        );
+
+
+        const amount =
+          document.createElement(
+            "div"
+          );
+
+        amount.className =
+          "history-amount";
+
+
+        const transactionAmount =
+          Number(
+            transaction.amount || 0
+          );
+
+
+        amount.textContent =
+          (
+            transactionAmount > 0
+              ? "+"
+              : ""
+          ) +
+          formatLootix(
+            transactionAmount
+          ) +
+          " LOOTIX";
+
+
+        line.appendChild(left);
+
+        line.appendChild(amount);
+
+        historyList.appendChild(
+          line
+        );
+
+      }
+    );
+
+
+    historyBox.style.display =
+      "block";
+
+  }
+
+
+  /* ==============================
+     INTERFACE CONNECTÉE
   ============================== */
 
   async function updateInterface(user) {
@@ -1337,6 +1706,11 @@
 
     const profile =
       await loadProfile(user);
+
+
+    await loadTransactionHistory(
+      user
+    );
 
 
     if (!profile) {
@@ -1390,16 +1764,22 @@
 
     walletEuros.textContent =
       "= " +
-      formatEurosFromLootix(total);
+      formatEurosFromLootix(
+        total
+      );
 
 
     availableLootix.textContent =
-      formatLootix(available) +
+      formatLootix(
+        available
+      ) +
       " LOOTIX";
 
 
     pendingLootix.textContent =
-      formatLootix(pending) +
+      formatLootix(
+        pending
+      ) +
       " LOOTIX";
 
 
@@ -1414,7 +1794,9 @@
 
     headerBalance.textContent =
       "🪙 " +
-      formatLootix(available) +
+      formatLootix(
+        available
+      ) +
       " LOOTIX";
 
 
@@ -1425,7 +1807,7 @@
 
 
   /* ==============================
-     UTILISATEUR DÉCONNECTÉ
+     INTERFACE DÉCONNECTÉE
   ============================== */
 
   function showLoggedOutInterface() {
@@ -1440,6 +1822,9 @@
       "none";
 
     wallet.style.display =
+      "none";
+
+    historyBox.style.display =
       "none";
 
     startButton.textContent =
@@ -1462,12 +1847,16 @@
           const {
             data: { user }
           } =
-            await supabaseClient.auth.getUser();
+            await supabaseClient
+              .auth
+              .getUser();
 
 
           if (!user) {
 
-            openAuthModal("signup");
+            openAuthModal(
+              "signup"
+            );
 
             return;
 
@@ -1560,7 +1949,9 @@
     const {
       data: { session }
     } =
-      await supabaseClient.auth.getSession();
+      await supabaseClient
+        .auth
+        .getSession();
 
 
     if (
@@ -1581,32 +1972,37 @@
   }
 
 
-  supabaseClient.auth.onAuthStateChange(
-    async (event, session) => {
+  supabaseClient
+    .auth
+    .onAuthStateChange(
+      async (
+        event,
+        session
+      ) => {
 
-      if (
-        event === "SIGNED_IN" &&
-        session &&
-        session.user
-      ) {
-
-        await updateInterface(
+        if (
+          event === "SIGNED_IN" &&
+          session &&
           session.user
-        );
+        ) {
+
+          await updateInterface(
+            session.user
+          );
+
+        }
+
+
+        if (
+          event === "SIGNED_OUT"
+        ) {
+
+          showLoggedOutInterface();
+
+        }
 
       }
-
-
-      if (
-        event === "SIGNED_OUT"
-      ) {
-
-        showLoggedOutInterface();
-
-      }
-
-    }
-  );
+    );
 
 
   initializeLootUp();
