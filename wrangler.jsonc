@@ -1,0 +1,9 @@
+{
+  "name": "loot-up",
+  "compatibility_date": "2026-08-17",
+  "assets": {
+    "directory": "./",
+    "not_found_handling": "single-page-application",
+    "html_handling": "auto-trailing-slash"
+  }
+}
