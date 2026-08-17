@@ -1,1341 +1,4095 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta
-name="viewport"
-content="width=device-width,initial-scale=1">
-
-<title>
-RiseLooter
-</title>
+<title>RiseLooter</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-
 :root{
-
---bg:#03070c;
-
---panel:#07111a;
-
---panel2:#0b1620;
-
---line:#1e3040;
-
---purple:#8d3cff;
-
---purple2:#bf82ff;
-
---gold:#ffb32c;
-
---green:#58df87;
-
---red:#ff6e72;
-
---blue:#71b8ff;
-
---muted:#98a3af;
-
+  --bg:#03070c;
+  --panel:#08121b;
+  --panel2:#0c1721;
+  --line:#203141;
+  --purple:#8c3dff;
+  --purple2:#bd7dff;
+  --gold:#ffb52c;
+  --green:#57df87;
+  --red:#ff6d72;
+  --muted:#99a4b0;
 }
 
 *{
-box-sizing:border-box
+  box-sizing:border-box;
 }
 
 html{
-scroll-behavior:smooth
+  scroll-behavior:smooth;
 }
 
 body{
-
-margin:0;
-
-background:
-radial-gradient(
-circle at 55% -10%,
-#111827,
-#04070b 45%
-);
-
-color:white;
-
-font-family:
-Arial,
-Helvetica,
-sans-serif;
-
+  margin:0;
+  background:
+    radial-gradient(circle at 50% -10%,#121a29,#03070b 48%);
+  color:#fff;
+  font-family:Arial,Helvetica,sans-serif;
 }
 
 button,
 input{
-font:inherit
+  font:inherit;
 }
 
 button{
-cursor:pointer
+  cursor:pointer;
 }
 
 .hidden{
-display:none!important
+  display:none!important;
 }
 
 .wrapper{
-
-width:min(
-1500px,
-96%
-);
-
-margin:auto;
-
+  width:min(1500px,96%);
+  margin:auto;
 }
 
 header{
-
-height:66px;
-
-display:flex;
-
-align-items:center;
-
-gap:32px;
-
-border-bottom:
-1px solid #15212c;
-
-position:sticky;
-
-top:0;
-
-background:
-rgba(
-3,
-7,
-12,
-.96
-);
-
-z-index:60;
-
+  height:66px;
+  position:sticky;
+  top:0;
+  z-index:70;
+  display:flex;
+  align-items:center;
+  gap:28px;
+  border-bottom:1px solid #14202b;
+  background:rgba(3,7,12,.96);
+  backdrop-filter:blur(12px);
 }
 
 .logo{
-
-font-size:27px;
-
-font-weight:1000;
-
-font-style:italic;
-
-margin-right:auto;
-
+  margin-right:auto;
+  font-size:27px;
+  font-weight:1000;
+  font-style:italic;
 }
 
 .logo span{
-color:var(--purple)
+  color:var(--purple);
 }
 
 nav{
-
-display:flex;
-
-gap:32px;
-
+  display:flex;
+  gap:28px;
 }
 
 nav button{
-
-background:none;
-
-border:0;
-
-color:#c9ced6;
-
-font-size:12px;
-
-font-weight:800;
-
-padding:23px 0;
-
+  border:0;
+  background:none;
+  color:#c5ccd5;
+  padding:23px 0;
+  font-size:12px;
+  font-weight:850;
 }
 
 nav button:hover{
-color:var(--purple2)
+  color:var(--purple2);
 }
 
 .header-right{
-
-display:flex;
-
-align-items:center;
-
-gap:9px;
-
+  display:flex;
+  align-items:center;
+  gap:8px;
 }
 
 .coin-pill{
-
-border:
-1px solid #29394a;
-
-padding:
-9px 13px;
-
-border-radius:10px;
-
-color:var(--gold);
-
-font-weight:900;
-
+  border:1px solid #29394a;
+  border-radius:10px;
+  padding:9px 13px;
+  color:var(--gold);
+  font-weight:900;
 }
 
 .btn{
-
-border:0;
-
-border-radius:8px;
-
-padding:
-10px 15px;
-
-font-weight:850;
-
-color:white;
-
-background:
-linear-gradient(
-#8535f2,
-#5d19c4
-);
-
+  border:0;
+  color:#fff;
+  padding:10px 15px;
+  border-radius:8px;
+  font-weight:850;
+  background:linear-gradient(#8535f2,#5d19c4);
 }
 
 .btn.dark{
+  background:#121d27;
+  border:1px solid #293a49;
+}
 
-background:#121d27;
-
-border:
-1px solid #283a4a;
-
+.btn.red{
+  background:#752c34;
 }
 
 main{
-padding:15px 0 70px
+  padding:15px 0 70px;
 }
 
 .panel{
-
-background:
-linear-gradient(
-145deg,
-#09131c,
-#040a10
-);
-
-border:
-1px solid var(--line);
-
-border-radius:14px;
-
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:linear-gradient(145deg,#09131c,#040a10);
 }
 
 .dashboard{
-
-display:grid;
-
-grid-template-columns:
-1.16fr
-1fr;
-
-gap:14px;
-
+  display:grid;
+  grid-template-columns:1.15fr 1fr;
+  gap:14px;
 }
 
 .hero{
-
-height:500px;
-
-position:relative;
-
-overflow:hidden;
-
-background:
-radial-gradient(
-circle at 68% 38%,
-#4a3825,
-#1c1913 25%,
-#070b0e 73%
-);
-
+  min-height:505px;
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 68% 38%,#4c3823,#1b1812 28%,#070b0e 73%);
 }
 
 .hero:after{
-
-content:"";
-
-position:absolute;
-
-inset:0;
-
-background:
-linear-gradient(
-90deg,
-rgba(2,5,8,.5),
-transparent 48%,
-rgba(2,5,8,.15)
-);
-
-pointer-events:none
-
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(90deg,rgba(3,6,9,.55),transparent 50%,rgba(3,6,9,.12));
+  pointer-events:none;
 }
 
 .hero-copy{
-
-position:absolute;
-
-left:23px;
-
-top:21px;
-
-z-index:6;
-
+  position:absolute;
+  top:22px;
+  left:23px;
+  z-index:8;
 }
 
 .hero-copy small{
-
-color:#b2b8c0;
-
-font-weight:800
-
+  color:#b3bbc5;
+  font-weight:850;
 }
 
 .level-badge{
-
-display:inline-block;
-
-margin-left:7px;
-
-padding:5px 8px;
-
-border-radius:5px;
-
-background:#7030d6;
-
-font-size:11px;
-
+  display:inline-block;
+  margin-left:7px;
+  padding:5px 8px;
+  border-radius:5px;
+  background:#7131d7;
+  font-size:11px;
 }
 
 .hero-copy h1{
-
-margin:
-10px 0 5px;
-
-font-size:29px;
-
+  margin:10px 0 5px;
+  font-size:29px;
 }
 
 .hero-copy p{
-
-margin:0;
-
-color:#abb3bc;
-
+  margin:0;
+  color:#abb4be;
 }
 
+/* ==========================================================
+   PERSONNAGE
+========================================================== */
 
-/* =========================================================
-   AVATAR
-========================================================= */
-
-.avatar-area{
-
-position:absolute;
-
-left:55%;
-
-bottom:34px;
-
-width:305px;
-
-height:405px;
-
-transform:
-translateX(-50%);
-
-z-index:4;
-
-animation:
-avatarIdle
-5s
-ease-in-out
-infinite;
-
+.avatar-stage{
+  position:absolute;
+  left:57%;
+  bottom:42px;
+  width:315px;
+  height:410px;
+  transform:translateX(-50%);
+  z-index:5;
+  animation:idleBody 5s ease-in-out infinite;
+  transform-origin:50% 100%;
 }
 
-.avatar-area svg{
-
-width:100%;
-
-height:100%;
-
-overflow:visible;
-
-filter:
-drop-shadow(
-0 22px 20px rgba(0,0,0,.5)
-);
-
+.avatar-stage svg{
+  width:100%;
+  height:100%;
+  overflow:visible;
+  filter:drop-shadow(0 22px 20px rgba(0,0,0,.55));
 }
 
-.avatar-head{
-
-transform-box:fill-box;
-
-transform-origin:center bottom;
-
-animation:
-headIdle
-9s
-ease-in-out
-infinite;
-
+.avatar-head-group{
+  transform-box:fill-box;
+  transform-origin:center bottom;
+  animation:idleHead 9s ease-in-out infinite;
 }
 
-@keyframes avatarIdle{
-
-0%,
-100%{
-
-transform:
-translateX(-50%)
-translateY(0)
-rotate(-.15deg);
-
+@keyframes idleBody{
+  0%,100%{
+    transform:translateX(-50%) translateY(0) rotate(-.15deg);
+  }
+  35%{
+    transform:translateX(-50%) translateY(-3px) rotate(.25deg);
+  }
+  70%{
+    transform:translateX(-50%) translateY(0) rotate(-.25deg);
+  }
 }
 
-35%{
-
-transform:
-translateX(-50%)
-translateY(-3px)
-rotate(.25deg);
-
+@keyframes idleHead{
+  0%,20%,100%{transform:rotate(0)}
+  32%,43%{transform:rotate(-2.5deg)}
+  62%,75%{transform:rotate(2.5deg)}
 }
 
-70%{
-
-transform:
-translateX(-50%)
-translateY(0)
-rotate(-.25deg);
-
-}
-
-}
-
-@keyframes headIdle{
-
-0%,
-20%,
-100%{
-transform:rotate(0deg)
-}
-
-32%,
-43%{
-transform:rotate(-2.5deg)
-}
-
-62%,
-75%{
-transform:rotate(2.5deg)
-}
-
-}
-
-
-/* =========================================================
-   NEXT EVOLUTION
-========================================================= */
+/* ==========================================================
+   PROCHAINE ÉVOLUTION
+========================================================== */
 
 .next-evolution{
-
-position:absolute;
-
-left:18px;
-
-bottom:87px;
-
-width:220px;
-
-padding:13px;
-
-background:
-rgba(
-4,
-10,
-16,
-.94
-);
-
-border:
-1px solid #2c4051;
-
-border-radius:10px;
-
-z-index:8;
-
+  position:absolute;
+  left:18px;
+  bottom:90px;
+  width:225px;
+  padding:13px;
+  z-index:9;
+  border:1px solid #2d4051;
+  border-radius:10px;
+  background:rgba(4,10,16,.95);
 }
 
 .next-evolution small{
+  color:#bc72ff;
+  font-weight:900;
+}
 
-color:#ba6eff;
-
-font-weight:900
-
+.next-evolution h3{
+  margin:7px 0;
 }
 
 .next-silhouette{
-
-width:78px;
-
-height:105px;
-
-margin:
-10px auto;
-
-position:relative;
-
-filter:
-brightness(0);
-
-opacity:.92;
-
+  height:100px;
+  margin:8px auto;
+  display:grid;
+  place-items:center;
 }
 
 .next-silhouette svg{
-
-width:100%;
-
-height:100%
-
+  height:100%;
+  filter:brightness(0);
+  opacity:.95;
 }
 
 .hero-track{
-
-position:absolute;
-
-left:24px;
-
-right:24px;
-
-bottom:17px;
-
-display:grid;
-
-grid-template-columns:
-repeat(8,1fr);
-
-z-index:8;
-
+  position:absolute;
+  left:22px;
+  right:22px;
+  bottom:17px;
+  z-index:9;
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
 }
 
 .track-node{
-
-text-align:center;
-
-font-size:10px;
-
-color:#87919c;
-
+  text-align:center;
+  color:#828e9a;
+  font-size:10px;
 }
 
 .track-circle{
-
-margin:
-0 auto 5px;
-
-display:grid;
-
-place-items:center;
-
-width:30px;
-
-height:30px;
-
-border-radius:50%;
-
-border:
-1px solid #4e5b67;
-
-background:#081018;
-
+  width:31px;
+  height:31px;
+  margin:0 auto 5px;
+  display:grid;
+  place-items:center;
+  border:1px solid #4e5d6a;
+  border-radius:50%;
+  background:#081018;
 }
 
 .track-node.unlocked{
-
-color:#ba6eff
-
+  color:#bd70ff;
 }
 
-.track-node.unlocked
-.track-circle{
-
-border-color:#9949ff;
-
-box-shadow:
-0 0 13px
-rgba(
-141,
-60,
-255,
-.45
-);
-
+.track-node.unlocked .track-circle{
+  border-color:#9a49ff;
+  box-shadow:0 0 14px rgba(141,61,255,.45);
 }
 
-
-/* =========================================================
+/* ==========================================================
    PROGRESSION
-========================================================= */
+========================================================== */
 
 .progress{
-
-padding:21px;
-
+  padding:22px;
 }
 
 .progress h3{
-
-font-size:14px;
-
-margin:
-0 0 23px;
-
+  margin:0 0 22px;
+  font-size:14px;
 }
 
 .progress-grid{
-
-display:grid;
-
-grid-template-columns:
-1fr 1fr;
-
-gap:28px;
-
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:30px;
 }
 
 .level-number{
-
-font-size:59px;
-
-line-height:1;
-
-font-weight:1000;
-
-color:#a553ff;
-
-margin:
-8px 0 15px;
-
+  margin:8px 0 16px;
+  font-size:60px;
+  line-height:1;
+  font-weight:1000;
+  color:#a655ff;
 }
 
 .progress-bar{
-
-height:10px;
-
-border-radius:20px;
-
-background:#020508;
-
-overflow:hidden;
-
+  height:10px;
+  overflow:hidden;
+  border-radius:20px;
+  background:#020508;
 }
 
 .progress-bar div{
-
-height:100%;
-
-width:0;
-
-background:
-linear-gradient(
-90deg,
-#6821d9,
-#a95dff
-);
-
-transition:
-width .5s;
-
+  height:100%;
+  width:0;
+  border-radius:20px;
+  background:linear-gradient(90deg,#6821da,#aa5dff);
+  transition:.5s;
 }
 
 .muted{
-color:var(--muted)
+  color:var(--muted);
 }
 
 .progress-stats{
-
-display:grid;
-
-grid-template-columns:
-repeat(3,1fr);
-
-margin-top:22px;
-
-border-top:
-1px solid #182937;
-
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  margin-top:22px;
+  border-top:1px solid #182937;
 }
 
 .pstat{
-
-text-align:center;
-
-padding:
-18px 5px 5px;
-
-border-right:
-1px solid #182937;
-
+  padding:18px 5px 5px;
+  text-align:center;
+  border-right:1px solid #182937;
 }
 
 .pstat:last-child{
-border:0
+  border:0;
 }
 
 .pstat b{
-
-display:block;
-
-font-size:24px;
-
-margin-top:8px;
-
+  display:block;
+  margin-top:8px;
+  font-size:24px;
 }
 
-
-/* =========================================================
+/* ==========================================================
    SECTIONS
-========================================================= */
+========================================================== */
 
 .section{
-
-margin-top:14px;
-
-padding:18px;
-
+  margin-top:14px;
+  padding:18px;
 }
 
 .section h2{
-
-margin:
-0 0 7px;
-
-font-size:20px;
-
+  margin:0 0 6px;
+  font-size:20px;
 }
 
 .section-subtitle{
-
-color:var(--muted);
-
-margin-bottom:17px;
-
+  margin-bottom:17px;
+  color:var(--muted);
 }
 
 .two-cols{
-
-display:grid;
-
-grid-template-columns:
-1fr 1fr;
-
-gap:14px;
-
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
 }
 
+/* ==========================================================
+   DÉFIS
+========================================================== */
+
 .challenge{
-
-display:flex;
-
-align-items:center;
-
-justify-content:space-between;
-
-gap:10px;
-
-border-bottom:
-1px solid #172633;
-
-padding:14px 4px;
-
-cursor:pointer;
-
-transition:.2s;
-
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:14px 5px;
+  border-bottom:1px solid #172633;
+  cursor:pointer;
+  transition:.2s;
 }
 
 .challenge:hover{
-
-padding-left:10px;
-
-color:#c98dff;
-
-}
-
-.challenge:last-child{
-border-bottom:0
+  padding-left:12px;
+  color:#ca8fff;
 }
 
 .challenge-reward{
-
-color:var(--green);
-
-font-weight:900
-
+  color:var(--green);
+  font-weight:900;
 }
 
 .bonus{
+  margin-top:14px;
+  color:#c575ff;
+  font-weight:900;
+}
 
-margin-top:14px;
+/* ==========================================================
+   STREAK
+========================================================== */
 
-color:#c475ff;
-
-font-weight:900;
-
+.streak-center{
+  text-align:center;
 }
 
 .days{
-
-display:flex;
-
-justify-content:center;
-
-gap:13px;
-
-flex-wrap:wrap;
-
-margin:
-22px 0;
-
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:13px;
+  margin:22px 0;
 }
 
 .day-wrap{
-text-align:center
+  text-align:center;
 }
 
 .day{
-
-width:37px;
-
-height:37px;
-
-display:grid;
-
-place-items:center;
-
-border:
-1px solid #364657;
-
-border-radius:50%;
-
+  width:37px;
+  height:37px;
+  display:grid;
+  place-items:center;
+  border:1px solid #364657;
+  border-radius:50%;
 }
 
 .day.on{
-
-border-color:#a64fff;
-
-box-shadow:
-0 0 13px
-rgba(
-141,
-60,
-255,
-.42
-);
-
-}
-
-.streak-center{
-text-align:center
+  border-color:#a64fff;
+  box-shadow:0 0 13px rgba(141,60,255,.42);
 }
 
 .streak-big{
-
-font-size:32px;
-
-font-weight:1000;
-
-color:#a751ff;
-
+  color:#a751ff;
+  font-size:32px;
+  font-weight:1000;
 }
 
-
-/* =========================================================
+/* ==========================================================
    MISSIONS
-========================================================= */
+========================================================== */
 
 .filters{
-
-display:flex;
-
-gap:8px;
-
-flex-wrap:wrap;
-
-margin-bottom:15px;
-
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:15px;
 }
 
 .filter{
-
-background:#101c27;
-
-border:
-1px solid #263848;
-
-color:white;
-
-padding:
-8px 12px;
-
-border-radius:8px;
-
+  border:1px solid #263848;
+  border-radius:8px;
+  background:#101c27;
+  color:#fff;
+  padding:8px 12px;
 }
 
 .filter.active{
-
-background:#7130d5;
-
-border-color:#914cff;
-
+  border-color:#914cff;
+  background:#7130d5;
 }
 
 .mission-grid{
-
-display:grid;
-
-grid-template-columns:
-repeat(
-3,
-1fr
-);
-
-gap:12px;
-
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
 }
 
 .mission{
-
-overflow:hidden;
-
-border:
-1px solid #243646;
-
-border-radius:10px;
-
-background:#071019;
-
+  overflow:hidden;
+  border:1px solid #243646;
+  border-radius:10px;
+  background:#071019;
 }
 
 .mission-image{
-
-height:115px;
-
-display:grid;
-
-place-items:center;
-
-font-size:46px;
-
-background:
-radial-gradient(
-circle,
-#274058,
-#101721
-);
-
+  height:115px;
+  display:grid;
+  place-items:center;
+  font-size:48px;
+  background:
+    radial-gradient(circle,#28435e,#101721);
 }
 
 .mission-body{
-padding:13px
+  padding:13px;
 }
 
 .mission-title{
+  font-size:16px;
+  font-weight:900;
+}
 
-font-size:16px;
-
-font-weight:900;
-
+.mission-description{
+  min-height:38px;
+  margin:6px 0;
+  color:#939eaa;
+  font-size:12px;
 }
 
 .mission-reward{
-
-color:var(--gold);
-
-font-weight:900;
-
-font-size:17px;
-
-margin:
-10px 0;
-
+  margin:10px 0;
+  color:var(--gold);
+  font-size:17px;
+  font-weight:900;
 }
 
-
-/* =========================================================
-   EVOLUTION
-========================================================= */
+/* ==========================================================
+   ÉVOLUTIONS
+========================================================== */
 
 .evolution-grid{
-
-display:grid;
-
-grid-template-columns:
-repeat(8,1fr);
-
-gap:8px;
-
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  gap:8px;
 }
 
 .evolution-card{
-
-height:210px;
-
-position:relative;
-
-overflow:hidden;
-
-border:
-1px solid #263747;
-
-border-radius:10px;
-
-background:
-radial-gradient(
-circle at 50% 35%,
-#1a2632,
-#05090d
-);
-
+  height:215px;
+  position:relative;
+  overflow:hidden;
+  border:1px solid #263747;
+  border-radius:10px;
+  background:
+    radial-gradient(circle at 50% 35%,#1a2632,#05090d);
 }
 
 .evolution-character{
-
-position:absolute;
-
-inset:
-12px 5px 38px;
-
+  position:absolute;
+  inset:10px 5px 42px;
 }
 
-.evolution-character
-svg{
-
-width:100%;
-
-height:100%;
-
+.evolution-character svg{
+  width:100%;
+  height:100%;
 }
 
 .evolution-lock{
-
-position:absolute;
-
-inset:0;
-
-display:flex;
-
-align-items:center;
-
-justify-content:center;
-
-font-size:28px;
-
-background:
-rgba(
-1,
-3,
-5,
-.94
-);
-
-backdrop-filter:
-blur(2px)
-brightness(.1);
-
-z-index:4;
-
+  position:absolute;
+  inset:0;
+  z-index:4;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:28px;
+  background:rgba(1,3,5,.94);
+  backdrop-filter:blur(2px) brightness(.1);
 }
 
-.evolution-card.unlocked
-.evolution-lock{
-
-display:none
-
+.evolution-card.unlocked .evolution-lock{
+  display:none;
 }
 
 .evolution-name{
-
-position:absolute;
-
-left:7px;
-
-right:7px;
-
-bottom:7px;
-
-z-index:5;
-
-font-size:10px;
-
-text-shadow:
-0 2px 5px #000;
-
+  position:absolute;
+  left:7px;
+  right:7px;
+  bottom:7px;
+  z-index:5;
+  font-size:10px;
+  text-shadow:0 2px 5px #000;
 }
 
 .evolution-name b{
-
-font-size:12px
-
+  font-size:12px;
 }
 
-
-/* =========================================================
-   LEADERBOARD
-========================================================= */
+/* ==========================================================
+   CLASSEMENT
+========================================================== */
 
 .leader-row{
-
-display:grid;
-
-grid-template-columns:
-60px
-1fr
-120px
-150px
-130px;
-
-align-items:center;
-
-gap:10px;
-
-padding:
-13px 8px;
-
-border-bottom:
-1px solid #172633;
-
+  display:grid;
+  grid-template-columns:60px 1fr 110px 140px 130px;
+  gap:10px;
+  align-items:center;
+  padding:13px 8px;
+  border-bottom:1px solid #172633;
 }
 
 .leader-row.header{
-
-color:#8e99a5;
-
-font-size:11px;
-
-font-weight:900;
-
+  color:#8e99a5;
+  font-size:11px;
+  font-weight:900;
 }
 
 .rank{
-
-font-size:20px;
-
-font-weight:1000;
-
-color:#b96eff;
-
+  color:#ba6eff;
+  font-size:20px;
+  font-weight:1000;
 }
 
-
-/* =========================================================
-   REFERRAL
-========================================================= */
+/* ==========================================================
+   PARRAINAGE
+========================================================== */
 
 .referral-box{
-
-display:flex;
-
-gap:8px;
-
-margin-top:13px;
-
+  display:flex;
+  gap:8px;
+  margin-top:13px;
 }
 
 .referral-box input{
-
-flex:1;
-
-background:#050a0f;
-
-border:
-1px solid #293b4b;
-
-border-radius:8px;
-
-color:white;
-
-padding:12px;
-
+  flex:1;
+  padding:12px;
+  border:1px solid #293b4b;
+  border-radius:8px;
+  background:#050a0f;
+  color:#fff;
 }
 
+/* ==========================================================
+   RETRAITS
+========================================================== */
 
-/* =========================================================
+.withdraw-row{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 0;
+  border-bottom:1px solid #172633;
+}
+
+/* ==========================================================
    MODALS
-========================================================= */
+========================================================== */
 
 .modal{
-
-position:fixed;
-
-inset:0;
-
-z-index:100;
-
-display:none;
-
-place-items:center;
-
-padding:20px;
-
-background:
-rgba(
-0,
-0,
-0,
-.88
-);
-
+  position:fixed;
+  inset:0;
+  z-index:100;
+  display:none;
+  place-items:center;
+  padding:20px;
+  background:rgba(0,0,0,.88);
 }
 
 .modal.show{
-display:grid
+  display:grid;
 }
 
 .modal-box{
-
-width:min(
-520px,
-96%
-);
-
-max-height:94vh;
-
-overflow:auto;
-
-background:#08121b;
-
-border:
-1px solid #304354;
-
-border-radius:15px;
-
-padding:23px;
-
+  width:min(530px,96%);
+  max-height:95vh;
+  overflow:auto;
+  padding:23px;
+  border:1px solid #304354;
+  border-radius:15px;
+  background:#08121b;
 }
 
 .modal-box h2{
-margin-top:0
+  margin-top:0;
 }
 
 .modal-box input{
-
-width:100%;
-
-padding:11px;
-
-border-radius:8px;
-
-border:
-1px solid #2c3d4c;
-
-background:#050a0f;
-
-color:white;
-
-margin:
-6px 0 13px;
-
+  width:100%;
+  margin:6px 0 13px;
+  padding:11px;
+  border:1px solid #2c3d4c;
+  border-radius:8px;
+  background:#050a0f;
+  color:#fff;
 }
 
-
-/* =========================================================
-   AVATAR CREATOR
-========================================================= */
+/* ==========================================================
+   CRÉATEUR PERSONNAGE
+========================================================== */
 
 .avatar-preview{
-
-height:380px;
-
-display:grid;
-
-place-items:center;
-
-margin:
-10px 0 20px;
-
-border:
-1px solid #243747;
-
-border-radius:12px;
-
-background:
-radial-gradient(
-circle at 50% 35%,
-#344250,
-#10151b 43%,
-#05080b
-);
-
-overflow:hidden;
-
+  height:390px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  margin:10px 0 20px;
+  border:1px solid #243747;
+  border-radius:12px;
+  background:
+    radial-gradient(circle at 50% 35%,#344250,#10151b 43%,#05080b);
 }
 
 .avatar-preview-inner{
-
-width:260px;
-
-height:360px;
-
-animation:
-avatarPreviewIdle
-4.8s
-ease-in-out
-infinite;
-
+  width:275px;
+  height:370px;
+  animation:previewIdle 4.8s ease-in-out infinite;
 }
 
-.avatar-preview-inner
-svg{
-
-width:100%;
-
-height:100%;
-
+.avatar-preview-inner svg{
+  width:100%;
+  height:100%;
 }
 
-@keyframes avatarPreviewIdle{
-
-0%,
-100%{
-transform:translateY(0)
-}
-
-50%{
-transform:translateY(-3px)
-}
-
+@keyframes previewIdle{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-3px)}
 }
 
 .choice-title{
+  margin-top:13px;
+  color:#adb5c0;
+  font-size:12px;
+  font-weight:900;
+}
 
-margin-top:13px;
+.choices{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-top:7px;
+}
 
-font-size:12
+.choice{
+  padding:9px 11px;
+  border:1px solid #304152;
+  border-radius:8px;
+  background:#111c27;
+  color:#fff;
+}
+
+.choice.selected{
+  border-color:#a75aff;
+  box-shadow:0 0 10px rgba(141,61,255,.4);
+}
+
+/* ==========================================================
+   EVOLUTION CINEMATIC
+========================================================== */
+
+.evolution-overlay{
+  position:fixed;
+  inset:0;
+  z-index:200;
+  display:none;
+  justify-content:center;
+  align-items:center;
+  background:#010204;
+}
+
+.evolution-overlay.show{
+  display:flex;
+}
+
+.evolution-scene{
+  text-align:center;
+}
+
+.evo-dark{
+  width:220px;
+  height:320px;
+  margin:auto;
+  filter:brightness(0);
+  animation:reveal 4s forwards;
+}
+
+.evo-dark svg{
+  width:100%;
+  height:100%;
+}
+
+@keyframes reveal{
+  0%{
+    filter:brightness(0);
+    transform:scale(.88);
+  }
+  60%{
+    filter:brightness(0);
+    transform:scale(.98);
+  }
+  82%{
+    filter:brightness(5);
+    transform:scale(1.09);
+  }
+  100%{
+    filter:brightness(1);
+    transform:scale(1);
+  }
+}
+
+@media(max-width:1000px){
+  .dashboard,
+  .two-cols{
+    grid-template-columns:1fr;
+  }
+
+  .evolution-grid{
+    grid-template-columns:repeat(4,1fr);
+  }
+
+  nav{
+    display:none;
+  }
+}
+
+@media(max-width:650px){
+  .mission-grid{
+    grid-template-columns:1fr;
+  }
+
+  .evolution-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .hero-track{
+    display:none;
+  }
+
+  .leader-row{
+    grid-template-columns:45px 1fr 70px;
+  }
+
+  .leader-row > *:nth-child(4),
+  .leader-row > *:nth-child(5){
+    display:none;
+  }
+
+  .coin-pill{
+    display:none;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+<header>
+
+<div class="logo">
+RISE <span>LOOTER</span>
+</div>
+
+<nav>
+<button data-nav="home">ACCUEIL</button>
+<button data-nav="missions">MISSIONS</button>
+<button data-nav="challenges">DÉFIS</button>
+<button data-nav="leaderboard">CLASSEMENT</button>
+<button data-nav="referral">PARRAINAGE</button>
+</nav>
+
+<div class="header-right">
+
+<div class="coin-pill">
+🪙 <span id="headerCoins">0</span> RL Coins
+</div>
+
+<button class="btn" id="withdrawHeader">
+Retirer mes gains
+</button>
+
+<button class="btn dark hidden" id="adminButton">
+Administration
+</button>
+
+<button class="btn dark" id="authButton">
+Connexion
+</button>
+
+</div>
+
+</header>
+
+<main>
+
+<section id="home" class="dashboard">
+
+<div class="panel hero">
+
+<div class="hero-copy">
+<small>
+TON LOOTER
+<span class="level-badge" id="levelBadge">
+NIVEAU 1
+</span>
+</small>
+
+<h1 id="heroTitle">
+LE DÉBUTANT
+</h1>
+
+<p id="heroDescription">
+Pas grand chose, mais la volonté d'y arriver.
+</p>
+</div>
+
+<div class="next-evolution">
+<small>PROCHAINE ÉVOLUTION</small>
+
+<h3 id="nextEvolutionLevel">
+NIVEAU 5
+</h3>
+
+<b id="nextEvolutionTitle">
+LE DÉBROUILLARD
+</b>
+
+<div class="next-silhouette" id="nextSilhouette"></div>
+
+<div class="muted" id="nextEvolutionXP">
+Encore quelques XP avant d'évoluer.
+</div>
+</div>
+
+<div class="avatar-stage" id="mainAvatar"></div>
+
+<div class="hero-track" id="heroTrack"></div>
+
+</div>
+
+<div class="panel progress">
+
+<h3>PROGRESSION</h3>
+
+<div class="progress-grid">
+
+<div>
+
+<small class="muted">
+NIVEAU ACTUEL
+</small>
+
+<div class="level-number" id="currentLevel">
+1
+</div>
+
+<div class="progress-bar">
+<div id="xpBar"></div>
+</div>
+
+<p id="xpProgressText">
+0 / 100 XP
+</p>
+
+<small class="muted">
+XP TOTAL
+</small>
+
+<h2 id="totalXP">
+0 XP
+</h2>
+
+</div>
+
+<div>
+
+<small class="muted">
+PROCHAIN NIVEAU
+</small>
+
+<h3
+id="nextLevelXP"
+style="color:#b96cff">
++100 XP
+</h3>
+
+<div
+class="next-evolution"
+style="position:relative;left:auto;bottom:auto;width:100%;margin-top:18px">
+
+<small>
+PROCHAINE ÉVOLUTION
+</small>
+
+<h3 id="nextEvolutionLevel2">
+NIVEAU 5
+</h3>
+
+<b id="nextEvolutionTitle2">
+LE DÉBROUILLARD
+</b>
+
+<div
+class="next-silhouette"
+id="nextSilhouette2">
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="progress-stats">
+
+<div class="pstat">
+🔥 SÉRIE ACTUELLE
+<b id="currentStreak">
+0 jours
+</b>
+</div>
+
+<div class="pstat">
+👑 MEILLEURE SÉRIE
+<b id="bestStreak">
+0 jours
+</b>
+</div>
+
+<div class="pstat">
+🏆 CLASSEMENT
+<b id="myRank">
+# —
+</b>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<div class="two-cols">
+
+<section id="challenges" class="panel section">
+
+<h2>🎯 Défi du jour</h2>
+
+<div class="section-subtitle">
+Clique sur un défi pour aller directement vers les missions correspondantes.
+</div>
+
+<div class="challenge" data-category="game">
+<span>🎮 Termine une mission de jeu</span>
+<span class="challenge-reward">+40 RL Coins</span>
+</div>
+
+<div class="challenge" data-category="video">
+<span>▶ Regarde une vidéo</span>
+<span class="challenge-reward">+30 RL Coins</span>
+</div>
+
+<div class="challenge" data-category="survey">
+<span>▤ Réponds à un sondage</span>
+<span class="challenge-reward">+30 RL Coins</span>
+</div>
+
+<div class="bonus">
+🎁 RÉCOMPENSE DU JOUR : +100 RL Coins
+</div>
+
+</section>
+
+<section class="panel section streak-center">
+
+<h2>🔥 Ta série</h2>
+
+<div class="section-subtitle">
+Ta série se valide automatiquement à ta première connexion de chaque journée.
+</div>
+
+<div class="days" id="streakDays"></div>
+
+<div class="streak-big" id="streakBig">
+0 jours
+</div>
+
+<div>
+Continue comme ça !
+</div>
+
+</section>
+
+</div>
+
+<section id="missions" class="panel section">
+
+<h2>🎯 Missions</h2>
+
+<div class="section-subtitle">
+Choisis comment tu veux gagner tes RL Coins.
+</div>
+
+<div class="filters">
+
+<button class="filter active" data-filter="all">
+Toutes
+</button>
+
+<button class="filter" data-filter="game">
+🎮 Jeux
+</button>
+
+<button class="filter" data-filter="video">
+▶ Vidéos
+</button>
+
+<button class="filter" data-filter="survey">
+▤ Sondages
+</button>
+
+</div>
+
+<div class="mission-grid" id="missionGrid"></div>
+
+</section>
+
+<section class="panel section">
+
+<h2>⚡ Ton parcours d'évolution</h2>
+
+<div class="section-subtitle">
+Les évolutions non obtenues restent volontairement secrètes.
+</div>
+
+<div class="evolution-grid" id="evolutionGrid"></div>
+
+</section>
+
+<section id="leaderboard" class="panel section">
+
+<h2>🏆 Classement</h2>
+
+<div class="section-subtitle">
+Les Looters qui possèdent le plus d'XP.
+</div>
+
+<div id="leaderboardContent"></div>
+
+</section>
+
+<section id="referral" class="panel section">
+
+<h2>👥 Parrainage</h2>
+
+<div class="section-subtitle">
+Invite tes amis à rejoindre RiseLooter.
+</div>
+
+<div class="referral-box">
+
+<input
+id="referralLink"
+readonly
+value="Connecte-toi pour obtenir ton lien">
+
+<button class="btn" id="copyReferral">
+Copier
+</button>
+
+</div>
+
+</section>
+
+<section id="withdrawals" class="panel section">
+
+<h2>💸 Mes retraits</h2>
+
+<div id="withdrawalsContent">
+Connecte-toi pour consulter tes retraits.
+</div>
+
+</section>
+
+</main>
+
+</div>
+
+<!-- ==========================================================
+     AUTH
+========================================================== -->
+
+<div class="modal" id="authModal">
+
+<div class="modal-box">
+
+<h2>Connexion RiseLooter</h2>
+
+<label>E-mail</label>
+<input
+type="email"
+id="emailInput">
+
+<label>Mot de passe</label>
+<input
+type="password"
+id="passwordInput">
+
+<button
+class="btn"
+id="loginAction">
+Se connecter
+</button>
+
+<button
+class="btn dark"
+id="signupAction">
+Créer mon compte
+</button>
+
+<button
+class="btn dark"
+id="closeAuth">
+Fermer
+</button>
+
+</div>
+
+</div>
+
+<!-- ==========================================================
+     AVATAR CREATOR
+========================================================== -->
+
+<div class="modal" id="avatarModal">
+
+<div class="modal-box">
+
+<h2>🎮 Crée ton Looter</h2>
+
+<div class="section-subtitle">
+Personnalise ton personnage. L'aperçu change instantanément.
+</div>
+
+<div class="avatar-preview">
+<div
+class="avatar-preview-inner"
+id="avatarPreview">
+</div>
+</div>
+
+<div class="choice-title">
+Personnage
+</div>
+
+<div class="choices" id="genderChoices">
+
+<button class="choice selected" data-value="male">
+Homme
+</button>
+
+<button class="choice" data-value="female">
+Femme
+</button>
+
+</div>
+
+<div class="choice-title">
+Teint
+</div>
+
+<div class="choices" id="skinChoices">
+
+<button class="choice" data-value="light">
+Clair
+</button>
+
+<button class="choice" data-value="warm">
+Doré
+</button>
+
+<button class="choice selected" data-value="medium">
+Mat
+</button>
+
+<button class="choice" data-value="deep">
+Foncé
+</button>
+
+<button class="choice" data-value="dark">
+Très foncé
+</button>
+
+</div>
+
+<div class="choice-title">
+Couleur des cheveux
+</div>
+
+<div class="choices" id="hairColorChoices">
+
+<button class="choice" data-value="black">
+Noir
+</button>
+
+<button class="choice selected" data-value="brown">
+Brun
+</button>
+
+<button class="choice" data-value="blond">
+Blond
+</button>
+
+<button class="choice" data-value="red">
+Roux
+</button>
+
+<button class="choice" data-value="purple">
+Violet
+</button>
+
+</div>
+
+<div class="choice-title">
+Coiffure
+</div>
+
+<div class="choices" id="hairStyleChoices"></div>
+
+<br>
+
+<button class="btn" id="saveAvatar">
+Commencer mon aventure
+</button>
+
+</div>
+
+</div>
+
+<!-- ==========================================================
+     WITHDRAW
+========================================================== -->
+
+<div class="modal" id="withdrawModal">
+
+<div class="modal-box">
+
+<h2>💸 Retirer mes gains</h2>
+
+<p>
+Disponible :
+<strong id="withdrawAvailable">
+0 RL Coins
+</strong>
+</p>
+
+<label>Nombre de RL Coins</label>
+
+<input
+type="number"
+id="withdrawAmount"
+min="500">
+
+<label>Adresse PayPal</label>
+
+<input
+type="email"
+id="withdrawPaypal">
+
+<div class="muted">
+Minimum : 500 RL Coins = 5 €
+</div>
+
+<br>
+
+<button class="btn" id="withdrawSubmit">
+Demander le retrait
+</button>
+
+<button class="btn dark" id="withdrawClose">
+Fermer
+</button>
+
+</div>
+
+</div>
+
+<!-- ==========================================================
+     EVOLUTION ANIMATION
+========================================================== -->
+
+<div
+class="evolution-overlay"
+id="evolutionOverlay">
+
+<div class="evolution-scene">
+
+<h3 style="color:#b96cff">
+ÉVOLUTION EN COURS...
+</h3>
+
+<div
+class="evo-dark"
+id="evolutionCharacter">
+</div>
+
+<h1 id="evolutionTitle"></h1>
+
+<p>
+Nouvelle tenue • Nouvel environnement • Nouveau rang
+</p>
+
+<button class="btn" id="closeEvolution">
+Découvrir mon Looter
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+/* ==========================================================
+   SUPABASE
+========================================================== */
+
+const SUPABASE_URL =
+"https://dvvjujkpnpzerbjxjjsy.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_HvsPthhIg2aTGnluSJ9R5w_4InrkBOo";
+
+const sb =
+supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
+
+const $ =
+id =>
+document.getElementById(id);
+
+let currentUser = null;
+
+let currentProfile = null;
+
+let currentFilter = "all";
+
+
+/* ==========================================================
+   ÉVOLUTIONS
+========================================================== */
+
+const stages = [
+
+{
+level:1,
+name:"DÉBUTANT",
+description:"Pas grand chose, mais la volonté d'y arriver."
+},
+
+{
+level:5,
+name:"DÉBROUILLARD",
+description:"Tu commences à prendre confiance."
+},
+
+{
+level:10,
+name:"CHASSEUR",
+description:"Plus agile, plus fort et plus déterminé."
+},
+
+{
+level:15,
+name:"HUSTLER",
+description:"Plus élégant, plus assuré et beaucoup plus charismatique."
+},
+
+{
+level:20,
+name:"PRO",
+description:"Une allure premium et une vraie présence."
+},
+
+{
+level:30,
+name:"ÉLITE",
+description:"Une présence imposante, rare et presque surnaturelle."
+},
+
+{
+level:40,
+name:"CYBER LOOTER",
+description:"Armure technologique avancée et puissance absolue."
+},
+
+{
+level:50,
+name:"RISE LOOTER",
+description:"Forme cybernétique transcendante et surpuissante."
+}
+
+];
+
+
+/* ==========================================================
+   AVATAR OPTIONS
+========================================================== */
+
+const maleHair = [
+
+["male_textured","Dégradé texturé"],
+
+["male_medium","Mi-long moderne"],
+
+["male_curly","Bouclé moderne"],
+
+["male_undercut","Undercut"],
+
+["male_short","Court stylé"]
+
+];
+
+
+const femaleHair = [
+
+["female_long","Longs lisses"],
+
+["female_wavy","Longs ondulés"],
+
+["female_bob","Carré moderne"],
+
+["female_ponytail","Attache stylée"],
+
+["female_curly","Boucles volumineuses"]
+
+];
+
+
+const skinColors = {
+
+light:"#efd0ba",
+
+warm:"#dba57f",
+
+medium:"#b87d59",
+
+deep:"#815037",
+
+dark:"#54301f"
+
+};
+
+
+const hairColors = {
+
+black:"#151313",
+
+brown:"#3d261d",
+
+blond:"#b78c53",
+
+red:"#7a3523",
+
+purple:"#603485"
+
+};
+
+
+let avatarDraft = {
+
+gender:"male",
+
+skin:"medium",
+
+hairColor:"brown",
+
+hairStyle:"male_textured"
+
+};
+
+
+/* ==========================================================
+   SVG AVATAR
+========================================================== */
+
+function avatarSVG(
+options = {},
+stage = 1
+){
+
+const gender =
+options.gender || "male";
+
+const skin =
+skinColors[
+options.skin || "medium"
+];
+
+const hair =
+hairColors[
+options.hairColor || "brown"
+];
+
+const hairStyle =
+options.hairStyle ||
+(
+gender === "female"
+? "female_long"
+: "male_textured"
+);
+
+
+let clothing="#8a8174";
+
+let pants="#28282b";
+
+let accent="transparent";
+
+let armour=false;
+
+let ultimate=false;
+
+
+if(stage===2){
+
+clothing="#4a4038";
+
+pants="#24262a";
+
+}
+
+if(stage===3){
+
+clothing="#1d2936";
+
+pants="#161c24";
+
+accent="#334c68";
+
+}
+
+if(stage===4){
+
+clothing="#30223b";
+
+pants="#17151c";
+
+accent="#713ca0";
+
+}
+
+if(stage===5){
+
+clothing="#31291d";
+
+pants="#171717";
+
+accent="#c08a32";
+
+}
+
+if(stage===6){
+
+clothing="#241833";
+
+pants="#14131a";
+
+accent="#8d3cff";
+
+}
+
+if(stage===7){
+
+clothing="#142236";
+
+pants="#0c1420";
+
+accent="#6e72ff";
+
+armour=true;
+
+}
+
+if(stage===8){
+
+clothing="#171a36";
+
+pants="#0b0e20";
+
+accent="#c5a4ff";
+
+armour=true;
+
+ultimate=true;
+
+}
+
+
+let hairSVG = "";
+
+
+if(hairStyle==="male_textured"){
+
+hairSVG =
+`<path d="M112 63
+C120 28 177 18 201 49
+C214 66 200 81 198 90
+C177 73 157 75 130 85
+C121 80 116 73 112 63Z"
+fill="${hair}"/>`;
+
+}
+
+
+if(hairStyle==="male_medium"){
+
+hairSVG =
+`<path d="M109 66
+C117 25 178 19 203 50
+L205 116
+C194 92 188 75 169 75
+C147 77 133 91 119 108
+L108 102Z"
+fill="${hair}"/>`;
+
+}
+
+
+if(hairStyle==="male_curly"){
+
+hairSVG =
+`<g fill="${hair}">
+<circle cx="124" cy="60" r="19"/>
+<circle cx="145" cy="44" r="21"/>
+<circle cx="170" cy="43" r="22"/>
+<circle cx="193" cy="58" r="20"/>
+<circle cx="124" cy="83" r="17"/>
+<circle cx="191" cy="83" r="17"/>
+</g>`;
+
+}
+
+
+if(hairStyle==="male_undercut"){
+
+hairSVG =
+`<path d="M116 76
+C120 42 144 30 178 38
+C194 42 204 52 207 69
+C180 53 151 55 126 78Z"
+fill="${hair}"/>`;
+
+}
+
+
+if(hairStyle==="male_short"){
+
+hairSVG =
+`<path d="M118 69
+C122 40 143 33 168 34
+C190 35 202 46 203 68
+C177 56 146 56 118 69Z"
+fill="${hair}"/>`;
+
+}
+
+
+if(hairStyle==="female_long"){
+
+hairSVG =
+`<path d="M107 67
+C115 22 184 14 211 57
+L215 173
+C199 158 195 118 192 83
+C171 71 143 73 124 88
+C122 127 118 157 105 177Z"
+fill="${hair}"/>`;
+
+}
+
+
+if(hairStyle==="female_wavy"){
+
+hairSVG =
+`<path d="M104 65
+C112 22 187 13 214 59
+C210 88 221 107 215 135
+C208 166 222 185 207 208
+C195 183 199 157 193 134
+C187 111 193 90 180 78
+C155 72 134 76 121 91
+C115 116 122 139 113 162
+C104 185 111 200 98 211
+C92 178 101 147 101 119Z"
+fill="${hair}"/>`;
+
+}
+
+
+if(hairStyle==="female_bob"){
+
+hairSVG =
+`<path d="M107 69
+C114 21 186 16 211 59
+L207 139
+C192 125 193 101 189 82
+C169 70 142 73 122 89
+L117 142
+C105 126 103 99 107 69Z"
+fill="${hair}"/>`;
+
+}
+
+
+if(hairStyle==="female_ponytail"){
+
+hairSVG =
+`<path d="M111 68
+C118 27 182 17 207 57
+C192 48 171 46 147 53
+C132 59 123 70 120 88Z"
+fill="${hair}"/>
+
+<path d="M198 61
+C236 68 233 125 212 159
+C217 122 211 92 190 78Z"
+fill="${hair}"/>`;
+
+}
+
+
+if(hairStyle==="female_curly"){
+
+hairSVG =
+`<g fill="${hair}">
+<circle cx="117" cy="66" r="24"/>
+<circle cx="137" cy="42" r="24"/>
+<circle cx="165" cy="38" r="25"/>
+<circle cx="192" cy="50" r="24"/>
+<circle cx="207" cy="76" r="23"/>
+<circle cx="110" cy="100" r="21"/>
+<circle cx="211" cy="107" r="22"/>
+<circle cx="112" cy="134" r="19"/>
+<circle cx="207" cy="140" r="19"/>
+</g>`;
+
+}
+
+
+const torsoWidth =
+gender==="female"
+? 116
+: 135;
+
+
+const torsoX =
+160 - torsoWidth/2;
+
+
+const faceMood =
+
+stage===1
+? `
+<path
+d="M145 114 Q160 107 175 114"
+stroke="#713e3e"
+stroke-width="3"
+fill="none"/>
+`
+:
+`
+<path
+d="M144 109 Q160 120 176 109"
+stroke="#713e3e"
+stroke-width="3"
+fill="none"/>
+`;
+
+
+return `
+<svg
+viewBox="0 0 320 430"
+xmlns="http://www.w3.org/2000/svg">
+
+<defs>
+
+<filter id="glow">
+
+<feGaussianBlur
+stdDeviation="8"
+result="blur"/>
+
+<feMerge>
+
+<feMergeNode in="blur"/>
+
+<feMergeNode in="SourceGraphic"/>
+
+</feMerge>
+
+</filter>
+
+</defs>
+
+
+${stage>=4 ? `
+<ellipse
+cx="160"
+cy="230"
+rx="100"
+ry="180"
+fill="${accent}"
+opacity="${stage>=7 ? ".25" : ".12"}"
+filter="url(#glow)"/>
+` : ""}
+
+
+<g class="avatar-head-group">
+
+${ultimate
+? `
+<path
+d="M120 65
+L140 35
+L180 35
+L202 67
+L197 126
+L176 145
+L144 145
+L121 124Z"
+fill="#12172e"
+stroke="${accent}"
+stroke-width="4"/>
+
+<path
+d="M137 91
+L157 87
+L155 98
+L137 101Z"
+fill="#c4a5ff"
+filter="url(#glow)"/>
+
+<path
+d="M183 91
+L163 87
+L165 98
+L183 101Z"
+fill="#c4a5ff"
+filter="url(#glow)"/>
+`
+:
+`
+
+${hairSVG}
+
+<ellipse
+cx="160"
+cy="93"
+rx="42"
+ry="52"
+fill="${skin}"/>
+
+<ellipse
+cx="116"
+cy="95"
+rx="6"
+ry="11"
+fill="${skin}"/>
+
+<ellipse
+cx="204"
+cy="95"
+rx="6"
+ry="11"
+fill="${skin}"/>
+
+<path
+d="M137 78 Q146 73 153 78"
+stroke="#3b2924"
+stroke-width="3"
+fill="none"/>
+
+<path
+d="M167 78 Q176 73 183 78"
+stroke="#3b2924"
+stroke-width="3"
+fill="none"/>
+
+<ellipse
+cx="145"
+cy="90"
+rx="8"
+ry="5"
+fill="#f5f2ed"/>
+
+<ellipse
+cx="175"
+cy="90"
+rx="8"
+ry="5"
+fill="#f5f2ed"/>
+
+<circle
+cx="146"
+cy="90"
+r="3.5"
+fill="#25262a"/>
+
+<circle
+cx="174"
+cy="90"
+r="3.5"
+fill="#25262a"/>
+
+<path
+d="M159 92
+L155 104
+L162 105"
+stroke="#805542"
+stroke-width="2"
+fill="none"/>
+
+${faceMood}
+
+`
+
+}
+
+</g>
+
+
+${!ultimate
+? `
+<rect
+x="146"
+y="137"
+width="28"
+height="31"
+rx="8"
+fill="${skin}"/>
+`
+: ""}
+
+
+${armour
+? `
+<path
+d="M${torsoX-15} 164
+L${torsoX+torsoWidth+15} 164
+L${torsoX+torsoWidth+34} 274
+L${torsoX+torsoWidth-2} 294
+L${torsoX+8} 294
+L${torsoX-34} 274Z"
+fill="${clothing}"
+stroke="${accent}"
+stroke-width="4"/>
+
+<path
+d="M140 175
+L160 195
+L180 175
+L174 254
+L160 272
+L146 254Z"
+fill="${accent}"
+opacity=".7"
+filter="url(#glow)"/>
+`
+:
+`
+<path
+d="M${torsoX} 164
+Q160 153 ${torsoX+torsoWidth} 164
+L${torsoX+torsoWidth+12} 280
+Q160 293 ${torsoX-12} 280Z"
+fill="${clothing}"
+stroke="${accent}"
+stroke-width="${stage>=3 ? "2" : "0"}"/>
+`
+
+}
+
+
+<path
+d="M${torsoX} 170
+Q${torsoX-32} 180 ${torsoX-42} 217
+L${torsoX-32} 289
+Q${torsoX-17} 296 ${torsoX-8} 283
+L${torsoX+9} 207Z"
+fill="${armour ? clothing : skin}"
+stroke="${armour ? accent : "none"}"
+stroke-width="${armour ? 3 : 0}"/>
+
+
+<path
+d="M${torsoX+torsoWidth} 170
+Q${torsoX+torsoWidth+32} 180 ${torsoX+torsoWidth+42} 217
+L${torsoX+torsoWidth+32} 289
+Q${torsoX+torsoWidth+17} 296 ${torsoX+torsoWidth+8} 283
+L${torsoX+torsoWidth-9} 207Z"
+fill="${armour ? clothing : skin}"
+stroke="${armour ? accent : "none"}"
+stroke-width="${armour ? 3 : 0}"/>
+
+
+<ellipse
+cx="${torsoX-31}"
+cy="296"
+rx="13"
+ry="17"
+fill="${armour ? clothing : skin}"/>
+
+<ellipse
+cx="${torsoX+torsoWidth+31}"
+cy="296"
+rx="13"
+ry="17"
+fill="${armour ? clothing : skin}"/>
+
+
+<path
+d="M111 279
+L154 279
+L151 389
+L105 389Z"
+fill="${pants}"
+stroke="${accent}"
+stroke-width="${armour ? 2 : 0}"/>
+
+
+<path
+d="M166 279
+L209 279
+L215 389
+L169 389Z"
+fill="${pants}"
+stroke="${accent}"
+stroke-width="${armour ? 2 : 0}"/>
+
+
+<path
+d="M101 381
+L151 381
+L157 411
+L91 411
+Q88 394 101 381Z"
+fill="${armour ? "#111a28" : "#39332f"}"
+stroke="${accent}"
+stroke-width="${armour ? 2 : 0}"/>
+
+
+<path
+d="M169 381
+L219 381
+Q233 394 229 411
+L163 411Z"
+fill="${armour ? "#111a28" : "#39332f"}"
+stroke="${accent}"
+stroke-width="${armour ? 2 : 0}"/>
+
+
+${stage===1
+? `
+<path
+d="M110 186
+L132 179
+L128 204
+L115 208Z"
+fill="#3a3735"/>
+
+<path
+d="M172 228
+L200 218
+L195 246
+L177 246Z"
+fill="#3a3735"/>
+
+<path
+d="M117 320
+L145 310"
+stroke="#5f5550"
+stroke-width="7"/>
+`
+: ""}
+
+
+${stage>=5
+? `
+<path
+d="M123 178
+L160 202
+L197 178"
+stroke="${accent}"
+stroke-width="4"
+fill="none"/>
+
+<circle
+cx="160"
+cy="215"
+r="8"
+fill="${accent}"
+filter="url(#glow)"/>
+`
+: ""}
+
+
+${stage>=8
+? `
+<path
+d="M73 181
+L21 129
+L54 201
+L15 231
+L78 241"
+stroke="#c3a1ff"
+stroke-width="6"
+fill="none"
+filter="url(#glow)"/>
+
+<path
+d="M247 181
+L299 129
+L266 201
+L305 231
+L242 241"
+stroke="#c3a1ff"
+stroke-width="6"
+fill="none"
+filter="url(#glow)"/>
+`
+: ""}
+
+</svg>
+`;
+
+}
+
+
+/* ==========================================================
+   HAIR UI
+========================================================== */
+
+function renderHairChoices(){
+
+const list =
+avatarDraft.gender === "male"
+? maleHair
+: femaleHair;
+
+
+if(
+!list.some(
+x =>
+x[0] === avatarDraft.hairStyle
+)
+){
+
+avatarDraft.hairStyle =
+list[0][0];
+
+}
+
+
+$("hairStyleChoices").innerHTML =
+list.map(
+item => `
+
+<button
+class="choice ${
+avatarDraft.hairStyle===item[0]
+? "selected"
+: ""
+}"
+data-value="${item[0]}">
+
+${item[1]}
+
+</button>
+
+`
+).join("");
+
+
+$("hairStyleChoices")
+.querySelectorAll(".choice")
+.forEach(
+
+button => {
+
+button.onclick = () => {
+
+avatarDraft.hairStyle =
+button.dataset.value;
+
+renderHairChoices();
+
+updateAvatarPreview();
+
+};
+
+}
+
+);
+
+}
+
+
+/* ==========================================================
+   PREVIEW
+========================================================== */
+
+function updateAvatarPreview(){
+
+$("avatarPreview").innerHTML =
+
+avatarSVG(
+{
+gender:
+avatarDraft.gender,
+
+skin:
+avatarDraft.skin,
+
+hairColor:
+avatarDraft.hairColor,
+
+hairStyle:
+avatarDraft.hairStyle
+},
+1
+);
+
+}
+
+
+/* ==========================================================
+   CHOICE BUTTONS
+========================================================== */
+
+function setupChoiceGroup(
+containerId,
+field
+){
+
+$(containerId)
+.querySelectorAll(".choice")
+.forEach(
+
+button => {
+
+button.onclick = () => {
+
+avatarDraft[field] =
+button.dataset.value;
+
+
+$(containerId)
+.querySelectorAll(".choice")
+.forEach(
+b =>
+b.classList.remove("selected")
+);
+
+
+button.classList.add(
+"selected"
+);
+
+
+if(field === "gender"){
+
+renderHairChoices();
+
+}
+
+
+updateAvatarPreview();
+
+};
+
+}
+
+);
+
+}
+
+
+/* ==========================================================
+   STAGE
+========================================================== */
+
+function stageIndex(level){
+
+let index=0;
+
+stages.forEach(
+(stage,i) => {
+
+if(level >= stage.level){
+
+index=i;
+
+}
+
+}
+);
+
+return index;
+
+}
+
+
+/* ==========================================================
+   RENDER PROFILE
+========================================================== */
+
+function renderProfile(profile){
+
+currentProfile =
+profile;
+
+
+const level =
+profile.level || 1;
+
+
+const stage =
+stageIndex(level);
+
+
+const info =
+stages[stage];
+
+
+const next =
+stages[stage+1];
+
+
+const avatarOptions = {
+
+gender:
+profile.avatar_gender,
+
+skin:
+profile.avatar_skin,
+
+hairColor:
+profile.avatar_hair_color,
+
+hairStyle:
+profile.avatar_hair_style
+
+};
+
+
+$("heroTitle").textContent =
+"LE " + info.name;
+
+
+$("heroDescription").textContent =
+info.description;
+
+
+$("levelBadge").textContent =
+"NIVEAU " + level;
+
+
+$("currentLevel").textContent =
+level;
+
+
+$("mainAvatar").innerHTML =
+avatarSVG(
+avatarOptions,
+stage+1
+);
+
+
+$("headerCoins").textContent =
+
+Number(
+profile.lootix_available || 0
+).toLocaleString("fr-FR");
+
+
+$("withdrawAvailable").textContent =
+
+Number(
+profile.lootix_available || 0
+).toLocaleString("fr-FR")
++
+" RL Coins";
+
+
+$("currentStreak").textContent =
+(profile.current_streak || 0)
++
+" jours";
+
+
+$("bestStreak").textContent =
+(profile.longest_streak || 0)
++
+" jours";
+
+
+$("streakBig").textContent =
+(profile.current_streak || 0)
++
+" jours";
+
+
+renderStreakDays(
+profile.current_streak || 0
+);
+
+
+renderTrack(level);
+
+
+renderEvolutionCards(
+level,
+avatarOptions
+);
+
+
+const levelStart =
+level <= 1
+? 0
+: 50 * (level-1) * level;
+
+
+const nextLevelTotal =
+
+level >= 50
+? levelStart
+: 50 * level * (level+1);
+
+
+const xpInLevel =
+
+Math.max(
+0,
+(profile.xp || 0)
+-
+levelStart
+);
+
+
+const xpNeeded =
+
+Math.max(
+0,
+nextLevelTotal
+-
+levelStart
+);
+
+
+const remaining =
+
+Math.max(
+0,
+nextLevelTotal
+-
+(profile.xp || 0)
+);
+
+
+$("totalXP").textContent =
+
+Number(
+profile.xp || 0
+).toLocaleString("fr-FR")
++
+" XP";
+
+
+$("xpProgressText").textContent =
+
+xpInLevel.toLocaleString("fr-FR")
++
+" / "
++
+xpNeeded.toLocaleString("fr-FR")
++
+" XP";
+
+
+$("xpBar").style.width =
+
+level>=50
+? "100%"
+:
+Math.min(
+100,
+xpInLevel /
+Math.max(
+1,
+xpNeeded
+)
+*
+100
+)
++
+"%";
+
+
+$("nextLevelXP").textContent =
+
+level>=50
+? "MAX"
+:
+"+ "
++
+remaining.toLocaleString("fr-FR")
++
+" XP";
+
+
+if(next){
+
+$("nextEvolutionLevel").textContent =
+$("nextEvolutionLevel2").textContent =
+"NIVEAU "
++
+next.level;
+
+
+$("nextEvolutionTitle").textContent =
+$("nextEvolutionTitle2").textContent =
+"LE "
++
+next.name;
+
+
+const requiredEvolutionXP =
+
+50
+*
+(next.level-1)
+*
+next.level;
+
+
+$("nextEvolutionXP").textContent =
+
+"Encore "
++
+Math.max(
+0,
+requiredEvolutionXP
+-
+(profile.xp || 0)
+).toLocaleString("fr-FR")
++
+" XP avant d'évoluer.";
+
+
+const silhouette =
+
+avatarSVG(
+avatarOptions,
+stage+2
+);
+
+
+$("nextSilhouette").innerHTML =
+silhouette;
+
+
+$("nextSilhouette2").innerHTML =
+silhouette;
+
+}else{
+
+$("nextEvolutionLevel").textContent =
+$("nextEvolutionLevel2").textContent =
+"MAX";
+
+
+$("nextEvolutionTitle").textContent =
+$("nextEvolutionTitle2").textContent =
+"ÉVOLUTION ULTIME";
+
+
+$("nextEvolutionXP").textContent =
+"Puissance maximale atteinte.";
+
+}
+
+
+if(profile.referral_code){
+
+const link =
+
+location.origin
++
+location.pathname
++
+"?ref="
++
+encodeURIComponent(
+profile.referral_code
+);
+
+
+$("referralLink").value =
+link;
+
+}
+
+
+$("adminButton")
+.classList.toggle(
+"hidden",
+!profile.is_admin
+);
+
+}
+
+
+/* ==========================================================
+   TRACK
+========================================================== */
+
+function renderTrack(level){
+
+$("heroTrack").innerHTML =
+
+stages.map(
+stage => `
+
+<div
+class="track-node ${
+level>=stage.level
+? "unlocked"
+: ""
+}">
+
+<div class="track-circle">
+${stage.level}
+</div>
+
+${stage.name}
+
+</div>
+
+`
+).join("");
+
+}
+
+
+/* ==========================================================
+   EVOLUTION CARDS
+========================================================== */
+
+function renderEvolutionCards(
+level,
+avatarOptions
+){
+
+$("evolutionGrid").innerHTML =
+
+stages.map(
+(stage,i) => {
+
+const unlocked =
+level >= stage.level;
+
+
+return `
+
+<div
+class="evolution-card ${
+unlocked
+? "unlocked"
+: ""
+}">
+
+<div class="evolution-character">
+
+${avatarSVG(
+avatarOptions,
+i+1
+)}
+
+</div>
+
+<div class="evolution-lock">
+🔒
+</div>
+
+<div class="evolution-name">
+
+NIVEAU ${stage.level}
+
+<br>
+
+<b>
+${stage.name}
+</b>
+
+<br>
+
+${unlocked
+? stage.description
+: "Évolution à découvrir"}
+
+</div>
+
+</div>
+
+`;
+
+}
+).join("");
+
+}
+
+
+/* ==========================================================
+   STREAK
+========================================================== */
+
+function renderStreakDays(streak){
+
+const names =
+
+[
+"LUN",
+"MAR",
+"MER",
+"JEU",
+"VEN",
+"SAM",
+"DIM"
+];
+
+
+$("streakDays").innerHTML =
+
+names.map(
+(name,i) => `
+
+<div class="day-wrap">
+
+<div
+class="day ${
+i < Math.min(streak,7)
+? "on"
+: ""
+}">
+
+🔥
+
+</div>
+
+<small>
+${name}
+</small>
+
+</div>
+
+`
+).join("");
+
+}
+
+
+/* ==========================================================
+   MISSIONS
+========================================================== */
+
+async function loadMissions(
+filter="all"
+){
+
+currentFilter =
+filter;
+
+
+document
+.querySelectorAll(".filter")
+.forEach(
+
+button => {
+
+button.classList.toggle(
+"active",
+button.dataset.filter === filter
+);
+
+}
+
+);
+
+
+let query =
+
+sb
+.from("offers")
+.select(
+"id,title,description,category,user_reward_lootix,target_url,status"
+)
+.eq(
+"status",
+"active"
+)
+.order(
+"user_reward_lootix",
+{
+ascending:false
+}
+);
+
+
+if(filter !== "all"){
+
+query =
+query.ilike(
+"category",
+"%"+filter+"%"
+);
+
+}
+
+
+const {
+data,
+error
+} =
+await query;
+
+
+if(error){
+
+console.error(error);
+
+$("missionGrid").innerHTML =
+
+"<div>Impossible de charger les missions.</div>";
+
+return;
+
+}
+
+
+if(!data || !data.length){
+
+$("missionGrid").innerHTML =
+
+"<div>Aucune mission disponible dans cette catégorie.</div>";
+
+return;
+
+}
+
+
+$("missionGrid").innerHTML =
+
+data.map(
+offer => {
+
+const category =
+String(
+offer.category || ""
+).toLowerCase();
+
+
+let icon="🎯";
+
+if(category.includes("game")){
+icon="🎮";
+}
+
+if(category.includes("video")){
+icon="▶";
+}
+
+if(category.includes("survey")){
+icon="▤";
+}
+
+
+return `
+
+<div class="mission">
+
+<div class="mission-image">
+${icon}
+</div>
+
+<div class="mission-body">
+
+<div class="mission-title">
+${escapeHTML(offer.title)}
+</div>
+
+<div class="mission-description">
+${escapeHTML(
+offer.description || ""
+)}
+</div>
+
+<div class="mission-reward">
+
++
+${Number(
+offer.user_reward_lootix || 0
+).toLocaleString("fr-FR")}
+RL Coins
+
+</div>
+
+<button
+class="btn"
+data-offer="${offer.id}">
+
+Commencer
+
+</button>
+
+</div>
+
+</div>
+
+`;
+
+}
+).join("");
+
+
+document
+.querySelectorAll("[data-offer]")
+.forEach(
+
+button => {
+
+button.onclick = () => {
+
+const offer =
+
+data.find(
+x =>
+x.id ===
+button.dataset.offer
+);
+
+
+startOffer(offer);
+
+};
+
+}
+
+);
+
+}
+
+
+/* ==========================================================
+   OPEN OFFER
+========================================================== */
+
+function startOffer(offer){
+
+if(!currentUser){
+
+openAuth();
+
+return;
+
+}
+
+
+if(offer.target_url){
+
+window.open(
+offer.target_url,
+"_blank",
+"noopener"
+);
+
+return;
+
+}
+
+
+alert(
+"Cette mission sera disponible lorsque son fournisseur sera connecté."
+);
+
+}
+
+
+/* ==========================================================
+   LEADERBOARD
+========================================================== */
+
+async function loadLeaderboard(){
+
+if(!currentUser){
+
+$("leaderboardContent").innerHTML =
+
+"Connecte-toi pour consulter le classement.";
+
+return;
+
+}
+
+
+const {
+data,
+error
+} =
+
+await sb.rpc(
+"get_leaderboard",
+{
+p_limit:50
+}
+);
+
+
+if(error){
+
+console.error(error);
+
+return;
+
+}
+
+
+$("leaderboardContent").innerHTML =
+
+`
+
+<div class="leader-row header">
+
+<div>RANG</div>
+<div>LOOTER</div>
+<div>NIVEAU</div>
+<div>XP</div>
+<div>SÉRIE</div>
+
+</div>
+
+`
++
+data.map(
+player => `
+
+<div class="leader-row">
+
+<div class="rank">
+#${player.rank}
+</div>
+
+<div>
+${escapeHTML(player.player_name)}
+</div>
+
+<div>
+Niv. ${player.level}
+</div>
+
+<div>
+${Number(player.xp).toLocaleString("fr-FR")} XP
+</div>
+
+<div>
+🔥 ${player.current_streak} j
+</div>
+
+</div>
+
+`
+).join("");
+
+
+const mine =
+data.find(
+x =>
+x.user_id ===
+currentUser.id
+);
+
+
+if(mine){
+
+$("myRank").textContent =
+"# "
++
+mine.rank;
+
+}
+
+}
+
+
+/* ==========================================================
+   WITHDRAWALS
+========================================================== */
+
+async function loadWithdrawals(){
+
+if(!currentUser){
+
+$("withdrawalsContent").textContent =
+
+"Connecte-toi pour consulter tes retraits.";
+
+return;
+
+}
+
+
+const {
+data,
+error
+} =
+
+await sb
+.from("withdrawals")
+.select("*")
+.eq(
+"user_id",
+currentUser.id
+)
+.order(
+"created_at",
+{
+ascending:false
+}
+);
+
+
+if(error){
+
+console.error(error);
+
+return;
+
+}
+
+
+if(!data.length){
+
+$("withdrawalsContent").innerHTML =
+
+"Aucun retrait pour le moment.";
+
+return;
+
+}
+
+
+$("withdrawalsContent").innerHTML =
+
+data.map(
+withdrawal => `
+
+<div class="withdraw-row">
+
+<div>
+
+<strong>
+
+${Number(
+withdrawal.amount_lootix
+).toLocaleString("fr-FR")}
+RL Coins
+
+</strong>
+
+<br>
+
+<span class="muted">
+
+${new Date(
+withdrawal.created_at
+).toLocaleString("fr-FR")}
+
+</span>
+
+</div>
+
+<div>
+
+${escapeHTML(
+withdrawal.status
+)}
+
+${withdrawal.status==="pending"
+? `
+
+<br>
+
+<button
+class="btn red"
+data-cancel="${withdrawal.id}">
+
+Annuler
+
+</button>
+
+`
+: ""}
+
+</div>
+
+</div>
+
+`
+).join("");
+
+
+document
+.querySelectorAll("[data-cancel]")
+.forEach(
+
+button => {
+
+button.onclick =
+async () => {
+
+if(
+!confirm(
+"Annuler ce retrait ?"
+)
+){
+
+return;
+
+}
+
+
+const {
+error
+} =
+
+await sb.rpc(
+"cancel_withdrawal",
+{
+p_withdrawal_id:
+button.dataset.cancel
+}
+);
+
+
+if(error){
+
+alert(error.message);
+
+return;
+
+}
+
+
+await refreshUser();
+
+};
+
+}
+
+);
+
+}
+
+
+/* ==========================================================
+   WITHDRAW
+========================================================== */
+
+async function submitWithdrawal(){
+
+if(!currentUser){
+
+openAuth();
+
+return;
+
+}
+
+
+const amount =
+Number(
+$("withdrawAmount").value
+);
+
+
+const paypal =
+$("withdrawPaypal").value.trim();
+
+
+if(amount < 500){
+
+alert(
+"Le retrait minimum est de 500 RL Coins."
+);
+
+return;
+
+}
+
+
+if(!paypal){
+
+alert(
+"Entre ton adresse PayPal."
+);
+
+return;
+
+}
+
+
+const {
+error
+} =
+
+await sb.rpc(
+"request_withdrawal",
+{
+
+p_amount_lootix:
+amount,
+
+p_payment_method:
+"paypal",
+
+p_payout_destination:
+paypal
+
+}
+);
+
+
+if(error){
+
+alert(error.message);
+
+return;
+
+}
+
+
+alert(
+"Demande de retrait enregistrée."
+);
+
+
+$("withdrawModal")
+.classList.remove("show");
+
+
+await refreshUser();
+
+}
+
+
+/* ==========================================================
+   LOGIN / SIGNUP
+========================================================== */
+
+function openAuth(){
+
+$("authModal")
+.classList.add("show");
+
+}
+
+
+async function login(){
+
+const email =
+$("emailInput").value.trim();
+
+
+const password =
+$("passwordInput").value;
+
+
+const {
+error
+} =
+
+await sb.auth.signInWithPassword(
+{
+email,
+password
+}
+);
+
+
+if(error){
+
+alert(error.message);
+
+return;
+
+}
+
+
+$("authModal")
+.classList.remove("show");
+
+
+await refreshUser();
+
+}
+
+
+async function signup(){
+
+const email =
+$("emailInput").value.trim();
+
+
+const password =
+$("passwordInput").value;
+
+
+const {
+data,
+error
+} =
+
+await sb.auth.signUp(
+{
+email,
+password
+}
+);
+
+
+if(error){
+
+alert(error.message);
+
+return;
+
+}
+
+
+if(data.session){
+
+$("authModal")
+.classList.remove("show");
+
+
+await refreshUser();
+
+}else{
+
+alert(
+"Compte créé. Vérifie ton e-mail pour confirmer ton inscription."
+);
+
+}
+
+}
+
+
+/* ==========================================================
+   AVATAR SAVE
+========================================================== */
+
+async function saveAvatar(){
+
+const {
+error
+} =
+
+await sb.rpc(
+"save_looter_customization",
+{
+
+p_gender:
+avatarDraft.gender,
+
+p_skin:
+avatarDraft.skin,
+
+p_hair_color:
+avatarDraft.hairColor,
+
+p_hair_style:
+avatarDraft.hairStyle
+
+}
+);
+
+
+if(error){
+
+alert(error.message);
+
+return;
+
+}
+
+
+$("avatarModal")
+.classList.remove("show");
+
+
+await refreshUser();
+
+}
+
+
+/* ==========================================================
+   REFERRAL
+========================================================== */
+
+async function copyReferral(){
+
+const value =
+$("referralLink").value;
+
+
+if(
+!value ||
+value.startsWith("Connecte")
+){
+
+return;
+
+}
+
+
+await navigator.clipboard.writeText(
+value
+);
+
+
+alert(
+"Lien de parrainage copié."
+);
+
+}
+
+
+/* ==========================================================
+   NAVIGATION
+========================================================== */
+
+function gotoSection(id){
+
+const element =
+$(id);
+
+
+if(element){
+
+element.scrollIntoView(
+{
+behavior:"smooth",
+block:"start"
+}
+);
+
+}
+
+}
+
+
+document
+.querySelectorAll("[data-nav]")
+.forEach(
+
+button => {
+
+button.onclick = () => {
+
+const target =
+button.dataset.nav;
+
+
+gotoSection(target);
+
+
+if(target==="leaderboard"){
+
+loadLeaderboard();
+
+}
+
+};
+
+}
+
+);
+
+
+document
+.querySelectorAll(".challenge")
+.forEach(
+
+challenge => {
+
+challenge.onclick =
+async () => {
+
+const category =
+challenge.dataset.category;
+
+
+await loadMissions(
+category
+);
+
+
+gotoSection(
+"missions"
+);
+
+};
+
+}
+
+);
+
+
+/* ==========================================================
+   FILTERS
+========================================================== */
+
+document
+.querySelectorAll(".filter")
+.forEach(
+
+button => {
+
+button.onclick =
+() => {
+
+loadMissions(
+button.dataset.filter
+);
+
+};
+
+}
+
+);
+
+
+/* ==========================================================
+   SESSION
+========================================================== */
+
+async function refreshUser(){
+
+const {
+data:{
+session
+}
+} =
+await sb.auth.getSession();
+
+
+currentUser =
+session?.user || null;
+
+
+if(!currentUser){
+
+currentProfile = null;
+
+
+$("authButton").textContent =
+"Connexion";
+
+
+$("headerCoins").textContent =
+"0";
+
+
+renderStreakDays(0);
+
+
+loadMissions();
+
+
+return;
+
+}
+
+
+$("authButton").textContent =
+"Déconnexion";
+
+
+await sb.rpc(
+"claim_daily_checkin"
+);
+
+
+const {
+data,
+error
+} =
+
+await sb
+.from("profiles")
+.select("*")
+.eq(
+"id",
+currentUser.id
+)
+.single();
+
+
+if(error){
+
+console.error(error);
+
+return;
+
+}
+
+
+renderProfile(data);
+
+
+if(
+!data.avatar_customized
+){
+
+avatarDraft.gender =
+data.avatar_gender || "male";
+
+
+avatarDraft.skin =
+data.avatar_skin || "medium";
+
+
+avatarDraft.hairColor =
+data.avatar_hair_color || "brown";
+
+
+avatarDraft.hairStyle =
+data.avatar_hair_style ||
+"male_textured";
+
+
+renderHairChoices();
+
+
+updateAvatarPreview();
+
+
+$("avatarModal")
+.classList.add("show");
+
+}
+
+
+await Promise.all(
+[
+loadMissions(),
+loadLeaderboard(),
+loadWithdrawals()
+]
+);
+
+}
+
+
+/* ==========================================================
+   AUTH BUTTON
+========================================================== */
+
+$("authButton").onclick =
+async () => {
+
+if(currentUser){
+
+await sb.auth.signOut();
+
+
+location.reload();
+
+}else{
+
+openAuth();
+
+}
+
+};
+
+
+$("loginAction").onclick =
+login;
+
+
+$("signupAction").onclick =
+signup;
+
+
+$("closeAuth").onclick =
+() => {
+
+$("authModal")
+.classList.remove("show");
+
+};
+
+
+/* ==========================================================
+   WITHDRAW BUTTONS
+========================================================== */
+
+$("withdrawHeader").onclick =
+() => {
+
+if(!currentUser){
+
+openAuth();
+
+return;
+
+}
+
+
+$("withdrawModal")
+.classList.add("show");
+
+};
+
+
+$("withdrawSubmit").onclick =
+submitWithdrawal;
+
+
+$("withdrawClose").onclick =
+() => {
+
+$("withdrawModal")
+.classList.remove("show");
+
+};
+
+
+/* ==========================================================
+   REFERRAL BUTTON
+========================================================== */
+
+$("copyReferral").onclick =
+copyReferral;
+
+
+/* ==========================================================
+   ADMIN
+========================================================== */
+
+$("adminButton").onclick =
+() => {
+
+alert(
+"Ton espace administration est actif. On branchera ensuite son tableau de bord détaillé aux retraits et aux offres."
+);
+
+};
+
+
+/* ==========================================================
+   AVATAR CHOICES
+========================================================== */
+
+setupChoiceGroup(
+"genderChoices",
+"gender"
+);
+
+
+setupChoiceGroup(
+"skinChoices",
+"skin"
+);
+
+
+setupChoiceGroup(
+"hairColorChoices",
+"hairColor"
+);
+
+
+renderHairChoices();
+
+
+updateAvatarPreview();
+
+
+$("saveAvatar").onclick =
+saveAvatar;
+
+
+/* ==========================================================
+   ESCAPE HTML
+========================================================== */
+
+function escapeHTML(value){
+
+return String(
+value ?? ""
+)
+.replaceAll(
+"&",
+"&amp;"
+)
+.replaceAll(
+"<",
+"&lt;"
+)
+.replaceAll(
+">",
+"&gt;"
+)
+.replaceAll(
+'"',
+"&quot;"
+)
+.replaceAll(
+"'",
+"&#039;"
+);
+
+}
+
+
+/* ==========================================================
+   INITIAL VISITOR AVATAR
+========================================================== */
+
+$("mainAvatar").innerHTML =
+
+avatarSVG(
+{
+gender:"male",
+skin:"medium",
+hairColor:"brown",
+hairStyle:"male_textured"
+},
+1
+);
+
+
+renderTrack(1);
+
+
+renderEvolutionCards(
+1,
+{
+gender:"male",
+skin:"medium",
+hairColor:"brown",
+hairStyle:"male_textured"
+}
+);
+
+
+renderStreakDays(0);
+
+
+/* ==========================================================
+   START
+========================================================== */
+
+refreshUser();
+
+</script>
+
+</body>
+</html>
