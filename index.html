@@ -9,969 +9,712 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+font-family:Arial,Helvetica,sans-serif;
+background:#0b0b0f;
+color:#fff;
+min-height:100vh
+}
+button,input{font-family:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:18px;
+padding:18px 6%;
+border-bottom:1px solid #222229;
+background:rgba(11,11,15,.97);
+position:sticky;
+top:0;
+z-index:50
 }
 
-html {
-  scroll-behavior: smooth;
+.logo{font-size:28px;font-weight:900;letter-spacing:-1px}
+.logo span,.purple{color:#9d5cff}
+
+.header-actions{
+display:flex;
+gap:10px;
+align-items:center;
+flex-wrap:wrap
 }
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-  background: #0b0b0f;
-  color: white;
-  min-height: 100vh;
+.header-balance{
+display:none;
+color:#b878ff;
+font-weight:900
 }
 
-button,
-input {
-  font-family: inherit;
+.header-btn{
+color:#fff;
+background:transparent;
+border:1px solid #444450;
+padding:10px 14px;
+border-radius:10px;
+font-weight:700
 }
 
-button {
-  cursor: pointer;
+#logoutButton,#adminButton{display:none}
+
+main{
+width:88%;
+max-width:1150px;
+margin:30px auto 70px
 }
 
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 18px;
-  padding: 20px 7%;
-  border-bottom: 1px solid #222229;
-  background: rgba(11,11,15,.96);
-  position: sticky;
-  top: 0;
-  z-index: 50;
+.section{margin-bottom:52px}
+.section-title{font-size:27px;margin-bottom:8px}
+.section-subtitle{
+color:#92929d;
+line-height:1.5;
+margin-bottom:20px
 }
 
-.logo {
-  font-size: 28px;
-  font-weight: 900;
-  letter-spacing: -1px;
+/* CAGNOTTE */
+
+.top-wallet{
+display:none;
+background:linear-gradient(135deg,rgba(157,92,255,.18),#111116 58%);
+border:1px solid #49336a;
+border-radius:20px;
+padding:24px;
+margin-bottom:34px
 }
 
-.logo span {
-  color: #9d5cff;
+.wallet-header{
+display:flex;
+justify-content:space-between;
+align-items:flex-start;
+gap:20px
 }
 
-.header-actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
+.wallet-small-title{color:#b8b8c2;margin-bottom:7px}
+.wallet-total{
+font-size:40px;
+color:#b878ff;
+font-weight:900
+}
+.wallet-euros{color:#c9c9d1;margin-top:4px}
+
+.wallet-actions{
+display:flex;
+flex-direction:column;
+align-items:flex-end;
+gap:9px
 }
 
-.header-balance {
-  display: none;
-  color: #b878ff;
-  font-weight: 900;
+.wallet-motivation{
+background:#19191f;
+border:1px solid #292932;
+padding:10px 14px;
+border-radius:10px;
+color:#c7c7d0;
+font-size:14px
 }
 
-.login-button,
-.logout-button {
-  color: white;
-  background: transparent;
-  border: 1px solid #444450;
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-weight: 700;
+.primary-button{
+background:#9d5cff;
+color:#fff;
+border:0;
+padding:12px 18px;
+border-radius:9px;
+font-weight:800
 }
 
-.logout-button {
-  display: none;
+.wallet-details{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:10px;
+margin-top:20px
 }
 
-main {
-  width: 88%;
-  max-width: 1150px;
-  margin: 32px auto 70px;
+.wallet-detail,.stat-card{
+background:rgba(17,17,22,.8);
+border:1px solid #292932;
+padding:13px;
+border-radius:12px
 }
 
-.section {
-  margin-bottom: 55px;
+.wallet-label,.stat-label{
+color:#8e8e99;
+font-size:12px;
+margin-bottom:5px
 }
-
-.section-title {
-  font-size: 27px;
-  margin-bottom: 8px;
-}
-
-.section-subtitle {
-  color: #92929d;
-  line-height: 1.5;
-  margin-bottom: 20px;
-}
-
-/* ==============================
-   CAGNOTTE EN HAUT
-================================ */
-
-.top-wallet {
-  display: none;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(157,92,255,.17),
-      rgba(17,17,22,1) 55%
-    );
-  border: 1px solid #49336a;
-  border-radius: 20px;
-  padding: 24px;
-  margin-bottom: 35px;
-}
-
-.wallet-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;
-}
-
-.wallet-small-title {
-  color: #b8b8c2;
-  margin-bottom: 7px;
-}
-
-.wallet-total {
-  font-size: 38px;
-  color: #b878ff;
-  font-weight: 900;
-}
-
-.wallet-euros {
-  color: #c9c9d1;
-  margin-top: 4px;
-}
-
-.wallet-motivation {
-  background: #19191f;
-  border: 1px solid #292932;
-  padding: 10px 14px;
-  border-radius: 10px;
-  color: #c7c7d0;
-  font-size: 14px;
-}
-
-.wallet-details {
-  display: grid;
-  grid-template-columns: repeat(3,1fr);
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.wallet-detail {
-  background: rgba(17,17,22,.75);
-  border: 1px solid #292932;
-  padding: 13px;
-  border-radius: 12px;
-}
-
-.wallet-label {
-  color: #8e8e99;
-  font-size: 12px;
-  margin-bottom: 5px;
-}
-
-.wallet-value {
-  font-weight: 800;
-}
+.wallet-value,.stat-value{font-weight:800}
 
 /* HERO */
 
-.hero {
-  text-align: center;
-  padding: 35px 0 60px;
+.hero{text-align:center;padding:35px 0 60px}
+.hero h1{
+font-size:clamp(42px,7vw,75px);
+line-height:1.04;
+letter-spacing:-2px;
+margin-bottom:22px
 }
-
-.hero h1 {
-  font-size: clamp(42px,7vw,75px);
-  line-height: 1.04;
-  letter-spacing: -2px;
-  margin-bottom: 22px;
+.hero h1 span{color:#9d5cff}
+.hero p{
+color:#a5a5b0;
+max-width:720px;
+margin:auto;
+font-size:18px;
+line-height:1.6
 }
-
-.hero h1 span {
-  color: #9d5cff;
+.hero-actions{margin-top:26px}
+.main-cta{
+border:0;
+background:#9d5cff;
+color:#fff;
+padding:15px 25px;
+border-radius:11px;
+font-weight:900;
+font-size:15px
 }
-
-.hero p {
-  color: #a5a5b0;
-  max-width: 720px;
-  margin: auto;
-  font-size: 18px;
-  line-height: 1.6;
-}
-
-.hero-actions {
-  margin-top: 26px;
-}
-
-.main-cta {
-  border: 0;
-  background: #9d5cff;
-  color: white;
-  padding: 15px 25px;
-  border-radius: 11px;
-  font-weight: 900;
-  font-size: 15px;
-}
-
-.conversion {
-  margin: 18px auto 0;
-  display: table;
-  background: #111116;
-  border: 1px solid #292932;
-  color: #c7c7d0;
-  padding: 9px 13px;
-  border-radius: 9px;
+.conversion{
+margin:18px auto 0;
+display:table;
+background:#111116;
+border:1px solid #292932;
+color:#c7c7d0;
+padding:9px 13px;
+border-radius:9px
 }
 
 /* BON PLAN */
 
-.daily-deal {
-  display: none;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(157,92,255,.17),
-      #111116 60%
-    );
-  border: 1px solid #49336a;
-  border-radius: 19px;
-  padding: 26px;
+.daily-deal{
+display:none;
+background:linear-gradient(135deg,rgba(157,92,255,.17),#111116 60%);
+border:1px solid #49336a;
+border-radius:19px;
+padding:26px
 }
-
-.daily-badge {
-  display: inline-block;
-  background: #9d5cff;
-  font-weight: 900;
-  font-size: 12px;
-  border-radius: 999px;
-  padding: 7px 11px;
-  margin-bottom: 15px;
+.daily-badge{
+display:inline-block;
+background:#9d5cff;
+font-weight:900;
+font-size:12px;
+border-radius:999px;
+padding:7px 11px;
+margin-bottom:15px
 }
-
-.daily-icon {
-  font-size: 35px;
-  margin-bottom: 10px;
+.daily-icon{font-size:35px;margin-bottom:10px}
+.daily-title{font-size:25px;margin-bottom:8px}
+.daily-description{
+color:#a5a5b0;
+line-height:1.5;
+margin-bottom:18px
 }
-
-.daily-title {
-  font-size: 25px;
-  margin-bottom: 8px;
+.daily-reward{
+color:#b878ff;
+font-size:28px;
+font-weight:900
 }
-
-.daily-description {
-  color: #a5a5b0;
-  line-height: 1.5;
-  margin-bottom: 18px;
-}
-
-.daily-reward {
-  color: #b878ff;
-  font-size: 28px;
-  font-weight: 900;
-}
-
-.daily-euros {
-  color: #aaaab4;
-  margin: 3px 0 18px;
-}
-
-.primary-button {
-  background: #9d5cff;
-  color: white;
-  border: 0;
-  padding: 12px 18px;
-  border-radius: 9px;
-  font-weight: 800;
-}
+.daily-euros{color:#aaaab4;margin:3px 0 18px}
 
 /* CATÉGORIES */
 
-.categories {
-  display: grid;
-  grid-template-columns: repeat(4,1fr);
-  gap: 14px;
+.categories{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:14px
 }
-
-.category-card {
-  background: #111116;
-  border: 1px solid #25252e;
-  border-radius: 15px;
-  padding: 20px;
+.category-card,.offer,.box{
+background:#111116;
+border:1px solid #25252e;
+border-radius:15px;
+padding:20px
 }
-
-.category-icon {
-  font-size: 30px;
-  margin-bottom: 12px;
+.category-icon,.offer-icon{font-size:30px;margin-bottom:12px}
+.category-card h3,.offer h3{margin-bottom:7px}
+.category-card p,.offer p{
+color:#91919c;
+line-height:1.45;
+font-size:13px
 }
-
-.category-card h3 {
-  margin-bottom: 7px;
-}
-
-.category-card p {
-  color: #91919c;
-  line-height: 1.45;
-  font-size: 13px;
-  min-height: 57px;
-}
-
-.category-card button {
-  width: 100%;
-  margin-top: 15px;
-  border: 0;
-  background: #202027;
-  color: white;
-  padding: 10px;
-  border-radius: 8px;
-  font-weight: 700;
+.category-card p{min-height:57px}
+.category-card button,.offer button{
+width:100%;
+margin-top:15px;
+border:0;
+background:#202027;
+color:#fff;
+padding:10px;
+border-radius:8px;
+font-weight:700
 }
 
 /* OFFRES */
 
-.offers {
-  display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(230px,1fr));
-  gap: 14px;
+.offers{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+gap:14px
 }
-
-.offer {
-  background: #111116;
-  border: 1px solid #25252e;
-  border-radius: 15px;
-  padding: 20px;
+.offer-category{
+display:inline-block;
+background:#1b1b21;
+color:#aaaab4;
+padding:5px 8px;
+border-radius:999px;
+font-size:11px;
+margin-bottom:10px
 }
-
-.offer-icon {
-  font-size: 29px;
-  margin-bottom: 9px;
+.offer-reward{
+color:#b878ff;
+font-size:19px;
+font-weight:900;
+margin-top:14px
 }
-
-.offer-category {
-  display: inline-block;
-  background: #1b1b21;
-  color: #aaaab4;
-  padding: 5px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  margin-bottom: 10px;
+.offer-euro{
+color:#91919c;
+font-size:12px;
+margin-top:4px
 }
-
-.offer h3 {
-  margin-bottom: 7px;
-}
-
-.offer p {
-  color: #91919c;
-  font-size: 13px;
-  line-height: 1.45;
-  margin-bottom: 15px;
-}
-
-.offer-reward {
-  color: #b878ff;
-  font-size: 19px;
-  font-weight: 900;
-}
-
-.offer-euro {
-  color: #91919c;
-  font-size: 12px;
-  margin: 4px 0 14px;
-}
-
-.offer button {
-  width: 100%;
-  border: 0;
-  background: #202027;
-  color: white;
-  padding: 10px;
-  border-radius: 8px;
-  font-weight: 700;
-}
-
-.loading {
-  grid-column: 1/-1;
-  background: #111116;
-  border: 1px solid #25252e;
-  border-radius: 15px;
-  padding: 25px;
-  text-align: center;
-  color: #90909a;
+.loading,.empty{
+grid-column:1/-1;
+background:#111116;
+border:1px solid #25252e;
+border-radius:15px;
+padding:25px;
+text-align:center;
+color:#90909a
 }
 
 /* DÉFIS */
 
-.challenge-box {
-  background: #111116;
-  border: 1px solid #292932;
-  border-radius: 18px;
-  padding: 23px;
+.challenge-box,.streak-box,.referral-box,.history-box,
+.profile-box,.withdrawals-box,.admin-panel{
+background:#111116;
+border:1px solid #292932;
+border-radius:18px;
+padding:23px
 }
 
-.challenge-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 15px;
-  margin-bottom: 15px;
+.challenge-head{
+display:flex;
+justify-content:space-between;
+gap:15px;
+margin-bottom:15px
 }
-
-.challenge-count {
-  color: #b878ff;
-  font-weight: 900;
+.challenge-count{color:#b878ff;font-weight:900}
+.progress{
+height:10px;
+background:#202027;
+border-radius:999px;
+overflow:hidden;
+margin-bottom:18px
 }
-
-.progress {
-  height: 10px;
-  background: #202027;
-  border-radius: 999px;
-  overflow: hidden;
-  margin-bottom: 18px;
+.progress-fill{
+height:100%;
+width:0;
+background:#9d5cff;
+transition:.3s
 }
-
-.progress-fill {
-  height: 100%;
-  width: 0%;
-  background: #9d5cff;
-  transition: width .3s;
+.challenge-list{display:grid;gap:9px}
+.challenge{
+background:#17171d;
+border:1px solid #272730;
+border-radius:11px;
+padding:13px;
+display:flex;
+justify-content:space-between;
+gap:10px
 }
-
-.challenge-list {
-  display: grid;
-  gap: 9px;
+.challenge.done{border-color:#446f5a}
+.challenge-status{color:#858590}
+.challenge.done .challenge-status{color:#69e6a6}
+.challenge-bonus{
+margin-top:16px;
+background:rgba(157,92,255,.12);
+border:1px solid #53377a;
+padding:16px;
+border-radius:12px;
+text-align:center
 }
-
-.challenge {
-  background: #17171d;
-  border: 1px solid #272730;
-  border-radius: 11px;
-  padding: 13px;
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
+.challenge-bonus-value{
+font-size:22px;
+font-weight:900;
+color:#b878ff;
+margin:5px
 }
-
-.challenge.done {
-  border-color: #446f5a;
-}
-
-.challenge-status {
-  color: #858590;
-}
-
-.challenge.done .challenge-status {
-  color: #69e6a6;
-}
-
-.challenge-bonus {
-  margin-top: 16px;
-  background: rgba(157,92,255,.12);
-  border: 1px solid #53377a;
-  padding: 16px;
-  border-radius: 12px;
-  text-align: center;
-}
-
-.challenge-bonus-value {
-  font-size: 22px;
-  font-weight: 900;
-  color: #b878ff;
-  margin: 5px;
-}
-
-.claim-bonus {
-  display: none;
-  margin-top: 10px;
-}
+#claimBonus{display:none;margin-top:10px}
 
 /* SÉRIE */
 
-.streak-box {
-  background: #111116;
-  border: 1px solid #292932;
-  border-radius: 18px;
-  padding: 23px;
+.streak-number{
+color:#b878ff;
+font-size:32px;
+font-weight:900;
+margin-bottom:5px
 }
-
-.streak-number {
-  color: #b878ff;
-  font-size: 32px;
-  font-weight: 900;
-  margin-bottom: 5px;
+.streak-description{color:#91919c;margin-bottom:16px}
+.streak-days{
+display:grid;
+grid-template-columns:repeat(7,1fr);
+gap:7px;
+margin-bottom:17px
 }
-
-.streak-description {
-  color: #91919c;
-  margin-bottom: 16px;
+.streak-day{
+background:#17171d;
+border:1px solid #272730;
+border-radius:9px;
+text-align:center;
+padding:11px 3px;
+color:#858590;
+font-size:11px
 }
-
-.streak-days {
-  display: grid;
-  grid-template-columns: repeat(7,1fr);
-  gap: 7px;
-  margin-bottom: 17px;
-}
-
-.streak-day {
-  background: #17171d;
-  border: 1px solid #272730;
-  border-radius: 9px;
-  text-align: center;
-  padding: 11px 3px;
-  color: #858590;
-  font-size: 11px;
-}
-
-.streak-day.active {
-  color: white;
-  border-color: #654296;
-  background: rgba(157,92,255,.15);
+.streak-day.active{
+color:#fff;
+border-color:#654296;
+background:rgba(157,92,255,.15)
 }
 
 /* PARRAINAGE */
 
-.referral-box {
-  background: #111116;
-  border: 1px solid #292932;
-  border-radius: 18px;
-  padding: 23px;
+.referral-link-box{
+display:flex;
+gap:8px;
+margin:17px 0
+}
+.referral-link{
+flex:1;
+background:#17171d;
+border:1px solid #292932;
+color:#c7c7d0;
+padding:11px;
+border-radius:9px;
+overflow:hidden;
+white-space:nowrap;
+text-overflow:ellipsis
+}
+.referral-link-box button{
+border:0;
+background:#9d5cff;
+color:#fff;
+padding:10px 14px;
+border-radius:9px;
+font-weight:800
+}
+.referral-stats,.profile-grid,.admin-stats{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:9px
+}
+.referral-stat,.profile-stat{
+background:#17171d;
+border:1px solid #272730;
+border-radius:10px;
+padding:13px
+}
+.referral-stat-label,.profile-label{
+color:#898994;
+font-size:11px;
+margin-bottom:5px
+}
+.referral-stat-value,.profile-value{font-weight:900}
+
+/* HISTORIQUES */
+
+.history-box,.profile-box,.withdrawals-box{display:none}
+
+.history-item,.withdrawal-item,.admin-withdrawal{
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:15px;
+padding:14px 0;
+border-bottom:1px solid #25252e
+}
+.history-item:last-child,
+.withdrawal-item:last-child,
+.admin-withdrawal:last-child{border-bottom:0}
+
+.item-title{font-weight:700;margin-bottom:4px}
+.item-meta{color:#83838e;font-size:11px;margin-top:3px}
+.item-amount{
+color:#b878ff;
+font-weight:900;
+white-space:nowrap
+}
+.status{
+display:inline-block;
+font-size:11px;
+padding:5px 8px;
+border-radius:999px;
+margin-top:6px
+}
+.status-pending{background:#382b1c;color:#ffb86b}
+.status-processing{background:#202f45;color:#7ab8ff}
+.status-paid{background:#1d3a2c;color:#69e6a6}
+.status-rejected{background:#402020;color:#ff7777}
+.status-cancelled{background:#29292f;color:#aaaab4}
+
+.small-button{
+border:1px solid #383842;
+background:#1c1c22;
+color:#fff;
+padding:7px 10px;
+border-radius:7px;
+font-size:11px;
+font-weight:700;
+margin-top:7px
+}
+.danger-button{
+border-color:#643636;
+color:#ff8b8b
 }
 
-.referral-link-box {
-  display: flex;
-  gap: 8px;
-  margin: 17px 0;
+/* ADMIN */
+
+#adminSection{display:none}
+.admin-panel{
+border-color:#513779;
+background:linear-gradient(135deg,rgba(157,92,255,.10),#111116 45%)
+}
+.admin-heading{
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:15px;
+margin-bottom:20px
+}
+.admin-badge{
+background:#9d5cff;
+padding:6px 10px;
+border-radius:999px;
+font-size:11px;
+font-weight:900
+}
+.admin-stats{
+grid-template-columns:repeat(4,1fr);
+margin-bottom:25px
+}
+.admin-subtitle{font-size:20px;margin:25px 0 10px}
+.admin-actions{
+display:flex;
+gap:6px;
+flex-wrap:wrap;
+justify-content:flex-end
+}
+.admin-actions button{
+border:0;
+padding:7px 9px;
+border-radius:7px;
+font-size:11px;
+font-weight:800
+}
+.process-btn{background:#31578b;color:#fff}
+.paid-btn{background:#2d7551;color:#fff}
+.reject-btn{background:#823f3f;color:#fff}
+
+/* MODALES */
+
+.modal-overlay{
+display:none;
+position:fixed;
+inset:0;
+z-index:100;
+background:rgba(0,0,0,.82);
+align-items:center;
+justify-content:center;
+padding:20px
+}
+.modal{
+width:100%;
+max-width:430px;
+background:#111116;
+border:1px solid #30303a;
+padding:25px;
+border-radius:17px;
+position:relative
+}
+.close-modal{
+position:absolute;
+right:15px;
+top:12px;
+border:0;
+background:transparent;
+color:#aaaab4;
+font-size:25px
+}
+.modal h2{margin-bottom:7px}
+.modal-subtitle{
+color:#92929d;
+margin-bottom:18px;
+line-height:1.45
+}
+.auth-tabs{display:flex;gap:7px;margin-bottom:18px}
+.auth-tab{
+flex:1;
+border:1px solid #30303a;
+background:transparent;
+color:#fff;
+padding:9px;
+border-radius:8px;
+font-weight:700
+}
+.auth-tab.active{background:#9d5cff;border-color:#9d5cff}
+.auth-form{display:none}
+.auth-form.active{display:block}
+label{
+display:block;
+color:#c0c0c8;
+font-size:13px;
+margin-bottom:6px
+}
+input{
+width:100%;
+background:#0b0b0f;
+border:1px solid #30303a;
+border-radius:8px;
+color:#fff;
+padding:12px;
+margin-bottom:13px
+}
+.auth-submit{
+width:100%;
+border:0;
+background:#9d5cff;
+color:#fff;
+padding:12px;
+border-radius:9px;
+font-weight:900
+}
+.message{
+margin-top:12px;
+min-height:18px;
+font-size:12px
+}
+.success{color:#69e6a6}
+.error{color:#ff7777}
+
+.withdrawal-summary{
+background:#18181e;
+border:1px solid #292932;
+padding:14px;
+border-radius:10px;
+margin-bottom:17px
+}
+.withdrawal-preview{
+font-size:25px;
+font-weight:900;
+color:#b878ff;
+margin:6px 0
+}
+.info{
+font-size:12px;
+color:#94949e;
+line-height:1.5
 }
 
-.referral-link {
-  flex: 1;
-  background: #17171d;
-  border: 1px solid #292932;
-  color: #c7c7d0;
-  padding: 11px;
-  border-radius: 9px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+footer{
+border-top:1px solid #222229;
+padding-top:25px;
+color:#72727d;
+text-align:center;
+font-size:12px;
+line-height:1.6
 }
 
-.referral-link-box button {
-  border: 0;
-  background: #9d5cff;
-  color: white;
-  padding: 10px 14px;
-  border-radius: 9px;
-  font-weight: 800;
+@media(max-width:850px){
+.categories{grid-template-columns:repeat(2,1fr)}
+.admin-stats{grid-template-columns:repeat(2,1fr)}
 }
 
-.referral-stats {
-  display: grid;
-  grid-template-columns: repeat(3,1fr);
-  gap: 9px;
+@media(max-width:650px){
+header{padding:15px 5%}
+.logo{font-size:22px}
+main{width:91%}
+.wallet-header{display:block}
+.wallet-actions{align-items:stretch;margin-top:15px}
+.wallet-details,.referral-stats,.profile-grid,.admin-stats{
+grid-template-columns:1fr
 }
-
-.referral-stat {
-  background: #17171d;
-  border: 1px solid #272730;
-  border-radius: 10px;
-  padding: 13px;
+.categories{grid-template-columns:1fr}
+.streak-days{grid-template-columns:repeat(4,1fr)}
+.header-balance{display:none!important}
+.history-item,.withdrawal-item,.admin-withdrawal{
+align-items:flex-start;
+flex-direction:column
 }
-
-.referral-stat-label {
-  color: #898994;
-  font-size: 11px;
-  margin-bottom: 5px;
+.admin-actions{justify-content:flex-start}
 }
-
-.referral-stat-value {
-  font-weight: 900;
-}
-
-/* HISTORIQUE */
-
-.history-box {
-  display: none;
-  background: #111116;
-  border: 1px solid #292932;
-  border-radius: 18px;
-  padding: 23px;
-}
-
-.history-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
-  padding: 14px 0;
-  border-bottom: 1px solid #25252e;
-}
-
-.history-item:last-child {
-  border-bottom: 0;
-}
-
-.history-title {
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-
-.history-meta {
-  color: #83838e;
-  font-size: 11px;
-}
-
-.history-status {
-  margin-top: 4px;
-  font-size: 11px;
-}
-
-.history-amount {
-  color: #b878ff;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-/* PROFIL */
-
-.profile-box {
-  display: none;
-  background: #111116;
-  border: 1px solid #292932;
-  border-radius: 18px;
-  padding: 23px;
-}
-
-.profile-grid {
-  display: grid;
-  grid-template-columns: repeat(3,1fr);
-  gap: 10px;
-}
-
-.profile-stat {
-  background: #17171d;
-  border: 1px solid #272730;
-  border-radius: 10px;
-  padding: 14px;
-}
-
-.profile-label {
-  color: #868691;
-  font-size: 11px;
-  margin-bottom: 5px;
-}
-
-.profile-value {
-  font-weight: 900;
-}
-
-/* AUTH */
-
-.modal-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  background: rgba(0,0,0,.8);
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.modal {
-  width: 100%;
-  max-width: 420px;
-  background: #111116;
-  border: 1px solid #30303a;
-  padding: 25px;
-  border-radius: 17px;
-  position: relative;
-}
-
-.close-modal {
-  position: absolute;
-  right: 15px;
-  top: 12px;
-  border: 0;
-  background: transparent;
-  color: #aaaab4;
-  font-size: 25px;
-}
-
-.modal h2 {
-  margin-bottom: 7px;
-}
-
-.modal-subtitle {
-  color: #92929d;
-  margin-bottom: 18px;
-  line-height: 1.45;
-}
-
-.auth-tabs {
-  display: flex;
-  gap: 7px;
-  margin-bottom: 18px;
-}
-
-.auth-tab {
-  flex: 1;
-  border: 1px solid #30303a;
-  background: transparent;
-  color: white;
-  padding: 9px;
-  border-radius: 8px;
-  font-weight: 700;
-}
-
-.auth-tab.active {
-  background: #9d5cff;
-  border-color: #9d5cff;
-}
-
-.auth-form {
-  display: none;
-}
-
-.auth-form.active {
-  display: block;
-}
-
-label {
-  display: block;
-  color: #c0c0c8;
-  font-size: 13px;
-  margin-bottom: 6px;
-}
-
-input {
-  width: 100%;
-  background: #0b0b0f;
-  border: 1px solid #30303a;
-  border-radius: 8px;
-  color: white;
-  padding: 12px;
-  margin-bottom: 13px;
-}
-
-.auth-submit {
-  width: 100%;
-  border: 0;
-  background: #9d5cff;
-  color: white;
-  padding: 12px;
-  border-radius: 9px;
-  font-weight: 900;
-}
-
-.auth-message {
-  margin-top: 12px;
-  min-height: 18px;
-  font-size: 12px;
-}
-
-.success {
-  color: #69e6a6;
-}
-
-.error {
-  color: #ff7777;
-}
-
-footer {
-  border-top: 1px solid #222229;
-  padding-top: 25px;
-  color: #72727d;
-  text-align: center;
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-
-/* MOBILE */
-
-@media(max-width:850px) {
-
-  .categories {
-    grid-template-columns: repeat(2,1fr);
-  }
-
-}
-
-@media(max-width:650px) {
-
-  header {
-    padding: 15px 5%;
-  }
-
-  .logo {
-    font-size: 22px;
-  }
-
-  main {
-    width: 91%;
-  }
-
-  .wallet-header {
-    display: block;
-  }
-
-  .wallet-motivation {
-    margin-top: 15px;
-  }
-
-  .wallet-details,
-  .referral-stats,
-  .profile-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .categories {
-    grid-template-columns: 1fr;
-  }
-
-  .streak-days {
-    grid-template-columns: repeat(4,1fr);
-  }
-
-  .header-balance {
-    display: none !important;
-  }
-
-}
-
 </style>
 </head>
 
 <body>
 
 <header>
-
-<div class="logo">
-LOOT <span>UP</span>
-</div>
+<div class="logo">LOOT <span>UP</span></div>
 
 <div class="header-actions">
+<div class="header-balance" id="headerBalance">🪙 0 LOOTIX</div>
 
-<div
-class="header-balance"
-id="headerBalance">
-0 LOOTIX
-</div>
+<button class="header-btn" id="adminButton">
+⚙️ Administration
+</button>
 
-<button
-class="login-button"
-id="loginButton">
+<button class="header-btn" id="loginButton">
 Se connecter
 </button>
 
-<button
-class="logout-button"
-id="logoutButton">
+<button class="header-btn" id="logoutButton">
 Déconnexion
 </button>
-
 </div>
-
 </header>
-
 
 <main>
 
+<!-- CAGNOTTE -->
 
-<!-- ==========================
-     CAGNOTTE EN PREMIER
-========================== -->
-
-<section
-class="top-wallet"
-id="topWallet">
+<section class="top-wallet" id="topWallet">
 
 <div class="wallet-header">
 
 <div>
-
-<div class="wallet-small-title">
-💰 Ta cagnotte
+<div class="wallet-small-title">💰 Ta cagnotte</div>
+<div class="wallet-total" id="walletTotal">0 LOOTIX</div>
+<div class="wallet-euros" id="walletEuros">= 0,00 €</div>
 </div>
 
-<div
-class="wallet-total"
-id="walletTotal">
-0 LOOTIX
-</div>
-
-<div
-class="wallet-euros"
-id="walletEuros">
-= 0,00 €
-</div>
-
-</div>
-
+<div class="wallet-actions">
 <div class="wallet-motivation">
 Continue et fais monter ta cagnotte.
 </div>
 
+<button class="primary-button" id="withdrawButton">
+💸 Retirer mes gains
+</button>
 </div>
 
+</div>
 
 <div class="wallet-details">
 
 <div class="wallet-detail">
-
-<div class="wallet-label">
-🟢 Disponible
+<div class="wallet-label">🟢 Disponible</div>
+<div class="wallet-value" id="availableLootix">0 LOOTIX</div>
 </div>
-
-<div
-class="wallet-value"
-id="availableLootix">
-0 LOOTIX
-</div>
-
-</div>
-
 
 <div class="wallet-detail">
-
-<div class="wallet-label">
-🟠 En attente
+<div class="wallet-label">🟠 En attente</div>
+<div class="wallet-value" id="pendingLootix">0 LOOTIX</div>
 </div>
-
-<div
-class="wallet-value"
-id="pendingLootix">
-0 LOOTIX
-</div>
-
-</div>
-
 
 <div class="wallet-detail">
-
-<div class="wallet-label">
-🔥 Série actuelle
-</div>
-
-<div
-class="wallet-value"
-id="walletStreak">
-0 jour
-</div>
-
+<div class="wallet-label">🔥 Série actuelle</div>
+<div class="wallet-value" id="walletStreak">0 jour</div>
 </div>
 
 </div>
 
 </section>
-
-
 
 <!-- HERO -->
 
@@ -983,19 +726,14 @@ Multiplie les actions.<br>
 </h1>
 
 <p>
-Joue, regarde, réponds à des sondages,
-relève des défis et parraine tes amis
-pour accumuler des LOOTIX.
+Joue, regarde, réponds à des sondages, relève des défis et
+parraine tes amis pour accumuler des LOOTIX.
 </p>
 
 <div class="hero-actions">
-
-<button
-class="main-cta"
-id="mainCTA">
+<button class="main-cta" id="mainCTA">
 Commencer à gagner
 </button>
-
 </div>
 
 <div class="conversion">
@@ -1004,61 +742,25 @@ Commencer à gagner
 
 </section>
 
-
-
 <!-- BON PLAN -->
 
 <section class="section">
 
-<h2 class="section-title">
-🔥 Le bon plan du jour
-</h2>
-
+<h2 class="section-title">🔥 Le bon plan du jour</h2>
 <div class="section-subtitle">
 Notre sélection pour faire monter ta cagnotte aujourd'hui.
 </div>
 
-<div
-class="daily-deal"
-id="dailyDeal">
+<div class="daily-deal" id="dailyDeal">
 
-<div class="daily-badge">
-⭐ Sélection Loot Up
-</div>
+<div class="daily-badge">⭐ Sélection Loot Up</div>
+<div class="daily-icon" id="dailyIcon">🎯</div>
+<div class="daily-title" id="dailyTitle">Chargement...</div>
+<div class="daily-description" id="dailyDescription"></div>
+<div class="daily-reward" id="dailyReward">0 LOOTIX</div>
+<div class="daily-euros" id="dailyEuros">= 0,00 €</div>
 
-<div
-class="daily-icon"
-id="dailyIcon">
-🎯
-</div>
-
-<div
-class="daily-title"
-id="dailyTitle">
-Chargement...
-</div>
-
-<div
-class="daily-description"
-id="dailyDescription">
-Recherche de la meilleure mission disponible.
-</div>
-
-<div
-class="daily-reward"
-id="dailyReward">
-0 LOOTIX
-</div>
-
-<div
-class="daily-euros"
-id="dailyEuros">
-= 0,00 €
-</div>
-
-<button
-class="primary-button"
-id="dailyButton">
+<button class="primary-button" id="dailyButton">
 Profiter de l'offre
 </button>
 
@@ -1066,144 +768,66 @@ Profiter de l'offre
 
 </section>
 
-
-
 <!-- CATÉGORIES -->
 
 <section class="section">
 
-<h2 class="section-title">
-⚡ Gagne comme tu veux
-</h2>
-
-<div class="section-subtitle">
-Choisis la manière qui te convient.
-</div>
+<h2 class="section-title">⚡ Gagne comme tu veux</h2>
+<div class="section-subtitle">Choisis la manière qui te convient.</div>
 
 <div class="categories">
 
 <div class="category-card">
-
-<div class="category-icon">
-🎮
+<div class="category-icon">🎮</div>
+<h3>Joue</h3>
+<p>Découvre les missions de jeux et atteins les objectifs proposés.</p>
+<button data-filter="game">Voir les jeux</button>
 </div>
-
-<h3>
-Joue
-</h3>
-
-<p>
-Découvre les missions de jeux et atteins les objectifs proposés.
-</p>
-
-<button data-filter="game">
-Voir les jeux
-</button>
-
-</div>
-
 
 <div class="category-card">
-
-<div class="category-icon">
-📺
+<div class="category-icon">📺</div>
+<h3>Regarde</h3>
+<p>Regarde les contenus rémunérés disponibles sur Loot Up.</p>
+<button data-filter="video">Voir les vidéos</button>
 </div>
-
-<h3>
-Regarde
-</h3>
-
-<p>
-Regarde les contenus rémunérés disponibles sur Loot Up.
-</p>
-
-<button data-filter="video">
-Voir les vidéos
-</button>
-
-</div>
-
 
 <div class="category-card">
-
-<div class="category-icon">
-📝
+<div class="category-icon">📝</div>
+<h3>Sondages</h3>
+<p>Partage ton avis et gagne des LOOTIX grâce aux sondages.</p>
+<button data-filter="survey">Voir les sondages</button>
 </div>
-
-<h3>
-Sondages
-</h3>
-
-<p>
-Partage ton avis et gagne des LOOTIX grâce aux sondages.
-</p>
-
-<button data-filter="survey">
-Voir les sondages
-</button>
-
-</div>
-
 
 <div class="category-card">
-
-<div class="category-icon">
-👥
-</div>
-
-<h3>
-Parrainage
-</h3>
-
-<p>
-Invite tes amis et gagne lorsque leur activité devient éligible.
-</p>
-
-<button id="goReferral">
-Parrainer un ami
-</button>
-
+<div class="category-icon">👥</div>
+<h3>Parrainage</h3>
+<p>Invite tes amis et gagne lorsque leur activité devient éligible.</p>
+<button id="goReferral">Parrainer un ami</button>
 </div>
 
 </div>
 
 </section>
 
+<!-- MISSIONS -->
 
+<section class="section" id="offersSection">
 
-<!-- OFFRES -->
-
-<section
-class="section"
-id="offersSection">
-
-<h2
-class="section-title"
-id="offersTitle">
+<h2 class="section-title" id="offersTitle">
 🎯 Missions disponibles
 </h2>
 
-<div
-class="offers"
-id="offersContainer">
-
-<div class="loading">
-Chargement des missions...
-</div>
-
+<div class="offers" id="offersContainer">
+<div class="loading">Chargement des missions...</div>
 </div>
 
 </section>
-
-
 
 <!-- DÉFIS -->
 
 <section class="section">
 
-<h2 class="section-title">
-🎯 Défis du jour
-</h2>
+<h2 class="section-title">🎯 Défis du jour</h2>
 
 <div class="section-subtitle">
 Complète les trois actions pour débloquer ton bonus.
@@ -1212,98 +836,46 @@ Complète les trois actions pour débloquer ton bonus.
 <div class="challenge-box">
 
 <div class="challenge-head">
-
-<strong>
-Progression du jour
-</strong>
-
-<div
-class="challenge-count"
-id="challengeCount">
-0 / 3
-</div>
-
+<strong>Progression du jour</strong>
+<div class="challenge-count" id="challengeCount">0 / 3</div>
 </div>
 
 <div class="progress">
-
-<div
-class="progress-fill"
-id="challengeProgress">
+<div class="progress-fill" id="challengeProgress"></div>
 </div>
-
-</div>
-
 
 <div class="challenge-list">
 
-<div
-class="challenge"
-id="challengeGame">
-
-<span>
-🎮 Termine une mission de jeu
-</span>
-
-<span class="challenge-status">
-À faire
-</span>
-
+<div class="challenge" id="challengeGame">
+<span>🎮 Termine une mission de jeu</span>
+<span class="challenge-status">À faire</span>
 </div>
 
-
-<div
-class="challenge"
-id="challengeVideo">
-
-<span>
-📺 Réalise une action vidéo
-</span>
-
-<span class="challenge-status">
-À faire
-</span>
-
+<div class="challenge" id="challengeVideo">
+<span>📺 Réalise une action vidéo</span>
+<span class="challenge-status">À faire</span>
 </div>
 
-
-<div
-class="challenge"
-id="challengeSurvey">
-
-<span>
-📝 Termine un sondage
-</span>
-
-<span class="challenge-status">
-À faire
-</span>
-
+<div class="challenge" id="challengeSurvey">
+<span>📝 Termine un sondage</span>
+<span class="challenge-status">À faire</span>
 </div>
 
 </div>
-
 
 <div class="challenge-bonus">
 
-<div>
-🎁 BONUS DU JOUR
-</div>
+<div>🎁 BONUS DU JOUR</div>
 
-<div
-class="challenge-bonus-value"
-id="challengeBonus">
+<div class="challenge-bonus-value" id="challengeBonus">
 +100 LOOTIX
 </div>
 
-<div
-id="challengeBonusEuro">
+<div id="challengeBonusEuro">
 = 1,00 €
 </div>
 
-<button
-class="primary-button claim-bonus"
-id="claimBonus">
+<button class="primary-button" id="claimBonus">
 Récupérer mon bonus
 </button>
 
@@ -1313,15 +885,11 @@ Récupérer mon bonus
 
 </section>
 
-
-
 <!-- SÉRIE -->
 
 <section class="section">
 
-<h2 class="section-title">
-🔥 Ta série
-</h2>
+<h2 class="section-title">🔥 Ta série</h2>
 
 <div class="section-subtitle">
 Reviens régulièrement pour conserver ta progression.
@@ -1329,53 +897,23 @@ Reviens régulièrement pour conserver ta progression.
 
 <div class="streak-box">
 
-<div
-class="streak-number"
-id="streakNumber">
-0 jour
-</div>
+<div class="streak-number" id="streakNumber">0 jour</div>
 
 <div class="streak-description">
 Valide ta présence quotidienne pour faire progresser ta série.
 </div>
 
-
 <div class="streak-days">
-
-<div class="streak-day" data-streak="1">
-Jour 1
+<div class="streak-day" data-streak="1">Jour 1</div>
+<div class="streak-day" data-streak="2">Jour 2</div>
+<div class="streak-day" data-streak="3">Jour 3</div>
+<div class="streak-day" data-streak="4">Jour 4</div>
+<div class="streak-day" data-streak="5">Jour 5</div>
+<div class="streak-day" data-streak="6">Jour 6</div>
+<div class="streak-day" data-streak="7">🔥 Jour 7</div>
 </div>
 
-<div class="streak-day" data-streak="2">
-Jour 2
-</div>
-
-<div class="streak-day" data-streak="3">
-Jour 3
-</div>
-
-<div class="streak-day" data-streak="4">
-Jour 4
-</div>
-
-<div class="streak-day" data-streak="5">
-Jour 5
-</div>
-
-<div class="streak-day" data-streak="6">
-Jour 6
-</div>
-
-<div class="streak-day" data-streak="7">
-🔥 Jour 7
-</div>
-
-</div>
-
-
-<button
-class="primary-button"
-id="checkinButton">
+<button class="primary-button" id="checkinButton">
 Valider ma journée
 </button>
 
@@ -1383,88 +921,45 @@ Valider ma journée
 
 </section>
 
-
-
 <!-- PARRAINAGE -->
 
-<section
-class="section"
-id="referralSection">
+<section class="section" id="referralSection">
 
-<h2 class="section-title">
-👥 Parrainage
-</h2>
+<h2 class="section-title">👥 Parrainage</h2>
 
 <div class="section-subtitle">
 Invite tes amis et suis les gains générés par leur activité.
 </div>
 
-
 <div class="referral-box">
 
-<strong>
-Ton lien personnel
-</strong>
+<strong>Ton lien personnel</strong>
 
 <div class="referral-link-box">
 
-<div
-class="referral-link"
-id="referralLink">
+<div class="referral-link" id="referralLink">
 Connecte-toi pour obtenir ton lien.
 </div>
 
-<button id="copyReferral">
-Copier
-</button>
+<button id="copyReferral">Copier</button>
 
 </div>
-
 
 <div class="referral-stats">
 
 <div class="referral-stat">
-
-<div class="referral-stat-label">
-👥 Filleuls
+<div class="referral-stat-label">👥 Filleuls</div>
+<div class="referral-stat-value" id="referralCount">0</div>
 </div>
-
-<div
-class="referral-stat-value"
-id="referralCount">
-0
-</div>
-
-</div>
-
 
 <div class="referral-stat">
-
-<div class="referral-stat-label">
-🟠 Gains en attente
+<div class="referral-stat-label">🟠 Gains en attente</div>
+<div class="referral-stat-value" id="referralPending">0 LOOTIX</div>
 </div>
-
-<div
-class="referral-stat-value"
-id="referralPending">
-0 LOOTIX
-</div>
-
-</div>
-
 
 <div class="referral-stat">
-
-<div class="referral-stat-label">
-🟢 Gains validés
-</div>
-
-<div
-class="referral-stat-value"
-id="referralConfirmed">
-0 LOOTIX
-</div>
-
+<div class="referral-stat-label">🟢 Gains validés</div>
+<div class="referral-stat-value" id="referralConfirmed">0 LOOTIX</div>
 </div>
 
 </div>
@@ -1473,85 +968,57 @@ id="referralConfirmed">
 
 </section>
 
+<!-- RETRAITS -->
 
+<section class="section">
+
+<h2 class="section-title">💸 Mes retraits</h2>
+
+<div class="section-subtitle">
+Suis ici tes demandes de paiement.
+</div>
+
+<div class="withdrawals-box" id="withdrawalsBox">
+<div id="withdrawalsList"></div>
+</div>
+
+</section>
 
 <!-- HISTORIQUE -->
 
 <section class="section">
 
-<h2 class="section-title">
-🧾 Historique
-</h2>
+<h2 class="section-title">🧾 Historique des gains</h2>
 
-<div
-class="history-box"
-id="historyBox">
-
-<div id="historyList">
-</div>
-
+<div class="history-box" id="historyBox">
+<div id="historyList"></div>
 </div>
 
 </section>
-
-
 
 <!-- PROFIL -->
 
 <section class="section">
 
-<h2 class="section-title">
-👤 Mon profil
-</h2>
+<h2 class="section-title">👤 Mon profil</h2>
 
-<div
-class="profile-box"
-id="profileBox">
+<div class="profile-box" id="profileBox">
 
 <div class="profile-grid">
 
 <div class="profile-stat">
-
-<div class="profile-label">
-🏆 Niveau
+<div class="profile-label">🏆 Niveau</div>
+<div class="profile-value" id="profileLevel">1</div>
 </div>
-
-<div
-class="profile-value"
-id="profileLevel">
-1
-</div>
-
-</div>
-
 
 <div class="profile-stat">
-
-<div class="profile-label">
-🔥 Meilleure série
+<div class="profile-label">🔥 Meilleure série</div>
+<div class="profile-value" id="profileLongestStreak">0 jour</div>
 </div>
-
-<div
-class="profile-value"
-id="profileLongestStreak">
-0 jour
-</div>
-
-</div>
-
 
 <div class="profile-stat">
-
-<div class="profile-label">
-👥 Code parrainage
-</div>
-
-<div
-class="profile-value"
-id="profileReferralCode">
--
-</div>
-
+<div class="profile-label">👥 Code parrainage</div>
+<div class="profile-value" id="profileReferralCode">-</div>
 </div>
 
 </div>
@@ -1560,159 +1027,205 @@ id="profileReferralCode">
 
 </section>
 
+<!-- ADMINISTRATION -->
 
+<section class="section" id="adminSection">
+
+<div class="admin-panel">
+
+<div class="admin-heading">
+<div>
+<h2 class="section-title">⚙️ Administration Loot Up</h2>
+<div class="section-subtitle">
+Tableau de bord réservé à l'administrateur.
+</div>
+</div>
+
+<div class="admin-badge">ADMIN</div>
+</div>
+
+<div class="admin-stats">
+
+<div class="stat-card">
+<div class="stat-label">👥 Utilisateurs</div>
+<div class="stat-value" id="adminUsers">0</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-label">🟢 LOOTIX disponibles</div>
+<div class="stat-value" id="adminAvailable">0</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-label">🟠 LOOTIX en attente</div>
+<div class="stat-value" id="adminPendingLootix">0</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-label">💸 Retraits en attente</div>
+<div class="stat-value" id="adminPendingWithdrawals">0</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-label">💶 À payer</div>
+<div class="stat-value" id="adminToPay">0,00 €</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-label">💰 Revenus partenaires</div>
+<div class="stat-value" id="adminRevenue">0,00 €</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-label">📈 Marge plateforme</div>
+<div class="stat-value" id="adminMargin">0,00 €</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-label">🎯 Offres actives</div>
+<div class="stat-value" id="adminOffers">0</div>
+</div>
+
+</div>
+
+<h3 class="admin-subtitle">💸 Demandes de retrait</h3>
+
+<div id="adminWithdrawals">
+<div class="empty">Chargement...</div>
+</div>
+
+</div>
+
+</section>
 
 <footer>
-
 LOOT UP — 100 LOOTIX = 1 €<br>
-
-Les récompenses dépendent des conditions et
-de la validation de chaque mission.
-
+Les récompenses dépendent des conditions et de la validation de chaque mission.
 </footer>
 
 </main>
 
-
-
 <!-- AUTH -->
 
-<div
-class="modal-overlay"
-id="authModal">
+<div class="modal-overlay" id="authModal">
 
 <div class="modal">
 
-<button
-class="close-modal"
-id="closeModal">
-×
-</button>
+<button class="close-modal" id="closeAuth">×</button>
 
-<h2>
-Bienvenue sur LOOT UP
-</h2>
+<h2>Bienvenue sur LOOT UP</h2>
 
 <div class="modal-subtitle">
 Crée ton compte et commence à faire monter ta cagnotte.
 </div>
 
-
 <div class="auth-tabs">
-
-<button
-class="auth-tab active"
-type="button"
-data-tab="signup">
-Créer un compte
-</button>
-
-<button
-class="auth-tab"
-type="button"
-data-tab="login">
-Se connecter
-</button>
-
+<button class="auth-tab active" data-tab="signup">Créer un compte</button>
+<button class="auth-tab" data-tab="login">Se connecter</button>
 </div>
 
+<form class="auth-form active" id="signupForm">
 
-<form
-class="auth-form active"
-id="signupForm">
+<label>Adresse e-mail</label>
+<input id="signupEmail" type="email" required>
 
-<label>
-Adresse e-mail
-</label>
+<label>Mot de passe</label>
+<input id="signupPassword" type="password" minlength="6" required>
 
-<input
-id="signupEmail"
-type="email"
-required>
+<label>Confirme ton mot de passe</label>
+<input id="signupConfirm" type="password" minlength="6" required>
 
-
-<label>
-Mot de passe
-</label>
-
-<input
-id="signupPassword"
-type="password"
-minlength="6"
-required>
-
-
-<label>
-Confirme ton mot de passe
-</label>
-
-<input
-id="signupConfirm"
-type="password"
-minlength="6"
-required>
-
-
-<button
-class="auth-submit"
-id="signupSubmit"
-type="submit">
+<button class="auth-submit" id="signupSubmit" type="submit">
 Créer mon compte
 </button>
 
 </form>
 
+<form class="auth-form" id="loginForm">
 
-<form
-class="auth-form"
-id="loginForm">
+<label>Adresse e-mail</label>
+<input id="loginEmail" type="email" required>
 
-<label>
-Adresse e-mail
-</label>
+<label>Mot de passe</label>
+<input id="loginPassword" type="password" required>
 
-<input
-id="loginEmail"
-type="email"
-required>
-
-
-<label>
-Mot de passe
-</label>
-
-<input
-id="loginPassword"
-type="password"
-required>
-
-
-<button
-class="auth-submit"
-id="loginSubmit"
-type="submit">
+<button class="auth-submit" id="loginSubmit" type="submit">
 Se connecter
 </button>
 
 </form>
 
+<div class="message" id="authMessage"></div>
 
-<div
-class="auth-message"
-id="authMessage">
+</div>
+</div>
+
+<!-- RETRAIT -->
+
+<div class="modal-overlay" id="withdrawModal">
+
+<div class="modal">
+
+<button class="close-modal" id="closeWithdraw">×</button>
+
+<h2>💸 Retirer mes gains</h2>
+
+<div class="modal-subtitle">
+Transforme tes LOOTIX disponibles en paiement PayPal.
+</div>
+
+<div class="withdrawal-summary">
+
+<div class="info">Disponible</div>
+
+<div class="withdrawal-preview" id="withdrawAvailable">
+0 LOOTIX
+</div>
+
+<div id="withdrawAvailableEuro">
+0,00 €
 </div>
 
 </div>
 
+<form id="withdrawForm">
+
+<label>Nombre de LOOTIX à retirer</label>
+
+<input
+id="withdrawAmount"
+type="number"
+min="500"
+step="1"
+placeholder="Exemple : 500"
+required>
+
+<div class="info" id="withdrawConversion">
+Minimum : 500 LOOTIX = 5 €
 </div>
 
+<br>
 
+<label>Adresse e-mail PayPal</label>
+
+<input
+id="paypalEmail"
+type="email"
+placeholder="tonadresse@email.com"
+required>
+
+<button class="auth-submit" id="withdrawSubmit" type="submit">
+Demander le retrait
+</button>
+
+</form>
+
+<div class="message" id="withdrawMessage"></div>
+
+</div>
+</div>
 
 <script>
-
-/* =========================================================
-   SUPABASE
-========================================================= */
 
 const SUPABASE_URL =
 "https://dvvjujkpnpzerbjxjjsy.supabase.co";
@@ -1720,1899 +1233,1059 @@ const SUPABASE_URL =
 const SUPABASE_KEY =
 "sb_publishable_HvsPthhIg2aTGnluSJ9R5w_4InrkBOo";
 
-
 const supabaseClient =
-window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_KEY
-);
+window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
+let currentUser=null;
+let currentProfile=null;
+let withdrawalMinimum=500;
+let isAdmin=false;
 
+/* OUTILS */
 
-let currentUser = null;
-let currentProfile = null;
-let currentDailyDeal = null;
-let currentOfferFilter = null;
+const $=id=>document.getElementById(id);
 
-
-
-/* =========================================================
-   OUTILS
-========================================================= */
-
-function formatLootix(value) {
-
-return new Intl.NumberFormat(
-"fr-FR"
-).format(
-Number(value || 0)
-);
-
+function formatLootix(value){
+return new Intl.NumberFormat("fr-FR").format(Number(value||0));
 }
 
-
-function lootixToEuro(value) {
-
-return new Intl.NumberFormat(
-"fr-FR",
-{
+function lootixToEuro(value){
+return new Intl.NumberFormat("fr-FR",{
 style:"currency",
 currency:"EUR"
-}
-).format(
-Number(value || 0) / 100
-);
-
+}).format(Number(value||0)/100);
 }
 
-
-function categoryIcon(category) {
-
-const c =
-String(category || "")
-.toLowerCase();
-
-if(c.includes("game"))
-return "🎮";
-
-if(c.includes("survey"))
-return "📝";
-
-if(c.includes("video"))
-return "📺";
-
-if(c.includes("app"))
-return "📱";
-
-return "🎯";
-
+function formatEuro(value){
+return new Intl.NumberFormat("fr-FR",{
+style:"currency",
+currency:"EUR"
+}).format(Number(value||0));
 }
 
-
-function categoryLabel(category) {
-
-const c =
-String(category || "")
-.toLowerCase();
-
-if(c.includes("game"))
-return "Jeu";
-
-if(c.includes("survey"))
-return "Sondage";
-
-if(c.includes("video"))
-return "Vidéo";
-
-if(c.includes("app"))
-return "Application";
-
-return "Mission";
-
+function categoryIcon(category){
+const c=String(category||"").toLowerCase();
+if(c.includes("game"))return"🎮";
+if(c.includes("survey"))return"📝";
+if(c.includes("video"))return"📺";
+if(c.includes("app"))return"📱";
+return"🎯";
 }
 
+function categoryLabel(category){
+const c=String(category||"").toLowerCase();
+if(c.includes("game"))return"Jeu";
+if(c.includes("survey"))return"Sondage";
+if(c.includes("video"))return"Vidéo";
+if(c.includes("app"))return"Application";
+return"Mission";
+}
 
+function statusLabel(status){
+const map={
+pending:"En attente",
+processing:"En traitement",
+paid:"Payé",
+rejected:"Refusé",
+cancelled:"Annulé"
+};
+return map[status]||status;
+}
 
-/* =========================================================
-   AUTH MODALE
-========================================================= */
+function statusClass(status){
+return "status status-"+status;
+}
 
-const authModal =
-document.getElementById("authModal");
+/* AUTH */
 
-const authMessage =
-document.getElementById("authMessage");
-
-
-function openAuth(tab="signup") {
-
-authModal.style.display =
-"flex";
-
+function openAuth(tab="signup"){
+$("authModal").style.display="flex";
 switchAuth(tab);
-
 }
 
-
-function closeAuth() {
-
-authModal.style.display =
-"none";
-
-authMessage.textContent =
-"";
-
+function closeAuth(){
+$("authModal").style.display="none";
+$("authMessage").textContent="";
 }
 
-
-function switchAuth(tabName) {
-
-document
-.querySelectorAll(".auth-tab")
-.forEach(tab => {
-
-tab.classList.toggle(
-"active",
-tab.dataset.tab === tabName
-);
-
+function switchAuth(tabName){
+document.querySelectorAll(".auth-tab").forEach(tab=>{
+tab.classList.toggle("active",tab.dataset.tab===tabName);
 });
-
-
-document
-.querySelectorAll(".auth-form")
-.forEach(form => {
-
-form.classList.toggle(
-"active",
-form.id === tabName + "Form"
-);
-
+document.querySelectorAll(".auth-form").forEach(form=>{
+form.classList.toggle("active",form.id===tabName+"Form");
 });
-
 }
 
+$("closeAuth").onclick=closeAuth;
+$("loginButton").onclick=()=>openAuth("login");
 
-document
-.getElementById("closeModal")
-.onclick =
-closeAuth;
-
-
-document
-.querySelectorAll(".auth-tab")
-.forEach(tab => {
-
-tab.onclick =
-() => switchAuth(
-tab.dataset.tab
-);
-
+document.querySelectorAll(".auth-tab").forEach(tab=>{
+tab.onclick=()=>switchAuth(tab.dataset.tab);
 });
 
-
-document
-.getElementById("loginButton")
-.onclick =
-() => openAuth("login");
-
-
-authModal.onclick =
-event => {
-
-if(event.target === authModal)
-closeAuth();
-
+$("authModal").onclick=e=>{
+if(e.target===$("authModal"))closeAuth();
 };
 
+$("signupForm").addEventListener("submit",async e=>{
+e.preventDefault();
 
+const email=$("signupEmail").value.trim();
+const password=$("signupPassword").value;
+const confirm=$("signupConfirm").value;
 
-/* =========================================================
-   INSCRIPTION
-========================================================= */
-
-document
-.getElementById("signupForm")
-.addEventListener(
-"submit",
-async event => {
-
-event.preventDefault();
-
-
-const email =
-document
-.getElementById("signupEmail")
-.value
-.trim();
-
-
-const password =
-document
-.getElementById("signupPassword")
-.value;
-
-
-const confirm =
-document
-.getElementById("signupConfirm")
-.value;
-
-
-if(password !== confirm) {
-
-authMessage.className =
-"auth-message error";
-
-authMessage.textContent =
-"Les mots de passe ne correspondent pas.";
-
+if(password!==confirm){
+$("authMessage").className="message error";
+$("authMessage").textContent="Les mots de passe ne correspondent pas.";
 return;
-
 }
 
+$("signupSubmit").disabled=true;
+$("signupSubmit").textContent="Création...";
 
-const button =
-document
-.getElementById("signupSubmit");
+const {data,error}=await supabaseClient.auth.signUp({email,password});
 
-button.disabled =
-true;
+$("signupSubmit").disabled=false;
+$("signupSubmit").textContent="Créer mon compte";
 
-button.textContent =
-"Création...";
-
-
-const {
-data,
-error
-} =
-await supabaseClient
-.auth
-.signUp({
-email,
-password
-});
-
-
-button.disabled =
-false;
-
-button.textContent =
-"Créer mon compte";
-
-
-if(error) {
-
-authMessage.className =
-"auth-message error";
-
-authMessage.textContent =
-error.message;
-
+if(error){
+$("authMessage").className="message error";
+$("authMessage").textContent=error.message;
 return;
-
 }
 
-
-if(data.session) {
-
-authMessage.className =
-"auth-message success";
-
-authMessage.textContent =
-"Compte créé !";
-
+if(data.session){
+currentUser=data.user;
 await applyStoredReferral();
-
 await refreshUser();
-
-setTimeout(
-closeAuth,
-700
-);
-
-}
-
-else {
-
-authMessage.className =
-"auth-message success";
-
-authMessage.textContent =
-"Compte créé ! Vérifie ton e-mail pour confirmer ton inscription.";
-
-}
-
-}
-);
-
-
-
-/* =========================================================
-   CONNEXION
-========================================================= */
-
-document
-.getElementById("loginForm")
-.addEventListener(
-"submit",
-async event => {
-
-event.preventDefault();
-
-
-const email =
-document
-.getElementById("loginEmail")
-.value
-.trim();
-
-
-const password =
-document
-.getElementById("loginPassword")
-.value;
-
-
-const button =
-document
-.getElementById("loginSubmit");
-
-button.disabled =
-true;
-
-button.textContent =
-"Connexion...";
-
-
-const {
-error
-} =
-await supabaseClient
-.auth
-.signInWithPassword({
-email,
-password
-});
-
-
-button.disabled =
-false;
-
-button.textContent =
-"Se connecter";
-
-
-if(error) {
-
-authMessage.className =
-"auth-message error";
-
-authMessage.textContent =
-"Adresse e-mail ou mot de passe incorrect.";
-
-return;
-
-}
-
-
-await applyStoredReferral();
-
-await refreshUser();
-
 closeAuth();
-
+}else{
+$("authMessage").className="message success";
+$("authMessage").textContent=
+"Compte créé. Vérifie ton e-mail pour confirmer ton inscription.";
 }
-);
+});
 
+$("loginForm").addEventListener("submit",async e=>{
+e.preventDefault();
 
+$("loginSubmit").disabled=true;
+$("loginSubmit").textContent="Connexion...";
 
-/* =========================================================
-   DÉCONNEXION
-========================================================= */
+const {error}=await supabaseClient.auth.signInWithPassword({
+email:$("loginEmail").value.trim(),
+password:$("loginPassword").value
+});
 
-document
-.getElementById("logoutButton")
-.onclick =
-async () => {
+$("loginSubmit").disabled=false;
+$("loginSubmit").textContent="Se connecter";
 
-await supabaseClient
-.auth
-.signOut();
+if(error){
+$("authMessage").className="message error";
+$("authMessage").textContent="Adresse e-mail ou mot de passe incorrect.";
+return;
+}
 
-currentUser = null;
-currentProfile = null;
+await applyStoredReferral();
+await refreshUser();
+closeAuth();
+});
 
+$("logoutButton").onclick=async()=>{
+await supabaseClient.auth.signOut();
+currentUser=null;
+currentProfile=null;
+isAdmin=false;
 showLoggedOut();
-
 };
 
+/* ÉTAT UI */
 
+function showLoggedIn(){
+$("loginButton").style.display="none";
+$("logoutButton").style.display="block";
+$("headerBalance").style.display="block";
+$("topWallet").style.display="block";
+$("historyBox").style.display="block";
+$("profileBox").style.display="block";
+$("withdrawalsBox").style.display="block";
+$("mainCTA").textContent="Découvrir les missions";
+}
 
-/* =========================================================
-   PROFIL
-========================================================= */
+function showLoggedOut(){
+$("loginButton").style.display="block";
+$("logoutButton").style.display="none";
+$("headerBalance").style.display="none";
+$("adminButton").style.display="none";
+$("adminSection").style.display="none";
+$("topWallet").style.display="none";
+$("historyBox").style.display="none";
+$("profileBox").style.display="none";
+$("withdrawalsBox").style.display="none";
+$("mainCTA").textContent="Commencer à gagner";
+}
 
-async function loadProfile() {
+/* PARAMÈTRES */
 
-if(!currentUser)
-return;
-
-
-const {
-data,
-error
-} =
-await supabaseClient
-.from("profiles")
-.select(
-"id, lootix_available, lootix_pending, level, current_streak, longest_streak, referral_code"
-)
-.eq(
-"id",
-currentUser.id
-)
+async function loadSettings(){
+const {data}=await supabaseClient
+.from("app_settings")
+.select("withdrawal_minimum_lootix")
+.eq("id",1)
 .single();
 
+if(data){
+withdrawalMinimum=Number(data.withdrawal_minimum_lootix||500);
+$("withdrawAmount").min=withdrawalMinimum;
+$("withdrawConversion").textContent=
+"Minimum : "+formatLootix(withdrawalMinimum)+
+" LOOTIX = "+lootixToEuro(withdrawalMinimum);
+}
+}
 
-if(error) {
+/* PROFIL */
 
-console.error(
-"Profile error",
-error
-);
+async function loadProfile(){
+if(!currentUser)return;
 
+const {data,error}=await supabaseClient
+.from("profiles")
+.select(`
+id,
+lootix_available,
+lootix_pending,
+level,
+current_streak,
+longest_streak,
+referral_code,
+is_admin
+`)
+.eq("id",currentUser.id)
+.single();
+
+if(error||!data){
+console.error(error);
 return;
-
 }
 
+currentProfile=data;
+isAdmin=!!data.is_admin;
 
-currentProfile =
-data;
+const available=Number(data.lootix_available||0);
+const pending=Number(data.lootix_pending||0);
+const total=available+pending;
 
+$("walletTotal").textContent=formatLootix(total)+" LOOTIX";
+$("walletEuros").textContent="= "+lootixToEuro(total);
+$("availableLootix").textContent=formatLootix(available)+" LOOTIX";
+$("pendingLootix").textContent=formatLootix(pending)+" LOOTIX";
+$("headerBalance").textContent="🪙 "+formatLootix(available)+" LOOTIX";
 
-const available =
-Number(
-data.lootix_available || 0
-);
+$("walletStreak").textContent=
+data.current_streak+(data.current_streak===1?" jour":" jours");
 
+$("streakNumber").textContent=
+data.current_streak+(data.current_streak===1?" jour":" jours");
 
-const pending =
-Number(
-data.lootix_pending || 0
-);
+$("profileLevel").textContent=data.level;
+$("profileLongestStreak").textContent=
+data.longest_streak+(data.longest_streak===1?" jour":" jours");
 
+$("profileReferralCode").textContent=data.referral_code||"-";
 
-const total =
-available + pending;
+$("withdrawAvailable").textContent=
+formatLootix(available)+" LOOTIX";
 
+$("withdrawAvailableEuro").textContent=
+lootixToEuro(available);
 
-document
-.getElementById("walletTotal")
-.textContent =
-formatLootix(total)
-+ " LOOTIX";
+updateStreakVisual(data.current_streak);
+buildReferralLink(data.referral_code);
 
+$("adminButton").style.display=isAdmin?"block":"none";
 
-document
-.getElementById("walletEuros")
-.textContent =
-"= "
-+ lootixToEuro(total);
-
-
-document
-.getElementById("availableLootix")
-.textContent =
-formatLootix(available)
-+ " LOOTIX";
-
-
-document
-.getElementById("pendingLootix")
-.textContent =
-formatLootix(pending)
-+ " LOOTIX";
-
-
-document
-.getElementById("walletStreak")
-.textContent =
-data.current_streak
-+ (
-data.current_streak === 1
-? " jour"
-: " jours"
-);
-
-
-document
-.getElementById("streakNumber")
-.textContent =
-data.current_streak
-+ (
-data.current_streak === 1
-? " jour"
-: " jours"
-);
-
-
-document
-.getElementById("profileLevel")
-.textContent =
-data.level;
-
-
-document
-.getElementById("profileLongestStreak")
-.textContent =
-data.longest_streak
-+ (
-data.longest_streak === 1
-? " jour"
-: " jours"
-);
-
-
-document
-.getElementById("profileReferralCode")
-.textContent =
-data.referral_code;
-
-
-document
-.getElementById("headerBalance")
-.textContent =
-"🪙 "
-+ formatLootix(available)
-+ " LOOTIX";
-
-
-updateStreakVisual(
-data.current_streak
-);
-
-
-buildReferralLink(
-data.referral_code
-);
-
+if(isAdmin){
+await loadAdminDashboard();
+}
 }
 
+/* CTA */
 
-
-/* =========================================================
-   AFFICHAGE CONNECTÉ
-========================================================= */
-
-function showLoggedIn() {
-
-document
-.getElementById("loginButton")
-.style.display =
-"none";
-
-
-document
-.getElementById("logoutButton")
-.style.display =
-"block";
-
-
-document
-.getElementById("headerBalance")
-.style.display =
-"block";
-
-
-document
-.getElementById("topWallet")
-.style.display =
-"block";
-
-
-document
-.getElementById("historyBox")
-.style.display =
-"block";
-
-
-document
-.getElementById("profileBox")
-.style.display =
-"block";
-
-
-document
-.getElementById("mainCTA")
-.textContent =
-"Découvrir les missions";
-
-}
-
-
-function showLoggedOut() {
-
-document
-.getElementById("loginButton")
-.style.display =
-"block";
-
-
-document
-.getElementById("logoutButton")
-.style.display =
-"none";
-
-
-document
-.getElementById("headerBalance")
-.style.display =
-"none";
-
-
-document
-.getElementById("topWallet")
-.style.display =
-"none";
-
-
-document
-.getElementById("historyBox")
-.style.display =
-"none";
-
-
-document
-.getElementById("profileBox")
-.style.display =
-"none";
-
-
-document
-.getElementById("mainCTA")
-.textContent =
-"Commencer à gagner";
-
-}
-
-
-
-/* =========================================================
-   BOUTON PRINCIPAL
-========================================================= */
-
-document
-.getElementById("mainCTA")
-.onclick =
-async () => {
-
-if(!currentUser) {
-
+$("mainCTA").onclick=()=>{
+if(!currentUser){
 openAuth("signup");
-
 return;
-
 }
-
-
-document
-.getElementById("offersSection")
-.scrollIntoView({
-behavior:"smooth"
-});
-
+$("offersSection").scrollIntoView({behavior:"smooth"});
 };
 
+/* OFFRES */
 
+async function loadOffers(filter=null){
 
-/* =========================================================
-   OFFRES
-========================================================= */
-
-async function loadOffers(filter=null) {
-
-currentOfferFilter =
-filter;
-
-
-const container =
-document
-.getElementById("offersContainer");
-
-
-container.innerHTML =
+$("offersContainer").innerHTML=
 '<div class="loading">Chargement des missions...</div>';
 
-
-let query =
-supabaseClient
+let query=supabaseClient
 .from("offers")
-.select(
-"id,title,description,category,user_reward_lootix,status"
-)
-.eq(
-"status",
-"active"
-)
-.order(
-"user_reward_lootix",
-{
-ascending:false
-}
-);
+.select("id,title,description,category,user_reward_lootix,status")
+.eq("status","active")
+.order("user_reward_lootix",{ascending:false});
 
-
-if(filter) {
-
-query =
-query.ilike(
-"category",
-"%" + filter + "%"
-);
-
+if(filter){
+query=query.ilike("category","%"+filter+"%");
 }
 
+const {data,error}=await query;
 
-const {
-data,
-error
-} =
-await query;
+$("offersContainer").innerHTML="";
 
-
-container.innerHTML =
-"";
-
-
-if(error) {
-
-container.innerHTML =
-'<div class="loading">Impossible de charger les missions.</div>';
-
+if(error){
+$("offersContainer").innerHTML=
+'<div class="empty">Impossible de charger les missions.</div>';
 return;
-
 }
 
-
-if(!data || !data.length) {
-
-container.innerHTML =
-'<div class="loading">Aucune mission disponible dans cette catégorie pour le moment.</div>';
-
+if(!data||!data.length){
+$("offersContainer").innerHTML=
+'<div class="empty">Aucune mission disponible pour le moment.</div>';
 return;
-
 }
 
+data.forEach(offer=>{
 
-data.forEach(
-offer => {
+const card=document.createElement("div");
+card.className="offer";
 
-const card =
-document.createElement("div");
+card.innerHTML=`
+<div class="offer-icon">${categoryIcon(offer.category)}</div>
+<div class="offer-category">${categoryLabel(offer.category)}</div>
+<h3></h3>
+<p></p>
+<div class="offer-reward">
++${formatLootix(offer.user_reward_lootix)} LOOTIX
+</div>
+<div class="offer-euro">
+= ${lootixToEuro(offer.user_reward_lootix)}
+</div>
+<button>Commencer la mission</button>
+`;
 
-card.className =
-"offer";
+card.querySelector("h3").textContent=offer.title;
+card.querySelector("p").textContent=
+offer.description||"Accomplis cette mission pour gagner des LOOTIX.";
 
-
-const icon =
-document.createElement("div");
-
-icon.className =
-"offer-icon";
-
-icon.textContent =
-categoryIcon(
-offer.category
-);
-
-
-const category =
-document.createElement("div");
-
-category.className =
-"offer-category";
-
-category.textContent =
-categoryLabel(
-offer.category
-);
-
-
-const title =
-document.createElement("h3");
-
-title.textContent =
-offer.title;
-
-
-const description =
-document.createElement("p");
-
-description.textContent =
-offer.description
-||
-"Accomplis cette mission pour gagner des LOOTIX.";
-
-
-const reward =
-document.createElement("div");
-
-reward.className =
-"offer-reward";
-
-reward.textContent =
-"+"
-+ formatLootix(
-offer.user_reward_lootix
-)
-+ " LOOTIX";
-
-
-const euro =
-document.createElement("div");
-
-euro.className =
-"offer-euro";
-
-euro.textContent =
-"= "
-+ lootixToEuro(
-offer.user_reward_lootix
-);
-
-
-const button =
-document.createElement("button");
-
-button.textContent =
-"Commencer la mission";
-
-
-button.onclick =
-() => {
-
-if(!currentUser) {
-
+card.querySelector("button").onclick=()=>{
+if(!currentUser){
 openAuth("signup");
-
 return;
-
 }
-
-
-alert(
-"La connexion au fournisseur réel sera branchée à l'étape Torox."
-);
-
+alert("La mission réelle sera ouverte lorsque Torox sera connecté.");
 };
 
-
-card.append(
-icon,
-category,
-title,
-description,
-reward,
-euro,
-button
-);
-
-
-container.appendChild(
-card
-);
-
+$("offersContainer").appendChild(card);
 });
-
 }
 
+document.querySelectorAll("[data-filter]").forEach(button=>{
+button.onclick=()=>{
+const filter=button.dataset.filter;
 
-
-/* =========================================================
-   FILTRES CATÉGORIES
-========================================================= */
-
-document
-.querySelectorAll(
-"[data-filter]"
-)
-.forEach(
-button => {
-
-button.onclick =
-() => {
-
-const filter =
-button.dataset.filter;
-
-
-document
-.getElementById("offersTitle")
-.textContent =
-filter === "game"
-? "🎮 Missions de jeux"
-:
-filter === "video"
-? "📺 Vidéos disponibles"
-:
+$("offersTitle").textContent=
+filter==="game"?"🎮 Missions de jeux":
+filter==="video"?"📺 Vidéos disponibles":
 "📝 Sondages disponibles";
 
-
-loadOffers(
-filter
-);
-
-
-document
-.getElementById("offersSection")
-.scrollIntoView({
-behavior:"smooth"
+loadOffers(filter);
+$("offersSection").scrollIntoView({behavior:"smooth"});
+};
 });
 
-};
+/* BON PLAN */
 
-}
-);
+async function loadDailyDeal(){
 
+const {data,error}=await supabaseClient.rpc("get_daily_deal");
 
+if(error||!data||!data.length)return;
 
-/* =========================================================
-   BON PLAN DU JOUR
-========================================================= */
+const deal=data[0];
 
-async function loadDailyDeal() {
+$("dailyDeal").style.display="block";
+$("dailyIcon").textContent=categoryIcon(deal.category);
+$("dailyTitle").textContent=deal.title;
+$("dailyDescription").textContent=
+deal.description||"Notre sélection du jour.";
 
-const {
-data,
-error
-} =
-await supabaseClient
-.rpc(
-"get_daily_deal"
-);
+$("dailyReward").textContent=
+"+"+formatLootix(deal.user_reward_lootix)+" LOOTIX";
 
-
-if(
-error
-||
-!data
-||
-!data.length
-) {
-
-return;
-
+$("dailyEuros").textContent=
+"= "+lootixToEuro(deal.user_reward_lootix);
 }
 
-
-const deal =
-data[0];
-
-
-currentDailyDeal =
-deal;
-
-
-document
-.getElementById("dailyDeal")
-.style.display =
-"block";
-
-
-document
-.getElementById("dailyIcon")
-.textContent =
-categoryIcon(
-deal.category
-);
-
-
-document
-.getElementById("dailyTitle")
-.textContent =
-deal.title;
-
-
-document
-.getElementById("dailyDescription")
-.textContent =
-deal.description
-||
-"Notre sélection du jour.";
-
-
-document
-.getElementById("dailyReward")
-.textContent =
-"+"
-+ formatLootix(
-deal.user_reward_lootix
-)
-+ " LOOTIX";
-
-
-document
-.getElementById("dailyEuros")
-.textContent =
-"= "
-+ lootixToEuro(
-deal.user_reward_lootix
-);
-
-}
-
-
-document
-.getElementById("dailyButton")
-.onclick =
-() => {
-
-if(!currentUser) {
-
+$("dailyButton").onclick=()=>{
+if(!currentUser){
 openAuth("signup");
-
 return;
-
 }
-
-
-alert(
-"Cette offre sera lancée automatiquement lorsque Torox sera connecté."
-);
-
+alert("Cette offre sera activée lorsque Torox sera connecté.");
 };
 
+/* HISTORIQUE */
 
+async function loadHistory(){
+if(!currentUser)return;
 
-/* =========================================================
-   HISTORIQUE
-========================================================= */
-
-async function loadHistory() {
-
-if(!currentUser)
-return;
-
-
-const {
-data,
-error
-} =
-await supabaseClient
-.from(
-"lootix_transactions"
-)
-.select(
-"amount,status,description,created_at"
-)
-.eq(
-"user_id",
-currentUser.id
-)
-.order(
-"created_at",
-{
-ascending:false
-}
-)
+const {data,error}=await supabaseClient
+.from("lootix_transactions")
+.select("amount,status,description,created_at")
+.eq("user_id",currentUser.id)
+.order("created_at",{ascending:false})
 .limit(30);
 
+$("historyList").innerHTML="";
 
-const container =
-document
-.getElementById(
-"historyList"
-);
-
-
-container.innerHTML =
-"";
-
-
-if(
-error
-||
-!data
-||
-!data.length
-) {
-
-container.innerHTML =
-'<div class="loading">Aucune transaction pour le moment.</div>';
-
+if(error||!data||!data.length){
+$("historyList").innerHTML='<div class="empty">Aucun gain pour le moment.</div>';
 return;
-
 }
 
+data.forEach(t=>{
+const line=document.createElement("div");
+line.className="history-item";
 
-data.forEach(
-transaction => {
+line.innerHTML=`
+<div>
+<div class="item-title"></div>
+<div class="item-meta"></div>
+<div class="item-meta"></div>
+</div>
+<div class="item-amount"></div>
+`;
 
-const line =
-document.createElement("div");
+line.querySelector(".item-title").textContent=
+t.description||"Transaction Loot Up";
 
-line.className =
-"history-item";
+const metas=line.querySelectorAll(".item-meta");
+metas[0].textContent=new Date(t.created_at).toLocaleString("fr-FR");
+metas[1].textContent=
+t.status==="confirmed"?"✓ Confirmé":
+t.status==="pending"?"⏳ En attente":
+t.status==="withdrawal"?"💸 Retrait":
+t.status;
 
+line.querySelector(".item-amount").textContent=
+(Number(t.amount)>=0?"+":"")+
+formatLootix(t.amount)+" LOOTIX";
 
-const left =
-document.createElement("div");
-
-
-const title =
-document.createElement("div");
-
-title.className =
-"history-title";
-
-title.textContent =
-transaction.description
-||
-"Transaction Loot Up";
-
-
-const meta =
-document.createElement("div");
-
-meta.className =
-"history-meta";
-
-meta.textContent =
-new Date(
-transaction.created_at
-)
-.toLocaleString(
-"fr-FR"
-);
-
-
-const status =
-document.createElement("div");
-
-status.className =
-"history-status";
-
-
-if(
-transaction.status ===
-"confirmed"
-) {
-
-status.textContent =
-"✓ Confirmé";
-
-status.style.color =
-"#69e6a6";
-
-}
-
-else if(
-transaction.status ===
-"rejected"
-) {
-
-status.textContent =
-"✕ Refusé";
-
-status.style.color =
-"#ff7777";
-
-}
-
-else {
-
-status.textContent =
-"⏳ En attente";
-
-status.style.color =
-"#ffad75";
-
-}
-
-
-left.append(
-title,
-meta,
-status
-);
-
-
-const amount =
-document.createElement("div");
-
-amount.className =
-"history-amount";
-
-amount.textContent =
-(
-Number(
-transaction.amount
-) >= 0
-? "+"
-: ""
-)
-+
-formatLootix(
-transaction.amount
-)
-+
-" LOOTIX";
-
-
-line.append(
-left,
-amount
-);
-
-
-container.appendChild(
-line
-);
-
+$("historyList").appendChild(line);
 });
-
 }
 
+/* DÉFIS */
 
+async function loadChallenges(){
 
-/* =========================================================
-   DÉFIS DU JOUR
-========================================================= */
+const {data,error}=
+await supabaseClient.rpc("get_daily_challenge_progress");
 
-async function loadChallenges() {
+if(error||!data||!data.length)return;
 
-const {
-data,
-error
-} =
-await supabaseClient
-.rpc(
-"get_daily_challenge_progress"
-);
+const info=data[0];
+const completed=Number(info.completed_count||0);
 
+$("challengeCount").textContent=completed+" / 3";
+$("challengeProgress").style.width=(completed/3*100)+"%";
 
-if(
-error
-||
-!data
-||
-!data.length
-)
+setChallenge("challengeGame",info.game_done);
+setChallenge("challengeVideo",info.video_done);
+setChallenge("challengeSurvey",info.survey_done);
+
+$("challengeBonus").textContent=
+"+"+formatLootix(info.bonus_lootix)+" LOOTIX";
+
+$("challengeBonusEuro").textContent=
+"= "+lootixToEuro(info.bonus_lootix);
+
+$("claimBonus").style.display=
+currentUser&&completed===3&&!info.bonus_claimed
+?"inline-block":"none";
+}
+
+function setChallenge(id,done){
+const element=$(id);
+element.classList.toggle("done",!!done);
+element.querySelector(".challenge-status").textContent=
+done?"✓ Terminé":"À faire";
+}
+
+$("claimBonus").onclick=async()=>{
+
+const {data,error}=
+await supabaseClient.rpc("claim_daily_challenge_bonus");
+
+if(error){
+alert("Le bonus n'est pas encore disponible.");
 return;
-
-
-const info =
-data[0];
-
-
-const completed =
-Number(
-info.completed_count || 0
-);
-
-
-document
-.getElementById("challengeCount")
-.textContent =
-completed + " / 3";
-
-
-document
-.getElementById("challengeProgress")
-.style.width =
-(completed / 3 * 100)
-+ "%";
-
-
-setChallenge(
-"challengeGame",
-info.game_done
-);
-
-
-setChallenge(
-"challengeVideo",
-info.video_done
-);
-
-
-setChallenge(
-"challengeSurvey",
-info.survey_done
-);
-
-
-document
-.getElementById("challengeBonus")
-.textContent =
-"+"
-+
-formatLootix(
-info.bonus_lootix
-)
-+
-" LOOTIX";
-
-
-document
-.getElementById("challengeBonusEuro")
-.textContent =
-"= "
-+
-lootixToEuro(
-info.bonus_lootix
-);
-
-
-const claim =
-document
-.getElementById("claimBonus");
-
-
-if(
-currentUser
-&&
-completed === 3
-&&
-!info.bonus_claimed
-) {
-
-claim.style.display =
-"inline-block";
-
 }
 
-else {
-
-claim.style.display =
-"none";
-
-}
-
-}
-
-
-function setChallenge(
-id,
-done
-) {
-
-const element =
-document.getElementById(
-id
-);
-
-
-element.classList.toggle(
-"done",
-!!done
-);
-
-
-element
-.querySelector(
-".challenge-status"
-)
-.textContent =
-done
-? "✓ Terminé"
-: "À faire";
-
-}
-
-
-document
-.getElementById("claimBonus")
-.onclick =
-async () => {
-
-const {
-data,
-error
-} =
-await supabaseClient
-.rpc(
-"claim_daily_challenge_bonus"
-);
-
-
-if(error) {
-
-alert(
-"Le bonus n'est pas encore disponible."
-);
-
-return;
-
-}
-
-
-alert(
-"🎉 +"
-+
-formatLootix(data)
-+
-" LOOTIX !\n\nContinue et fais monter ta cagnotte."
-);
-
-
+alert("🎉 +"+formatLootix(data)+" LOOTIX !");
 await refreshUser();
-
 };
 
+/* SÉRIE */
 
+function updateStreakVisual(value){
+const displayed=Math.min(Number(value||0),7);
 
-/* =========================================================
-   SÉRIE
-========================================================= */
-
-function updateStreakVisual(
-value
-) {
-
-const days =
-document.querySelectorAll(
-".streak-day"
-);
-
-
-const displayed =
-Math.min(
-Number(value || 0),
-7
-);
-
-
-days.forEach(
-day => {
-
+document.querySelectorAll(".streak-day").forEach(day=>{
 day.classList.toggle(
 "active",
-Number(
-day.dataset.streak
-)
-<= displayed
+Number(day.dataset.streak)<=displayed
 );
+});
+}
 
+$("checkinButton").onclick=async()=>{
+
+if(!currentUser){
+openAuth("login");
+return;
+}
+
+const {data,error}=await supabaseClient.rpc("claim_daily_checkin");
+
+if(error){
+alert("Impossible de valider la journée.");
+return;
+}
+
+if(data&&data.length){
+const r=data[0];
+
+alert(
+r.already_claimed
+?"Ta journée est déjà validée aujourd'hui 🔥"
+:"🔥 Série validée : "+r.current_streak+" jour(s) !"
+);
+}
+
+await refreshUser();
+};
+
+/* PARRAINAGE */
+
+function buildReferralLink(code){
+if(!code)return;
+
+const link=
+window.location.origin+
+window.location.pathname+
+"?ref="+encodeURIComponent(code);
+
+$("referralLink").textContent=link;
+$("referralLink").dataset.link=link;
+}
+
+$("copyReferral").onclick=async()=>{
+
+const link=$("referralLink").dataset.link;
+
+if(!link){
+openAuth("login");
+return;
+}
+
+await navigator.clipboard.writeText(link);
+alert("Lien de parrainage copié !");
+};
+
+$("goReferral").onclick=()=>{
+
+if(!currentUser){
+openAuth("signup");
+return;
+}
+
+$("referralSection").scrollIntoView({behavior:"smooth"});
+};
+
+async function loadReferralSummary(){
+
+if(!currentUser)return;
+
+const {data,error}=
+await supabaseClient.rpc("get_referral_summary");
+
+if(error||!data||!data.length)return;
+
+const item=data[0];
+
+$("referralCount").textContent=item.active_referrals;
+$("referralPending").textContent=
+formatLootix(item.pending_lootix)+" LOOTIX";
+
+$("referralConfirmed").textContent=
+formatLootix(item.confirmed_lootix)+" LOOTIX";
+}
+
+function captureReferral(){
+const code=new URLSearchParams(window.location.search).get("ref");
+if(code)localStorage.setItem("lootup_referral",code);
+}
+
+async function applyStoredReferral(){
+const code=localStorage.getItem("lootup_referral");
+
+if(!code||!currentUser)return;
+
+await supabaseClient.rpc("apply_referral_code",{
+p_referral_code:code
 });
 
+localStorage.removeItem("lootup_referral");
 }
 
+/* RETRAITS */
 
-document
-.getElementById("checkinButton")
-.onclick =
-async () => {
-
-if(!currentUser) {
-
+function openWithdraw(){
+if(!currentUser){
 openAuth("login");
-
 return;
-
 }
 
+$("withdrawMessage").textContent="";
+$("withdrawModal").style.display="flex";
+}
 
-const {
-data,
-error
-} =
-await supabaseClient
-.rpc(
-"claim_daily_checkin"
+function closeWithdraw(){
+$("withdrawModal").style.display="none";
+$("withdrawMessage").textContent="";
+}
+
+$("withdrawButton").onclick=openWithdraw;
+$("closeWithdraw").onclick=closeWithdraw;
+
+$("withdrawModal").onclick=e=>{
+if(e.target===$("withdrawModal"))closeWithdraw();
+};
+
+$("withdrawAmount").addEventListener("input",()=>{
+
+const amount=Number($("withdrawAmount").value||0);
+
+if(amount){
+$("withdrawConversion").textContent=
+formatLootix(amount)+" LOOTIX = "+lootixToEuro(amount)+
+" • Minimum "+formatLootix(withdrawalMinimum)+" LOOTIX";
+}else{
+$("withdrawConversion").textContent=
+"Minimum : "+formatLootix(withdrawalMinimum)+
+" LOOTIX = "+lootixToEuro(withdrawalMinimum);
+}
+});
+
+$("withdrawForm").addEventListener("submit",async e=>{
+e.preventDefault();
+
+const amount=Number($("withdrawAmount").value);
+const paypal=$("paypalEmail").value.trim();
+
+if(amount<withdrawalMinimum){
+$("withdrawMessage").className="message error";
+$("withdrawMessage").textContent=
+"Le minimum est de "+formatLootix(withdrawalMinimum)+" LOOTIX.";
+return;
+}
+
+if(!currentProfile||amount>Number(currentProfile.lootix_available||0)){
+$("withdrawMessage").className="message error";
+$("withdrawMessage").textContent=
+"Tu n'as pas assez de LOOTIX disponibles.";
+return;
+}
+
+const confirmation=confirm(
+"Confirmer le retrait de "+
+formatLootix(amount)+" LOOTIX ("+
+lootixToEuro(amount)+") vers "+paypal+" ?"
 );
 
+if(!confirmation)return;
 
-if(error) {
+$("withdrawSubmit").disabled=true;
+$("withdrawSubmit").textContent="Création de la demande...";
 
+const {error}=await supabaseClient.rpc("request_withdrawal",{
+p_amount_lootix:amount,
+p_payment_method:"paypal",
+p_payout_destination:paypal
+});
+
+$("withdrawSubmit").disabled=false;
+$("withdrawSubmit").textContent="Demander le retrait";
+
+if(error){
 console.error(error);
-
+$("withdrawMessage").className="message error";
+$("withdrawMessage").textContent=
+"Impossible de créer le retrait. Vérifie ton solde et le montant.";
 return;
-
 }
 
+$("withdrawMessage").className="message success";
+$("withdrawMessage").textContent=
+"✓ Demande créée. Ton retrait est maintenant en attente.";
 
-if(
-data
-&&
-data.length
-) {
-
-const result =
-data[0];
-
-
-if(
-result.already_claimed
-) {
-
-alert(
-"Ta journée est déjà validée aujourd'hui 🔥"
-);
-
-}
-
-else {
-
-alert(
-"🔥 Série validée : "
-+
-result.current_streak
-+
-" jour(s) !"
-);
-
-}
-
-}
-
+$("withdrawForm").reset();
 
 await refreshUser();
 
-};
-
-
-
-/* =========================================================
-   PARRAINAGE
-========================================================= */
-
-function buildReferralLink(
-code
-) {
-
-if(!code)
-return;
-
-
-const link =
-window.location.origin
-+
-window.location.pathname
-+
-"?ref="
-+
-encodeURIComponent(
-code
-);
-
-
-document
-.getElementById("referralLink")
-.textContent =
-link;
-
-
-document
-.getElementById("referralLink")
-.dataset.link =
-link;
-
-}
-
-
-document
-.getElementById("copyReferral")
-.onclick =
-async () => {
-
-const element =
-document.getElementById(
-"referralLink"
-);
-
-
-const link =
-element.dataset.link;
-
-
-if(!link) {
-
-openAuth("login");
-
-return;
-
-}
-
-
-await navigator
-.clipboard
-.writeText(
-link
-);
-
-
-alert(
-"Lien de parrainage copié !"
-);
-
-};
-
-
-document
-.getElementById("goReferral")
-.onclick =
-() => {
-
-if(!currentUser) {
-
-openAuth("signup");
-
-return;
-
-}
-
-
-document
-.getElementById(
-"referralSection"
-)
-.scrollIntoView({
-behavior:"smooth"
+setTimeout(closeWithdraw,1200);
 });
 
+async function loadWithdrawals(){
+
+if(!currentUser)return;
+
+const {data,error}=await supabaseClient
+.from("withdrawals")
+.select(`
+id,
+amount_lootix,
+amount_eur,
+payment_method,
+payout_destination,
+status,
+created_at
+`)
+.eq("user_id",currentUser.id)
+.order("created_at",{ascending:false});
+
+$("withdrawalsList").innerHTML="";
+
+if(error||!data||!data.length){
+$("withdrawalsList").innerHTML=
+'<div class="empty">Aucun retrait pour le moment.</div>';
+return;
+}
+
+data.forEach(w=>{
+
+const line=document.createElement("div");
+line.className="withdrawal-item";
+
+const left=document.createElement("div");
+
+left.innerHTML=`
+<div class="item-title">
+💸 ${formatLootix(w.amount_lootix)} LOOTIX — ${formatEuro(w.amount_eur)}
+</div>
+<div class="item-meta"></div>
+<div class="${statusClass(w.status)}">
+${statusLabel(w.status)}
+</div>
+`;
+
+left.querySelector(".item-meta").textContent=
+new Date(w.created_at).toLocaleString("fr-FR")+
+" • PayPal : "+w.payout_destination;
+
+if(w.status==="pending"){
+
+const cancel=document.createElement("button");
+cancel.className="small-button danger-button";
+cancel.textContent="Annuler la demande";
+
+cancel.onclick=async()=>{
+
+if(!confirm("Annuler ce retrait et récupérer les LOOTIX ?"))return;
+
+const {error}=await supabaseClient.rpc("cancel_withdrawal",{
+p_withdrawal_id:w.id
+});
+
+if(error){
+alert("Impossible d'annuler ce retrait.");
+return;
+}
+
+await refreshUser();
 };
 
-
-
-async function loadReferralSummary() {
-
-if(!currentUser)
-return;
-
-
-const {
-data,
-error
-} =
-await supabaseClient
-.rpc(
-"get_referral_summary"
-);
-
-
-if(
-error
-||
-!data
-||
-!data.length
-)
-return;
-
-
-const item =
-data[0];
-
-
-document
-.getElementById("referralCount")
-.textContent =
-item.active_referrals;
-
-
-document
-.getElementById("referralPending")
-.textContent =
-formatLootix(
-item.pending_lootix
-)
-+
-" LOOTIX";
-
-
-document
-.getElementById("referralConfirmed")
-.textContent =
-formatLootix(
-item.confirmed_lootix
-)
-+
-" LOOTIX";
-
+left.appendChild(cancel);
 }
 
+const amount=document.createElement("div");
+amount.className="item-amount";
+amount.textContent=formatEuro(w.amount_eur);
 
-
-/* =========================================================
-   LIEN PARRAINAGE EN ENTRÉE
-========================================================= */
-
-function captureReferral() {
-
-const params =
-new URLSearchParams(
-window.location.search
-);
-
-
-const code =
-params.get("ref");
-
-
-if(code) {
-
-localStorage.setItem(
-"lootup_referral",
-code
-);
-
+line.append(left,amount);
+$("withdrawalsList").appendChild(line);
+});
 }
 
+/* ADMIN */
+
+$("adminButton").onclick=async()=>{
+
+if(!isAdmin)return;
+
+$("adminSection").style.display="block";
+
+await loadAdminDashboard();
+
+$("adminSection").scrollIntoView({behavior:"smooth"});
+};
+
+async function loadAdminDashboard(){
+
+if(!isAdmin)return;
+
+$("adminSection").style.display="block";
+
+const [dashboard,economics]=await Promise.all([
+supabaseClient.rpc("get_admin_dashboard"),
+supabaseClient.rpc("get_admin_economics")
+]);
+
+if(!dashboard.error&&dashboard.data&&dashboard.data.length){
+
+const d=dashboard.data[0];
+
+$("adminUsers").textContent=formatLootix(d.total_users);
+$("adminAvailable").textContent=
+formatLootix(d.total_lootix_available);
+
+$("adminPendingLootix").textContent=
+formatLootix(d.total_lootix_pending);
+
+$("adminPendingWithdrawals").textContent=
+formatLootix(d.pending_withdrawals);
+
+$("adminToPay").textContent=
+lootixToEuro(d.pending_withdrawals_lootix);
 }
 
+if(!economics.error&&economics.data&&economics.data.length){
 
-async function applyStoredReferral() {
+const e=economics.data[0];
 
-const code =
-localStorage.getItem(
-"lootup_referral"
-);
+$("adminRevenue").textContent=
+formatEuro(e.partner_revenue_eur);
 
+$("adminMargin").textContent=
+formatEuro(e.platform_margin_eur);
 
-if(
-!code
-||
-!currentUser
-)
+$("adminOffers").textContent=
+formatLootix(e.active_offers);
+}
+
+await loadAdminWithdrawals();
+}
+
+async function loadAdminWithdrawals(){
+
+if(!isAdmin)return;
+
+const {data,error}=await supabaseClient
+.from("withdrawals")
+.select(`
+id,
+user_id,
+amount_lootix,
+amount_eur,
+payout_destination,
+status,
+created_at
+`)
+.in("status",["pending","processing"])
+.order("created_at",{ascending:true});
+
+$("adminWithdrawals").innerHTML="";
+
+if(error||!data||!data.length){
+$("adminWithdrawals").innerHTML=
+'<div class="empty">Aucun retrait à traiter. 🎉</div>';
 return;
+}
 
+data.forEach(w=>{
 
-await supabaseClient
-.rpc(
-"apply_referral_code",
+const line=document.createElement("div");
+line.className="admin-withdrawal";
+
+const info=document.createElement("div");
+
+info.innerHTML=`
+<div class="item-title">
+${formatLootix(w.amount_lootix)} LOOTIX — ${formatEuro(w.amount_eur)}
+</div>
+<div class="item-meta"></div>
+<div class="${statusClass(w.status)}">
+${statusLabel(w.status)}
+</div>
+`;
+
+info.querySelector(".item-meta").textContent=
+"PayPal : "+w.payout_destination+
+" • "+new Date(w.created_at).toLocaleString("fr-FR");
+
+const actions=document.createElement("div");
+actions.className="admin-actions";
+
+if(w.status==="pending"){
+
+const process=document.createElement("button");
+process.className="process-btn";
+process.textContent="Prendre en charge";
+
+process.onclick=async()=>{
+
+const {error}=await supabaseClient.rpc(
+"admin_process_withdrawal",
+{p_withdrawal_id:w.id}
+);
+
+if(error){
+alert("Erreur lors du traitement.");
+return;
+}
+
+await loadAdminDashboard();
+};
+
+actions.appendChild(process);
+}
+
+const paid=document.createElement("button");
+paid.className="paid-btn";
+paid.textContent="Marquer payé";
+
+paid.onclick=async()=>{
+
+if(!confirm(
+"Confirmer que le paiement PayPal a réellement été effectué ?"
+))return;
+
+const {error}=await supabaseClient.rpc(
+"admin_mark_withdrawal_paid",
+{p_withdrawal_id:w.id}
+);
+
+if(error){
+alert("Impossible de marquer ce retrait comme payé.");
+return;
+}
+
+await refreshUser();
+};
+
+const reject=document.createElement("button");
+reject.className="reject-btn";
+reject.textContent="Refuser";
+
+reject.onclick=async()=>{
+
+const reason=prompt("Motif du refus :");
+
+if(reason===null)return;
+
+const {error}=await supabaseClient.rpc(
+"admin_reject_withdrawal",
 {
-p_referral_code:
-code
+p_withdrawal_id:w.id,
+p_reason:reason||"Retrait refusé"
 }
 );
 
-
-localStorage.removeItem(
-"lootup_referral"
-);
-
-}
-
-
-
-/* =========================================================
-   RAFRAÎCHISSEMENT
-========================================================= */
-
-async function refreshUser() {
-
-const {
-data: {
-user
-}
-} =
-await supabaseClient
-.auth
-.getUser();
-
-
-currentUser =
-user;
-
-
-if(!currentUser) {
-
-showLoggedOut();
-
+if(error){
+alert("Impossible de refuser ce retrait.");
 return;
-
 }
 
+await refreshUser();
+};
+
+actions.append(paid,reject);
+
+line.append(info,actions);
+$("adminWithdrawals").appendChild(line);
+});
+}
+
+/* REFRESH */
+
+async function refreshUser(){
+
+const {data:{user}}=
+await supabaseClient.auth.getUser();
+
+currentUser=user;
+
+if(!currentUser){
+showLoggedOut();
+return;
+}
 
 showLoggedIn();
 
-
 await loadProfile();
 
-await loadHistory();
-
-await loadChallenges();
-
-await loadReferralSummary();
-
+await Promise.all([
+loadHistory(),
+loadChallenges(),
+loadReferralSummary(),
+loadWithdrawals()
+]);
 }
 
+/* INIT */
 
-
-/* =========================================================
-   INITIALISATION
-========================================================= */
-
-async function init() {
+async function init(){
 
 captureReferral();
 
+await Promise.all([
+loadSettings(),
+loadDailyDeal(),
+loadOffers(),
+loadChallenges()
+]);
 
-await loadDailyDeal();
+const {data:{session}}=
+await supabaseClient.auth.getSession();
 
-await loadOffers();
+if(session&&session.user){
 
-await loadChallenges();
-
-
-const {
-data: {
-session
-}
-} =
-await supabaseClient
-.auth
-.getSession();
-
-
-if(
-session
-&&
-session.user
-) {
-
-currentUser =
-session.user;
-
+currentUser=session.user;
 
 await applyStoredReferral();
-
 await refreshUser();
 
-}
-
-else {
-
+}else{
 showLoggedOut();
-
+}
 }
 
-}
+supabaseClient.auth.onAuthStateChange(async(event,session)=>{
 
-
-supabaseClient
-.auth
-.onAuthStateChange(
-async (
-event,
-session
-) => {
-
-if(
-event ===
-"SIGNED_IN"
-&&
-session
-) {
-
-currentUser =
-session.user;
-
+if(event==="SIGNED_IN"&&session){
+currentUser=session.user;
 await applyStoredReferral();
-
 await refreshUser();
-
 }
 
-
-if(
-event ===
-"SIGNED_OUT"
-) {
-
-currentUser =
-null;
-
+if(event==="SIGNED_OUT"){
+currentUser=null;
+currentProfile=null;
+isAdmin=false;
 showLoggedOut();
-
 }
 
-}
-);
-
+});
 
 init();
 
