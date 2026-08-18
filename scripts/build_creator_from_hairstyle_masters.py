@@ -201,11 +201,17 @@ def build():
                 skinned = tint(base, skin_mask, skin_rgb, .78)
                 for hair_name, hair_rgb in HAIRS.items():
                     hair_floor = .35
-                    if hair_name == "purple":
+                    if gender == "female":
+                        hair_floor = {
+                            "black": .24,
+                            "brown": .34,
+                            "blond": .68,
+                            "red": .48,
+                            "purple": .20,
+                        }[hair_name]
+                    elif hair_name == "purple":
                         dark_styles = {"male_textured", "male_short", "male_undercut"}
-                        if gender == "female":
-                            hair_floor = .20
-                        elif style in dark_styles:
+                        if style in dark_styles:
                             hair_floor = .62
                         else:
                             hair_floor = .40
