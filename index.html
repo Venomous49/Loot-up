@@ -1718,28 +1718,25 @@ body.creator-test-active #creatorModal .creator-note:after{content:' • MODE TE
 
 
 /* RISELOOTER_FINAL_CLEAN_V25 */
-/* Final creator presentation: only complete pre-rendered artwork, never synthetic overlays. */
+/* Only complete images are displayed. Synthetic head/skin/hair overlays are forbidden. */
 #creatorModal .creator-skin-overlay,
-#creatorModal .creator-hair-overlay{display:none!important}
+#creatorModal .creator-hair-overlay{display:none!important;visibility:hidden!important;opacity:0!important}
 #creatorModal .creator-preview{background:#03080d!important;overflow:hidden!important}
 #creatorModal .creator-real-preview{
   width:100%!important;height:100%!important;max-width:none!important;
-  object-fit:cover!important;object-position:72% 20%!important;
+  object-fit:cover!important;object-position:center 18%!important;
   filter:none!important;mix-blend-mode:normal!important;
-  transform:scale(1.035)!important;animation:none!important;
+  transform:none!important;animation:none!important;
 }
 #hairStyleChoices .hair-choice{min-height:116px!important;grid-template-rows:80px auto!important}
 #hairStyleChoices .hair-thumb{
   width:100%!important;height:80px!important;background-repeat:no-repeat!important;
-  background-size:335% auto!important;background-position:71% 7%!important;
+  background-size:cover!important;background-position:center 12%!important;
   border-radius:7px!important;background-color:#071018!important;
 }
-/* Features intentionally removed from the simplified product. */
 #shop,#inventory,#dailyChest,
 nav [data-nav="shop"],nav [data-nav="inventory"]{display:none!important}
-/* Keep the validated static character crisp: no fake whole-image breathing motion. */
 .character-holder,.character-holder img,.scene-clean-image{animation:none!important}
-/* Prevent old visual patches from drawing cover rectangles on the hero. */
 .character-holder:before,.character-holder>div:after{display:none!important;content:none!important}
 /* /RISELOOTER_FINAL_CLEAN_V25 */
 
@@ -2418,9 +2415,9 @@ function assetPath(profile,stage){
 
 function creatorAssetPath(){
   if(avatarDraft.gender === "female"){
-    return `assets/creator/female/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=safehair27`;
+    return `assets/creator/female/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=fullpreset28`;
   }
-  return `assets/creator/male/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=safehair27`;
+  return `01-debutant.webp?v=cleanbase28`;
 }
 
 function fallbackAssetPath(stage){
@@ -2486,7 +2483,7 @@ const list = avatarDraft.gender === "female" ? femaleHair : maleHair;
 if(!list.some(x => x[0] === avatarDraft.hairStyle)) avatarDraft.hairStyle=list[0][0];
 
 $("hairStyleChoices").innerHTML = list.map(([value,label]) => {
-  const thumb = `assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp?v=safehair27`;
+  const thumb = avatarDraft.gender === "male" ? `01-debutant.webp?v=cleanbase28` : `assets/creator/female/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp?v=fullpreset28`;
   return `<button class="choice hair-choice ${avatarDraft.hairStyle===value?"selected":""}" data-value="${value}">
     <span class="hair-thumb" style="background-image:url('${thumb}')"></span>
     <span>${label}</span>
