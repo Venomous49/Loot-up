@@ -45,33 +45,42 @@ s = re.sub(
     flags=re.S
 )
 
-marker = '/* RISELOOTER_VISUAL_OVERRIDE_V8 */'
+marker = '/* RISELOOTER_VISUAL_OVERRIDE_V9 */'
 css = r'''
-/* RISELOOTER_VISUAL_OVERRIDE_V8 */
+/* RISELOOTER_VISUAL_OVERRIDE_V9 */
 .hero{min-height:560px!important;position:relative!important;overflow:hidden!important;background:#070b0e!important}
 .hero:after{content:""!important;position:absolute!important;inset:0!important;z-index:4!important;background:linear-gradient(90deg,rgba(5,9,13,.995) 0%,rgba(5,9,13,.985) 27%,rgba(5,9,13,.82) 40%,rgba(5,9,13,.28) 55%,rgba(5,9,13,.04) 74%,rgba(5,9,13,0) 100%)!important;pointer-events:none!important}
 .character-holder{position:absolute!important;top:0!important;right:0!important;bottom:0!important;left:31%!important;width:auto!important;height:auto!important;z-index:1!important;transform:none!important;display:block!important;overflow:hidden!important;animation:none!important}
 .character-scene-real,.character-scene-static{position:absolute!important;inset:0!important;overflow:hidden!important}
-.character-scene-real img,.character-scene-static img{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center 18%!important}
-.scene-background{z-index:1!important;filter:saturate(.95) contrast(1.03) brightness(.92)!important}
-.scene-body{z-index:2!important;object-fit:contain!important;object-position:center bottom!important;filter:drop-shadow(0 15px 16px rgba(0,0,0,.35))!important}
-.scene-torso{z-index:3!important;object-fit:contain!important;object-position:center bottom!important;clip-path:polygon(24% 17%,78% 17%,84% 68%,20% 68%)!important;transform-origin:51% 58%!important;animation:realBreathing 4.8s ease-in-out infinite!important}
-.scene-head{z-index:4!important;object-fit:contain!important;object-position:center bottom!important;clip-path:polygon(31% 0%,70% 0%,73% 28%,29% 28%)!important;transform-origin:51% 24%!important;animation:realHeadIdle 7.2s ease-in-out infinite!important}
+.character-scene-real img,.character-scene-static img{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}
+.scene-background{z-index:1!important;object-fit:cover!important;object-position:center 18%!important;filter:saturate(.95) contrast(1.03) brightness(.92)!important;transform:none!important;animation:none!important}
+.scene-body{z-index:2!important;object-fit:contain!important;object-position:center bottom!important;filter:drop-shadow(0 15px 16px rgba(0,0,0,.35))!important;transform-origin:51% 84%!important;animation:personIdleV9 5.4s ease-in-out infinite!important;will-change:transform!important}
+.scene-torso{z-index:3!important;object-fit:contain!important;object-position:center bottom!important;clip-path:polygon(24% 16%,78% 16%,84% 69%,20% 69%)!important;transform-origin:51% 57%!important;animation:torsoBreatheV9 4.2s ease-in-out infinite!important;will-change:transform!important}
+.scene-head{z-index:4!important;object-fit:contain!important;object-position:center bottom!important;clip-path:polygon(30% 0%,71% 0%,74% 29%,28% 29%)!important;transform-origin:51% 23%!important;animation:headIdleV9 6.8s ease-in-out infinite!important;will-change:transform!important}
 .scene-outfit{z-index:5!important;object-fit:contain!important;object-position:center bottom!important;pointer-events:none!important}
-@keyframes realBreathing{0%,100%{transform:scaleX(1) scaleY(1) translateY(0)}50%{transform:scaleX(1.018) scaleY(1.009) translateY(-1px)}}
-@keyframes realHeadIdle{0%,100%{transform:rotate(0deg) translate(0,0)}25%{transform:rotate(-1deg) translate(-1px,0)}55%{transform:rotate(.9deg) translate(1px,-1px)}78%{transform:rotate(-.35deg) translate(0,0)}}
+@keyframes personIdleV9{
+  0%,100%{transform:translateX(0) translateY(0) rotate(0deg) scaleX(1) scaleY(1)}
+  25%{transform:translateX(-2px) translateY(0) rotate(-.18deg) scaleX(1.002) scaleY(1.001)}
+  50%{transform:translateX(1px) translateY(-1px) rotate(.16deg) scaleX(1.004) scaleY(1.003)}
+  75%{transform:translateX(0) translateY(0) rotate(-.08deg) scaleX(1.002) scaleY(1.001)}
+}
+@keyframes torsoBreatheV9{
+  0%,100%{transform:scaleX(1) scaleY(1) translateY(0)}
+  50%{transform:scaleX(1.035) scaleY(1.016) translateY(-2px)}
+}
+@keyframes headIdleV9{
+  0%,100%{transform:rotate(0deg) translate(0,0)}
+  24%{transform:rotate(-1.7deg) translate(-2px,0)}
+  52%{transform:rotate(1.5deg) translate(2px,-1px)}
+  78%{transform:rotate(-.6deg) translate(0,0)}
+}
 .character-holder:before{content:""!important;position:absolute!important;left:0!important;top:0!important;width:46%!important;height:115px!important;z-index:6!important;background:linear-gradient(135deg,rgba(5,9,13,1) 0%,rgba(5,9,13,.96) 48%,rgba(5,9,13,.55) 72%,rgba(5,9,13,0) 100%)!important;pointer-events:none!important}
 .character-holder:after{content:""!important;position:absolute!important;left:0!important;right:0!important;bottom:0!important;height:76px!important;z-index:6!important;background:linear-gradient(0deg,rgba(5,9,13,1) 0%,rgba(5,9,13,.85) 48%,rgba(5,9,13,0) 100%)!important;pointer-events:none!important}
 .hero-copy,.next-evolution,.hero-track{z-index:9!important}
 .hero-track{padding-top:8px!important;background:linear-gradient(0deg,rgba(4,9,14,.99) 0%,rgba(4,9,14,.88) 60%,rgba(4,9,14,0) 100%)!important}
 .next-evolution{background:rgba(4,10,16,.96)!important;backdrop-filter:blur(3px)!important}
 .shadow-character{height:145px!important;margin:10px auto!important;overflow:hidden!important;border-radius:8px!important;position:relative!important;background:#080d12!important;box-shadow:inset 0 0 30px rgba(0,0,0,.82)!important}
-.shadow-character:before{content:""!important;position:absolute!important;left:0!important;top:0!important;width:100%!important;height:46px!important;z-index:3!important;background:linear-gradient(180deg,rgba(4,10,16,.99),rgba(4,10,16,.9),rgba(4,10,16,0))!important;pointer-events:none!important}
-.shadow-character img{width:100%!important;height:100%!important;max-width:none!important;object-fit:cover!important;object-position:center 22%!important;transform:scale(1.01)!important;filter:brightness(.12) grayscale(1) contrast(1.45)!important;opacity:.98!important}
-.evolution-character{overflow:hidden!important;border-radius:7px!important;position:relative!important}
-.evolution-card.locked .evolution-character:before{content:""!important;position:absolute!important;left:0!important;right:0!important;top:0!important;height:34px!important;z-index:3!important;background:linear-gradient(180deg,rgba(5,9,13,.98),rgba(5,9,13,0))!important;pointer-events:none!important}
-.evolution-card.locked .evolution-character img{width:100%!important;height:100%!important;object-fit:cover!important;object-position:center 22%!important;transform:scale(1.01)!important;filter:brightness(.12) grayscale(1) contrast(1.45)!important;opacity:.98!important}
-@media (prefers-reduced-motion: reduce){.scene-torso,.scene-head{animation:none!important}}
+.shadow-character img{width:100%!important;height:100%!important;max-width:none!important;object-fit:cover!important;object-position:center 22%!important;transform:scale(1.01)!important;filter:brightness(.16) grayscale(1) contrast(1.38)!important;opacity:.98!important}
 '''
 
 if marker not in s:
