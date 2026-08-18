@@ -84,4 +84,36 @@ css=r'''
 if marker not in s:
     s=s.replace('</style>',css+'\n</style>',1)
 
+# Final high-specificity override: older visual experiments used a more specific
+# locked-card selector with brightness filters, which turned the light silhouette
+# PNG backgrounds almost black. This block wins over all previous rules.
+marker2='/* RISELOOTER_LOCKED_SILHOUETTES_FIX_V17 */'
+css2=r'''
+/* RISELOOTER_LOCKED_SILHOUETTES_FIX_V17 */
+.evolution-card.locked .evolution-character{
+  background:#b8bec3!important;
+}
+.evolution-card.locked .evolution-character:before,
+.evolution-card.locked .evolution-character:after{
+  display:none!important;
+  content:none!important;
+  background:none!important;
+}
+.evolution-card.locked .evolution-character img.evolution-silhouette{
+  display:block!important;
+  visibility:visible!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  object-fit:cover!important;
+  object-position:center 20%!important;
+  transform:none!important;
+  filter:none!important;
+  opacity:1!important;
+  mix-blend-mode:normal!important;
+}
+'''
+if marker2 not in s:
+    s=s.replace('</style>',css2+'\n</style>',1)
+
 p.write_text(s,encoding='utf-8')
