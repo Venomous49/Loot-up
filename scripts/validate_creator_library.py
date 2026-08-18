@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 
 ROOT = Path('assets/creator')
+MASTER_ROOT = Path('assets/creator_sources')
 EXPECTED = {
     'male': ['male_textured','male_short','male_medium','male_undercut','male_slick'],
     'female': ['female_long','female_wavy','female_bob','female_ponytail','female_short'],
@@ -12,6 +13,12 @@ SKINS = ['light','warm','medium','deep','dark']
 HAIRS = ['black','brown','blond','red','purple']
 
 errors = []
+
+for gender, styles in EXPECTED.items():
+    for style in styles:
+        candidates = list(MASTER_ROOT.glob(f'{style}.*'))
+        if not candidates:
+            errors.append(f'missing hairstyle master: {gender}/{style}')
 
 for gender, styles in EXPECTED.items():
     files = list((ROOT/gender).rglob('*.webp'))
@@ -76,7 +83,7 @@ for gender, styles in EXPECTED.items():
 html = Path('index.html').read_text(encoding='utf-8')
 required = [
     'function creatorAssetPath(state=avatarDraft,style=state.hairStyle)',
-    'assets/creator/${state.gender}/${state.skin}/${state.hairColor}/${style}.webp',
+    'assets/creator/${state.gender}/${state.skin}/${state.hairColor}/${style}.webp?v=${CREATOR_ASSET_VERSION}',
     'const thumb = creatorAssetPath(avatarDraft,value)',
     'if(field === "gender")',
 ]

@@ -2355,6 +2355,8 @@ const femaleHair = [
 ["female_short","Court moderne"]
 ];
 
+const CREATOR_ASSET_VERSION = "hairstyles2";
+
 let avatarDraft = {
 
 gender:"male",
@@ -2408,7 +2410,7 @@ function assetPath(profile,stage){
   const hairColor = profile?.avatar_hair_color || "brown";
   const hairStyle = profile?.avatar_hair_style || (gender === "female" ? "female_long" : "male_textured");
   if(stage === 0){
-    return `assets/creator/${gender}/${skin}/${hairColor}/${hairStyle}.webp`;
+    return `assets/creator/${gender}/${skin}/${hairColor}/${hairStyle}.webp?v=${CREATOR_ASSET_VERSION}`;
   }
   return `assets/characters/${gender}/${skin}/${hairColor}/${hairStyle}/${stages[stage].slug}.webp`;
 }
@@ -2418,7 +2420,7 @@ function assetPath(profile,stage){
 
 
 function creatorAssetPath(state=avatarDraft,style=state.hairStyle){
-  return `assets/creator/${state.gender}/${state.skin}/${state.hairColor}/${style}.webp`;
+  return `assets/creator/${state.gender}/${state.skin}/${state.hairColor}/${style}.webp?v=${CREATOR_ASSET_VERSION}`;
 }
 
 function creatorFallbackPath(gender=avatarDraft.gender){
