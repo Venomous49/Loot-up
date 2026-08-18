@@ -2378,11 +2378,14 @@ TEMPORAIREMENT FIXÉ SUR LE SET VALIDÉ
 ========================================================== */
 
 function assetPath(profile,stage){
-const gender = profile?.avatar_gender || "male";
-const skin = profile?.avatar_skin || "medium";
-const hairColor = profile?.avatar_hair_color || "brown";
-const hairStyle = profile?.avatar_hair_style || "male_textured";
-return `assets/characters/${gender}/${skin}/${hairColor}/${hairStyle}/${stages[stage].slug}.webp`;
+  const gender = profile?.avatar_gender || "male";
+  const skin = profile?.avatar_skin || "medium";
+  const hairColor = profile?.avatar_hair_color || "brown";
+  const hairStyle = profile?.avatar_hair_style || "male_textured";
+  if(stage === 0 && gender === "male"){
+    return `assets/creator/male/${skin}/${hairColor}/${hairStyle}.webp`;
+  }
+  return `assets/characters/${gender}/${skin}/${hairColor}/${hairStyle}/${stages[stage].slug}.webp`;
 }
 
 function creatorAssetPath(){
