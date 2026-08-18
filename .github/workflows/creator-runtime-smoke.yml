@@ -1,0 +1,40 @@
+name: Creator runtime smoke
+
+on:
+  push:
+    paths:
+      - 'index.html'
+      - 'assets/creator/**'
+      - 'scripts/creator_runtime_smoke.mjs'
+      - '.github/workflows/creator-runtime-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start static site
+        shell: bash
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/loot-up-http.log 2>&1 &
+          echo $! > /tmp/loot-up-http.pid
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/index.html >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/loot-up-http.log
+          exit 1
+      - name: Exercise all creator controls in Chromium
+        run: node scripts/creator_runtime_smoke.mjs
