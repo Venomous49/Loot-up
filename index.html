@@ -2421,6 +2421,11 @@ function creatorFallbackPath(gender=avatarDraft.gender){
   return `assets/creator/${gender}/medium/brown/${style}.webp?v=presets31`;
 }
 
+function creatorFallbackPath(gender=avatarDraft.gender){
+  const style = gender === "female" ? "female_long" : "male_textured";
+  return `assets/creator/${gender}/medium/brown/${style}.webp?v=presets31`;
+}
+
 function fallbackAssetPath(stage){
 return `${stages[stage].slug}.webp`;
 }
