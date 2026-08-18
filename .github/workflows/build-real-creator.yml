@@ -1,13 +1,13 @@
-name: Build real creator variants
+name: Build clean creator variants
 
 on:
   push:
     paths:
       - 'scripts/build_real_creator_variants.py'
       - 'scripts/activate_real_creator.py'
+      - 'scripts/final_site_cleanup.py'
       - '.github/workflows/build-real-creator.yml'
-      - '01-debutant-character.png'
-      - '01-debutant-background.webp'
+      - '01-debutant.webp'
   workflow_dispatch:
 
 permissions:
@@ -34,11 +34,14 @@ jobs:
       - name: Install deterministic image dependencies
         run: python -m pip install --quiet 'numpy<3' opencv-python-headless
 
-      - name: Generate real image variants
+      - name: Generate clean image variants from validated full artwork
         run: python scripts/build_real_creator_variants.py
 
       - name: Patch creator to use generated files
         run: python scripts/activate_real_creator.py
+
+      - name: Apply final site cleanup
+        run: python scripts/final_site_cleanup.py
 
       - name: Sanity checks
         shell: bash
@@ -51,12 +54,29 @@ jobs:
           echo "Generated $COUNT creator assets"
           test "$COUNT" -eq 125
           grep -q 'RISELOOTER_REAL_CREATOR_V23' index.html
+          grep -q 'RISELOOTER_FINAL_CLEAN_V25' index.html
           grep -q 'assets/creator/male/' index.html
-          if grep -q 'creator-skin-overlay.*clip-path' index.html; then
-            echo 'Legacy CSS exists in file but V23 hard-disables it; continuing.'
-          fi
+          grep -q 'data-nav="missions"' index.html
+          grep -q 'data-nav="challenges"' index.html
+          grep -q 'data-nav="leaderboard"' index.html
+          grep -q 'data-nav="referral"' index.html
+          grep -q '#shop,#inventory,#dailyChest' index.html
+          python - <<'PY'
+          from pathlib import Path
+          import cv2
+          files=list(Path('assets/creator/male').rglob('*.webp'))
+          assert len(files)==125
+          for f in [
+              Path('assets/creator/male/medium/brown/male_textured.webp'),
+              Path('assets/creator/male/medium/blond/male_medium.webp'),
+              Path('assets/creator/male/dark/black/male_slick.webp')]:
+              im=cv2.imread(str(f))
+              assert im is not None and im.size > 0, f
+              assert im.std() > 15, f'near-blank asset: {f}'
+          print('Image smoke tests passed')
+          PY
 
-      - name: Commit only final creator assets and integration
+      - name: Commit final creator assets and integration
         shell: bash
         run: |
           set -euo pipefail
@@ -67,5 +87,5 @@ jobs:
             echo 'No creator changes to publish'
             exit 0
           fi
-          git commit -m 'Publish real-time character creator assets'
+          git commit -m 'Publish clean character creator assets'
           git push
