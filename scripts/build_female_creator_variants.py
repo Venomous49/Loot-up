@@ -5,11 +5,15 @@ import numpy as np
 
 ROOT = Path('.')
 SRC64 = ROOT / 'assets/source/female_base.webp.b64'
+SRC64_PART2 = ROOT / 'assets/source/female_base.webp.b64.part2'
 SOURCE = ROOT / 'assets/source/female_base.webp'
 OUT = ROOT / 'assets/creator/female'
 OUT.mkdir(parents=True, exist_ok=True)
 
-SOURCE.write_bytes(base64.b64decode(SRC64.read_text(encoding='ascii').strip()))
+encoded = SRC64.read_text(encoding='ascii').strip()
+if SRC64_PART2.exists():
+    encoded += SRC64_PART2.read_text(encoding='ascii').strip()
+SOURCE.write_bytes(base64.b64decode(encoded, validate=True))
 base = cv2.imread(str(SOURCE), cv2.IMREAD_COLOR)
 if base is None:
     raise SystemExit('Unable to decode female source artwork')
@@ -18,8 +22,8 @@ yy, xx = np.mgrid[0:h, 0:w]
 hsv = cv2.cvtColor(base, cv2.COLOR_BGR2HSV)
 H, S, V = cv2.split(hsv)
 
-# Hand-fitted geometry around the validated female source. This is deliberately
-# tight: background pixels cannot join the hair mask and create square blocks.
+# Tight, hand-fitted female hair geometry. The mask is clamped after every
+# morphology operation so background pixels can never become a square overlay.
 geom = np.zeros((h,w), np.uint8)
 cv2.ellipse(geom,(int(.501*w),int(.224*h)),(int(.136*w),int(.200*h)),0,0,360,255,-1)
 left = np.array([
@@ -40,12 +44,10 @@ hair_candidate=(geom>0)&(S>35)&(V<150)&((H<30)|(H>165))
 hair_mask=hair_candidate.astype(np.uint8)*255
 hair_mask=cv2.morphologyEx(hair_mask,cv2.MORPH_CLOSE,np.ones((3,3),np.uint8),iterations=1)
 hair_mask=cv2.GaussianBlur(hair_mask,(3,3),0)
-# Absolute geometry clamp after morphology.
 hair_mask[geom==0]=0
 if not (12000 < cv2.countNonZero(hair_mask) < 42000):
     raise SystemExit(f'Female hair mask unsafe size: {cv2.countNonZero(hair_mask)}')
 
-# Skin mask: only exposed face/neck/arm, with geometry fixed to this source.
 skin_candidate=(H<30)&(S>35)&(S<225)&(V>45)
 face=(((xx-.497*w)/(.105*w))**2+((yy-.31*h)/(.17*h))**2)<1
 neck=(xx>.435*w)&(xx<.56*w)&(yy>.405*h)&(yy<.62*h)
@@ -86,7 +88,6 @@ def compose_style(skinned,hair_rgb,style):
     lower=hair_mask.copy(); lower[yy<cutoff*h]=0
     clean=remove_mask(coloured,lower)
     if style=='female_ponytail':
-        # Keep a narrow real-hair section at the rear to read as tied hair.
         keep=((xx>.585*w)&(xx<.635*w)&(yy>.39*h)&(yy<.68*h)).astype(np.uint8)*255
         keep=cv2.bitwise_and(keep,hair_mask)
         a=(keep.astype(np.float32)/255.0)[...,None]
