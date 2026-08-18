@@ -169,17 +169,22 @@ def masks(image, gender, style):
         # The source hood contains dark warm folds directly connected to the
         # hair. Fade the lower mask before it reaches the clothing so vivid
         # colours cannot paint a solid block over the chest and shoulders.
-        lower_fade = np.clip((.66 - y) / .18, 0, 1)
+        lower_fade = np.clip((.82 - y) / .22, 0, 1)
         hair_alpha *= lower_fade
 
     return hair_alpha, soften(skin, 2.0)
 
 
-def tint(rgb, alpha, target, strength, minimum_luminance=.35):
+def tint(rgb, alpha, target, strength, minimum_luminance=.35, preserve_texture=False):
     src = rgb.astype(np.float32)
     luminance = .299 * src[..., 0] + .587 * src[..., 1] + .114 * src[..., 2]
     target = np.asarray(target, dtype=np.float32)
-    coloured = target[None, None, :] * np.clip(luminance[..., None] / 105.0, minimum_luminance, 1.75)
+    normalized = np.clip(luminance[..., None] / 105.0, 0, 1.75)
+    if preserve_texture:
+        brightness = minimum_luminance + (1 - minimum_luminance) * normalized
+    else:
+        brightness = np.clip(normalized, minimum_luminance, 1.75)
+    coloured = target[None, None, :] * np.clip(brightness, 0, 1.75)
     a = (alpha * strength)[..., None]
     return np.clip(src * (1 - a) + coloured * a, 0, 255)
 
@@ -216,7 +221,7 @@ def build():
                         else:
                             hair_floor = .40
                     hair_strength = .78 if gender == "female" else 1.0
-                    result = tint(skinned, hair_mask, hair_rgb, hair_strength, hair_floor).astype(np.uint8)
+                    result = tint(skinned, hair_mask, hair_rgb, hair_strength, hair_floor, True).astype(np.uint8)
                     path = OUTPUT / gender / skin_name / hair_name / f"{style}.webp"
                     path.parent.mkdir(parents=True, exist_ok=True)
                     Image.fromarray(result, "RGB").save(path, "WEBP", quality=91, method=6)
