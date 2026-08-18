@@ -1,9 +1,9 @@
 name: Apply RiseLooter static asset patch
 
+# Legacy maintenance workflow. It must NEVER rewrite index.html automatically.
+# Run manually only when the legacy static/silhouette assets need rebuilding.
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 permissions:
   contents: write
