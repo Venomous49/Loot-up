@@ -15,6 +15,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install image tools
+        run: python3 -m pip install --quiet opencv-python-headless numpy
+
+      - name: Build separated beginner assets
+        run: |
+          python3 .github/scripts/build_beginner_layers.py
+          cp assets/characters/male/medium/brown/male_textured/generated/01-debutant-character.png ./01-debutant-character.png
+          cp assets/characters/male/medium/brown/male_textured/generated/01-debutant-background.webp ./01-debutant-background.webp
+
       - name: Patch index
         run: python3 .github/scripts/patch_riselooter.py
 
@@ -26,6 +35,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          git commit -m "Apply RiseLooter visual patch"
+          git add index.html 01-debutant-character.png 01-debutant-background.webp
+          git commit -m "Build true animated beginner layers"
           git push
