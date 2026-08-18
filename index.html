@@ -2412,13 +2412,12 @@ function assetPath(profile,stage){
   return `assets/characters/${gender}/${skin}/${hairColor}/${hairStyle}/${stages[stage].slug}.webp`;
 }
 
+
+
+
+
 function creatorAssetPath(){
   return `assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=presets31`;
-}
-
-function creatorFallbackPath(gender=avatarDraft.gender){
-  const style = gender === "female" ? "female_long" : "male_textured";
-  return `assets/creator/${gender}/medium/brown/${style}.webp?v=presets31`;
 }
 
 function creatorFallbackPath(gender=avatarDraft.gender){
