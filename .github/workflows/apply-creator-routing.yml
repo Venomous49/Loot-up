@@ -1,0 +1,55 @@
+name: Apply creator routing
+
+on:
+  push:
+    paths:
+      - 'scripts/final_site_cleanup.py'
+      - '.github/workflows/apply-creator-routing.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: riselooter-creator-routing
+  cancel-in-progress: true
+
+jobs:
+  routing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Apply direct complete-image routing
+        run: python scripts/final_site_cleanup.py
+
+      - name: Validate male creator routing
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find assets/creator/male -type f -name '*.webp' | wc -l)" -eq 125
+          for f in \
+            assets/creator/male/medium/brown/male_textured.webp \
+            assets/creator/male/light/blond/male_short.webp \
+            assets/creator/male/dark/red/male_slick.webp; do test -s "$f"; done
+          grep -q 'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=presets31' index.html
+          grep -q 'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp?v=presets31' index.html
+          grep -q '\["gender","skin","hairColor"\].includes(field)' index.html
+          ! grep -q '01-debutant.webp?v=cleanbase28' index.html
+
+      - name: Publish verified routing only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'Routing already current'
+            exit 0
+          fi
+          git commit -m 'Apply verified complete-image creator routing'
+          git push
