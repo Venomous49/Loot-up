@@ -51,8 +51,8 @@ jobs:
             assets/creator/female/medium/brown/female_long.webp \
             assets/creator/female/light/blond/female_bob.webp \
             assets/creator/female/dark/black/female_short.webp; do test -s "$f"; done
-          grep -q 'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=presets29' index.html
-          grep -q 'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp?v=presets29' index.html
+          grep -q 'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=presets30' index.html
+          grep -q 'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp?v=presets30' index.html
           grep -q '#creatorModal .creator-skin-overlay' index.html
           grep -q 'display:none!important' index.html
           python - <<'PY'
@@ -66,7 +66,6 @@ jobs:
                   im=cv2.imread(str(f))
                   assert im is not None and im.size>0,f
                   assert im.std()>12,f'near blank: {f}'
-          # Ensure female presets are real distinct full files, not aliases.
           a=cv2.imread('assets/creator/female/medium/brown/female_long.webp')
           b=cv2.imread('assets/creator/female/medium/brown/female_short.webp')
           c=cv2.imread('assets/creator/female/light/blond/female_long.webp')
