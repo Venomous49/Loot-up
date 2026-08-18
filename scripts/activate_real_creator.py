@@ -5,6 +5,14 @@ p=Path('index.html')
 s=p.read_text(encoding='utf-8')
 marker='RISELOOTER_REAL_CREATOR_V23'
 
+# Level 1 must reuse the exact appearance chosen in the creator.
+# Higher levels keep their validated reference artwork until dedicated variants exist.
+s=re.sub(
+    r'function assetPath\(profile,stage\)\{.*?\n\}',
+    '''function assetPath(profile,stage){\n  const gender = profile?.avatar_gender || "male";\n  const skin = profile?.avatar_skin || "medium";\n  const hairColor = profile?.avatar_hair_color || "brown";\n  const hairStyle = profile?.avatar_hair_style || "male_textured";\n  if(stage === 0 && gender === "male"){\n    return `assets/creator/male/${skin}/${hairColor}/${hairStyle}.webp`;\n  }\n  return `assets/characters/${gender}/${skin}/${hairColor}/${hairStyle}/${stages[stage].slug}.webp`;\n}''',
+    s,count=1,flags=re.S
+)
+
 # Replace creator asset routing with the pre-rendered real-image variants.
 s=re.sub(
     r'function creatorAssetPath\(\)\{.*?\n\}',
@@ -91,7 +99,6 @@ if marker not in s:
     s=s.replace('</style>',css+'\n</style>',1)
 
 # Ensure skin/hair colour changes also refresh hairstyle thumbnails after real assets are introduced.
-# Existing group handler refreshes preview; add hair-card refresh for these two groups once.
 if 'RISELOOTER_REFRESH_HAIR_THUMBS_V23' not in s:
     js=r'''
 /* RISELOOTER_REFRESH_HAIR_THUMBS_V23 */
