@@ -1718,7 +1718,6 @@ body.creator-test-active #creatorModal .creator-note:after{content:' • MODE TE
 
 
 /* RISELOOTER_FINAL_CLEAN_V25 */
-/* Complete-image presets only: no synthetic head/skin/hair overlays. */
 #creatorModal .creator-skin-overlay,
 #creatorModal .creator-hair-overlay{display:none!important;visibility:hidden!important;opacity:0!important}
 #creatorModal .creator-preview{background:#03080d!important;overflow:hidden!important}
@@ -2406,15 +2405,20 @@ function assetPath(profile,stage){
   const gender = profile?.avatar_gender || "male";
   const skin = profile?.avatar_skin || "medium";
   const hairColor = profile?.avatar_hair_color || "brown";
-  const hairStyle = profile?.avatar_hair_style || "male_textured";
-  if(stage === 0 && gender === "male"){
-    return `assets/creator/male/${skin}/${hairColor}/${hairStyle}.webp?v=safehair27`;
+  const hairStyle = profile?.avatar_hair_style || (gender === "female" ? "female_long" : "male_textured");
+  if(stage === 0){
+    return `assets/creator/${gender}/${skin}/${hairColor}/${hairStyle}.webp?v=presets31`;
   }
   return `assets/characters/${gender}/${skin}/${hairColor}/${hairStyle}/${stages[stage].slug}.webp`;
 }
 
 function creatorAssetPath(){
-  return `assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=presets29`;
+  return `assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=presets31`;
+}
+
+function creatorFallbackPath(gender=avatarDraft.gender){
+  const style = gender === "female" ? "female_long" : "male_textured";
+  return `assets/creator/${gender}/medium/brown/${style}.webp?v=presets31`;
 }
 
 function fallbackAssetPath(stage){
@@ -2447,7 +2451,10 @@ PERSONNAGE
 
 function characterHTML(profile,stage){
 const preferred=assetPath(profile,stage);
-const fallback=fallbackAssetPath(stage);
+const gender=profile?.avatar_gender || "male";
+const fallback=stage===0
+  ? `assets/creator/${gender}/medium/brown/${gender === "female" ? "female_long" : "male_textured"}.webp?v=presets31`
+  : fallbackAssetPath(stage);
 return `<div class="character-scene-clean"><img class="scene-clean-image" src="${preferred}" alt="Looter" data-fallback="${fallback}" data-tried-fallback="0" onerror="if(this.dataset.triedFallback!=='1'){this.dataset.triedFallback='1';this.src=this.dataset.fallback}else{this.style.display='none';this.nextElementSibling.style.display='block'}"><div class="character-missing" style="display:none">Asset réaliste manquant.</div></div>`;
 }
 
@@ -2459,14 +2466,14 @@ function updateCreatorPreview(){
 const preview=$("creatorPreview");
 if(!preview) return;
 const src=creatorAssetPath();
-const female=avatarDraft.gender === "female";
+const fallback=creatorFallbackPath();
 preview.innerHTML = `
-<img class="creator-real-preview" src="${src}" alt="Aperçu Looter"
+<img class="creator-real-preview" src="${src}" alt="Aperçu Looter" data-fallback="${fallback}" data-tried-fallback="0"
  onload="document.getElementById('saveAvatar').disabled=false"
- onerror="this.style.display='none';this.nextElementSibling.style.display='grid';document.getElementById('saveAvatar').disabled=true">
+ onerror="if(this.dataset.triedFallback!=='1'){this.dataset.triedFallback='1';this.src=this.dataset.fallback}else{this.style.display='none';this.nextElementSibling.style.display='grid';document.getElementById('saveAvatar').disabled=true}">
 <div class="creator-empty creator-asset-missing" style="display:none">
-  <strong>${female ? "MODÈLE FÉMININ EN PRÉPARATION" : "VARIANTE INDISPONIBLE"}</strong>
-  <span>${female ? "Le modèle féminin est en cours d'intégration." : "Cette variante n'a pas pu être chargée."}</span>
+  <strong>VARIANTE INDISPONIBLE</strong>
+  <span>Le preset n'a pas pu être chargé.</span>
 </div>
 <div class="creator-live-badge"><b>NIVEAU 1</b><strong>DÉBUTANT</strong></div>`;
 }
@@ -2480,7 +2487,7 @@ const list = avatarDraft.gender === "female" ? femaleHair : maleHair;
 if(!list.some(x => x[0] === avatarDraft.hairStyle)) avatarDraft.hairStyle=list[0][0];
 
 $("hairStyleChoices").innerHTML = list.map(([value,label]) => {
-  const thumb = `assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp?v=presets29`;
+  const thumb = `assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp?v=presets31`;
   return `<button class="choice hair-choice ${avatarDraft.hairStyle===value?"selected":""}" data-value="${value}">
     <span class="hair-thumb" style="background-image:url('${thumb}')"></span>
     <span>${label}</span>
@@ -2521,10 +2528,8 @@ b.classList.remove("selected")
 
 btn.classList.add("selected");
 
-if(field === "gender"){
-
+if(["gender","skin","hairColor"].includes(field)){
 renderHairChoices();
-
 }
 
 updateCreatorPreview();
