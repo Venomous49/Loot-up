@@ -8,9 +8,11 @@ s=p.read_text(encoding='utf-8')
 s=re.sub(r'function assetPath\(profile,stage\)\{.*?\n\}', '''function assetPath(profile,stage){\nreturn `${stages[stage].slug}.webp`;\n}''', s, count=1, flags=re.S)
 s=re.sub(r'function creatorAssetPath\(\)\{.*?\n\}', '''function creatorAssetPath(){\nreturn "01-debutant.webp";\n}''', s, count=1, flags=re.S)
 
-# Add a dedicated silhouette path helper once.
-if 'function silhouettePath(stage)' not in s:
-    s=s.replace('function creatorAssetPath(){\nreturn "01-debutant.webp";\n}', 'function creatorAssetPath(){\nreturn "01-debutant.webp";\n}\n\nfunction silhouettePath(stage){\nreturn `silhouettes/${stages[stage].slug}.png`;\n}')
+# Silhouette assets are also published at repository root for Cloudflare reliability.
+if 'function silhouettePath(stage)' in s:
+    s=re.sub(r'function silhouettePath\(stage\)\{.*?\n\}', '''function silhouettePath(stage){\nreturn `sil-${stages[stage].slug}.png`;\n}''', s, count=1, flags=re.S)
+else:
+    s=s.replace('function creatorAssetPath(){\nreturn "01-debutant.webp";\n}', 'function creatorAssetPath(){\nreturn "01-debutant.webp";\n}\n\nfunction silhouettePath(stage){\nreturn `sil-${stages[stage].slug}.png`;\n}')
 
 # Main character stays static and sharp.
 new_character=r'''function characterHTML(profile,stage){
@@ -19,7 +21,7 @@ return `<div class="character-scene-clean"><img class="scene-clean-image" src="$
 }'''
 s=re.sub(r'function characterHTML\(profile,stage\)\{.*?\n\}\n\n/\* ==========================================================\nAPERÇU CRÉATEUR', new_character+'\n\n/* ==========================================================\nAPERÇU CRÉATEUR', s, count=1, flags=re.S)
 
-# Locked evolution cards use the pre-generated silhouette PNGs; unlocked cards use the real artwork.
+# Locked evolution cards use the generated silhouette PNGs; unlocked cards use the real artwork.
 new_grid=r'''function renderEvolutionGrid(profile){
 
 const level = profile.level || 1;
@@ -28,7 +30,7 @@ $("evolutionGrid").innerHTML = stages.map((stage,i) => {
   const unlocked = level >= stage.level;
   const visual = unlocked
     ? `<img class="evolution-real" src="${assetPath(profile,i)}" alt="${stage.name}" onerror="this.style.display='none'">`
-    : `<img class="evolution-silhouette" src="${silhouettePath(i)}" alt="Silhouette ${stage.name}" onerror="this.style.display='none'">`;
+    : `<img class="evolution-silhouette" src="${silhouettePath(i)}" alt="" onerror="this.style.display='none'">`;
 
   return `
   <div class="evolution-card ${unlocked ? "unlocked" : "locked"}">
@@ -44,10 +46,10 @@ $("evolutionGrid").innerHTML = stages.map((stage,i) => {
 }'''
 s=re.sub(r'function renderEvolutionGrid\(profile\)\{.*?\n\}\n\n/\* ==========================================================\nPROFIL', new_grid+'\n\n/* ==========================================================\nPROFIL', s, count=1, flags=re.S)
 
-# Next evolution card also uses the real silhouette PNG.
+# Next evolution card also uses the generated silhouette PNG.
 s=re.sub(
     r'\$\("nextEvolutionShadow"\)\.innerHTML = `.*?`;\n\n}\nelse\{',
-    '''$("nextEvolutionShadow").innerHTML = `\n<img class="next-silhouette" src="${silhouettePath(idx + 1)}" alt="Silhouette prochaine évolution" onerror="this.style.display='none'">\n`;\n\n}\nelse{''',
+    '''$("nextEvolutionShadow").innerHTML = `\n<img class="next-silhouette" src="${silhouettePath(idx + 1)}" alt="" onerror="this.style.display='none'">\n`;\n\n}\nelse{''',
     s,
     count=1,
     flags=re.S
