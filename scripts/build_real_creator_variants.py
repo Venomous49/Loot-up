@@ -3,50 +3,36 @@ import cv2
 import numpy as np
 
 ROOT = Path('.')
-CHAR = ROOT / '01-debutant-character.png'
-BG = ROOT / '01-debutant-background.webp'
+SOURCE = ROOT / '01-debutant.webp'
 OUT = ROOT / 'assets' / 'creator' / 'male'
 OUT.mkdir(parents=True, exist_ok=True)
 
-char = cv2.imread(str(CHAR), cv2.IMREAD_UNCHANGED)
-bg = cv2.imread(str(BG), cv2.IMREAD_COLOR)
-if char is None or char.shape[2] != 4:
-    raise SystemExit('Missing transparent beginner character')
-if bg is None:
-    raise SystemExit('Missing beginner background')
+base = cv2.imread(str(SOURCE), cv2.IMREAD_COLOR)
+if base is None:
+    raise SystemExit('Missing validated 01-debutant.webp source artwork')
 
-h, w = char.shape[:2]
-if bg.shape[:2] != (h, w):
-    bg = cv2.resize(bg, (w, h), interpolation=cv2.INTER_CUBIC)
-
-bgr = char[:, :, :3].copy()
-alpha = char[:, :, 3].copy()
-alpha_f = alpha.astype(np.float32) / 255.0
-
-# ---------- masks built from the REAL character pixels ----------
-hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+h, w = base.shape[:2]
+hsv = cv2.cvtColor(base, cv2.COLOR_BGR2HSV)
 H, S, V = cv2.split(hsv)
-opaque = alpha > 24
-
-# Hair: dark pixels in a tight head region only, so hoodie/background can never be recoloured.
 yy, xx = np.mgrid[0:h, 0:w]
-head_region = (xx > w*.37) & (xx < w*.66) & (yy > h*.015) & (yy < h*.245)
-hair_mask = opaque & head_region & (V < 105) & (S > 18)
-# Fill small gaps while keeping exact image-derived silhouette.
-hm = (hair_mask.astype(np.uint8) * 255)
-hm = cv2.morphologyEx(hm, cv2.MORPH_CLOSE, np.ones((5,5),np.uint8), iterations=2)
-hm = cv2.morphologyEx(hm, cv2.MORPH_OPEN, np.ones((3,3),np.uint8), iterations=1)
 
-# Skin: HSV candidate pixels restricted to anatomically plausible zones.
-skin_candidate = opaque & (H < 25) & (S > 35) & (S < 210) & (V > 45)
-face = (xx > w*.405) & (xx < w*.625) & (yy > h*.07) & (yy < h*.30)
-left_arm = (xx > w*.27) & (xx < w*.46) & (yy > h*.27) & (yy < h*.64)
-right_arm = (xx > w*.57) & (xx < w*.77) & (yy > h*.27) & (yy < h*.65)
-legs = (xx > w*.32) & (xx < w*.68) & (yy > h*.58) & (yy < h*.91)
-skin_mask = skin_candidate & (face | left_arm | right_arm | legs)
-sm = (skin_mask.astype(np.uint8) * 255)
-sm = cv2.morphologyEx(sm, cv2.MORPH_OPEN, np.ones((3,3),np.uint8), iterations=1)
-sm = cv2.GaussianBlur(sm, (5,5), 0)
+# Masks are deliberately restricted to the character anatomy. This keeps the
+# alley/background and clothing completely untouched.
+head_region = (xx > w * .42) & (xx < w * .70) & (yy > h * .015) & (yy < h * .285)
+hair_candidate = head_region & (V < 115) & (S > 12)
+hair_mask = (hair_candidate.astype(np.uint8) * 255)
+hair_mask = cv2.morphologyEx(hair_mask, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8), iterations=2)
+hair_mask = cv2.morphologyEx(hair_mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
+hair_mask = cv2.GaussianBlur(hair_mask, (3, 3), 0)
+
+skin_candidate = (H < 28) & (S > 28) & (S < 220) & (V > 42)
+face = (xx > w * .44) & (xx < w * .66) & (yy > h * .085) & (yy < h * .315)
+left_arm = (xx > w * .29) & (xx < w * .47) & (yy > h * .27) & (yy < h * .64)
+right_arm = (xx > w * .57) & (xx < w * .78) & (yy > h * .27) & (yy < h * .66)
+legs = (xx > w * .32) & (xx < w * .70) & (yy > h * .57) & (yy < h * .92)
+skin_mask = (skin_candidate & (face | left_arm | right_arm | legs)).astype(np.uint8) * 255
+skin_mask = cv2.morphologyEx(skin_mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
+skin_mask = cv2.GaussianBlur(skin_mask, (5, 5), 0)
 
 SKINS = {
     'light': (218, 171, 137),
@@ -62,82 +48,106 @@ HAIRS = {
     'red': (126, 55, 30),
     'purple': (78, 42, 108),
 }
-STYLES = ['male_textured','male_short','male_medium','male_undercut','male_slick']
+STYLES = ['male_textured', 'male_short', 'male_medium', 'male_undercut', 'male_slick']
 
 
-def tint_preserve_luma(src_bgr, mask, rgb):
-    out = src_bgr.copy().astype(np.float32)
-    target = np.array([rgb[2], rgb[1], rgb[0]], dtype=np.float32)  # RGB -> BGR
+def tint_preserve_luma(src_bgr, mask, rgb, strength=1.0):
+    src = src_bgr.astype(np.float32)
+    target = np.array([rgb[2], rgb[1], rgb[0]], dtype=np.float32)
     gray = cv2.cvtColor(src_bgr, cv2.COLOR_BGR2GRAY).astype(np.float32)
-    # Preserve original light/shadow detail around target colour.
-    lum = np.clip(gray / 128.0, .42, 1.55)[...,None]
-    coloured = np.clip(target[None,None,:] * lum, 0, 255)
-    m = (mask.astype(np.float32)/255.0)[...,None]
-    return np.clip(out*(1-m) + coloured*m, 0, 255).astype(np.uint8)
+    lum = np.clip(gray / 118.0, .38, 1.65)[..., None]
+    coloured = np.clip(target[None, None, :] * lum, 0, 255)
+    m = (mask.astype(np.float32) / 255.0 * strength)[..., None]
+    return np.clip(src * (1 - m) + coloured * m, 0, 255).astype(np.uint8)
 
 
-def hairstyle_mask(base, style):
-    ys, xs = np.where(base > 15)
-    if len(xs) == 0:
-        return base.copy()
-    x0,x1,y0,y1 = xs.min(),xs.max(),ys.min(),ys.max()
-    roi = base[y0:y1+1, x0:x1+1]
-    canvas = np.zeros_like(base)
+def hair_bbox(mask):
+    ys, xs = np.where(mask > 24)
+    if not len(xs):
+        raise SystemExit('Hair mask is empty; source layout changed')
+    pad = 3
+    return max(0, xs.min() - pad), min(w - 1, xs.max() + pad), max(0, ys.min() - pad), min(h - 1, ys.max() + pad)
 
-    if style == 'male_textured':
-        return base.copy()
+
+x0, x1, y0, y1 = hair_bbox(hair_mask)
+base_hair_patch = base[y0:y1 + 1, x0:x1 + 1].copy()
+base_hair_alpha = hair_mask[y0:y1 + 1, x0:x1 + 1].copy()
+
+
+def place_patch(canvas_img, canvas_alpha, patch, alpha, cx, top):
+    ph, pw = alpha.shape
+    xa = int(round(cx - pw / 2))
+    ya = int(round(top))
+    xb, yb = xa + pw, ya + ph
+    sx0, sy0 = max(0, -xa), max(0, -ya)
+    sx1, sy1 = pw - max(0, xb - w), ph - max(0, yb - h)
+    xa, ya = max(0, xa), max(0, ya)
+    xb, yb = min(w, xb), min(h, yb)
+    if xb <= xa or yb <= ya:
+        return
+    canvas_img[ya:yb, xa:xb] = patch[sy0:sy1, sx0:sx1]
+    canvas_alpha[ya:yb, xa:xb] = np.maximum(canvas_alpha[ya:yb, xa:xb], alpha[sy0:sy1, sx0:sx1])
+
+
+def make_hair_layer(style, hair_rgb):
+    patch = tint_preserve_luma(base_hair_patch, base_hair_alpha, hair_rgb, .96)
+    alpha = base_hair_alpha.copy()
+    ph, pw = alpha.shape
+    cx = (x0 + x1) / 2
+    top = y0
+
     if style == 'male_short':
-        new_h = max(3, int(roi.shape[0]*.72))
-        r = cv2.resize(roi, (roi.shape[1], new_h), interpolation=cv2.INTER_AREA)
-        yy0 = y1-new_h+1
-        canvas[yy0:y1+1, x0:x1+1] = r
+        nh = max(5, int(ph * .72))
+        patch = cv2.resize(patch, (pw, nh), interpolation=cv2.INTER_AREA)
+        alpha = cv2.resize(alpha, (pw, nh), interpolation=cv2.INTER_AREA)
+        top = y1 - nh + 1
     elif style == 'male_medium':
-        r = cv2.dilate(roi, np.ones((5,5),np.uint8), iterations=1)
-        r = cv2.resize(r, (int(r.shape[1]*1.06), int(r.shape[0]*1.15)), interpolation=cv2.INTER_CUBIC)
-        rh,rw = r.shape
-        cx=(x0+x1)//2; bottom=y1+3
-        xa=max(0,cx-rw//2); xb=min(w,xa+rw); ya=max(0,bottom-rh); yb=min(h,ya+rh)
-        canvas[ya:yb,xa:xb]=r[:yb-ya,:xb-xa]
+        nw, nh = int(pw * 1.10), int(ph * 1.22)
+        patch = cv2.resize(patch, (nw, nh), interpolation=cv2.INTER_CUBIC)
+        alpha = cv2.resize(alpha, (nw, nh), interpolation=cv2.INTER_CUBIC)
+        alpha = cv2.dilate(alpha, np.ones((3, 3), np.uint8), iterations=1)
+        top = y0 - int(ph * .05)
     elif style == 'male_undercut':
-        r = cv2.erode(roi, np.ones((3,3),np.uint8), iterations=1)
-        # Narrow the lower sides but preserve the textured top.
-        rh,rw=r.shape
-        for y in range(rh):
-            t=y/max(1,rh-1)
-            cut=int((rw*.13)*t)
+        alpha = cv2.erode(alpha, np.ones((3, 3), np.uint8), iterations=1)
+        ah, aw = alpha.shape
+        for row in range(ah):
+            t = row / max(1, ah - 1)
+            cut = int(aw * .17 * t)
             if cut:
-                r[y,:cut]=0; r[y,rw-cut:]=0
-        canvas[y0:y1+1,x0:x1+1]=r
+                alpha[row, :cut] = 0
+                alpha[row, aw - cut:] = 0
     elif style == 'male_slick':
-        rh,rw=roi.shape
-        M=np.float32([[1,.18,-rw*.08],[0,1,0]])
-        r=cv2.warpAffine(roi,M,(rw,rh),flags=cv2.INTER_CUBIC,borderMode=cv2.BORDER_CONSTANT,borderValue=0)
-        r=cv2.morphologyEx(r,cv2.MORPH_CLOSE,np.ones((5,3),np.uint8),iterations=1)
-        canvas[y0:y1+1,x0:x1+1]=r
-    return cv2.GaussianBlur(canvas,(3,3),0)
+        M = np.float32([[1, .20, -pw * .09], [0, 1, 0]])
+        patch = cv2.warpAffine(patch, M, (pw, ph), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT)
+        alpha = cv2.warpAffine(alpha, M, (pw, ph), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+        alpha = cv2.morphologyEx(alpha, cv2.MORPH_CLOSE, np.ones((5, 3), np.uint8), iterations=1)
 
+    layer = np.zeros_like(base)
+    layer_alpha = np.zeros((h, w), np.uint8)
+    place_patch(layer, layer_alpha, patch, alpha, cx, top)
+    layer_alpha = cv2.GaussianBlur(layer_alpha, (3, 3), 0)
+    return layer, layer_alpha
+
+
+# Inpaint only the original hair area. This avoids the rectangular/duplicated
+# character artefact produced by the previous transparent-character composite.
+inpaint_mask = cv2.dilate((hair_mask > 18).astype(np.uint8) * 255, np.ones((3, 3), np.uint8), iterations=1)
+hairless = cv2.inpaint(base, inpaint_mask, 3, cv2.INPAINT_TELEA)
 
 for skin_name, skin_rgb in SKINS.items():
-    skin_bgr = tint_preserve_luma(bgr, sm, skin_rgb)
+    skinned = tint_preserve_luma(base, skin_mask, skin_rgb, .82)
+    # Replace only the hair region with the inpainted source, preserving all other pixels.
+    rm = (inpaint_mask.astype(np.float32) / 255.0)[..., None]
+    clean_head = np.clip(skinned.astype(np.float32) * (1 - rm) + hairless.astype(np.float32) * rm, 0, 255).astype(np.uint8)
+
     for hair_name, hair_rgb in HAIRS.items():
         for style in STYLES:
-            styled = hairstyle_mask(hm, style)
-            # Remove original detected hair before applying transformed real-hair texture.
-            result = skin_bgr.copy()
-            base_m = (hm.astype(np.float32)/255.0)[...,None]
-            # Fill removed hair from nearby dark neutral tone to avoid duplicate silhouettes.
-            neutral = np.full_like(result, (28,27,27))
-            result = np.clip(result*(1-base_m) + neutral*base_m,0,255).astype(np.uint8)
-            # Use original hair texture resized through the style mask; recolour while preserving luma.
-            hair_col = tint_preserve_luma(bgr, styled, hair_rgb)
-            style_m = (styled.astype(np.float32)/255.0)[...,None]
-            result = np.clip(result*(1-style_m) + hair_col*style_m,0,255).astype(np.uint8)
+            hair_layer, style_alpha = make_hair_layer(style, hair_rgb)
+            a = (style_alpha.astype(np.float32) / 255.0)[..., None]
+            comp = np.clip(clean_head.astype(np.float32) * (1 - a) + hair_layer.astype(np.float32) * a, 0, 255).astype(np.uint8)
 
-            # Composite on the validated background. No CSS painting needed in browser.
-            af = alpha_f[...,None]
-            comp = np.clip(result.astype(np.float32)*af + bg.astype(np.float32)*(1-af),0,255).astype(np.uint8)
             outdir = OUT / skin_name / hair_name
             outdir.mkdir(parents=True, exist_ok=True)
-            cv2.imwrite(str(outdir / f'{style}.webp'), comp, [cv2.IMWRITE_WEBP_QUALITY, 93])
+            cv2.imwrite(str(outdir / f'{style}.webp'), comp, [cv2.IMWRITE_WEBP_QUALITY, 94])
 
-print('Generated', len(SKINS)*len(HAIRS)*len(STYLES), 'real male creator variants')
+print('Generated', len(SKINS) * len(HAIRS) * len(STYLES), 'clean male creator variants from full artwork')
