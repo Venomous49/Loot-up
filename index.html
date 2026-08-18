@@ -2549,6 +2549,21 @@ updateCreatorPreview();
 
 }
 
+function syncChoiceSelections(){
+const groups = [
+  ["genderChoices","gender"],
+  ["skinChoices","skin"],
+  ["hairColorChoices","hairColor"]
+];
+groups.forEach(([id,field]) => {
+  const root = $(id);
+  if(!root) return;
+  root.querySelectorAll(".choice").forEach(btn => {
+    btn.classList.toggle("selected", btn.dataset.value === avatarDraft[field]);
+  });
+});
+}
+
 /* ==========================================================
 TRACK
 ========================================================== */
@@ -4177,6 +4192,8 @@ avatarDraft.gender === "female"
 :
 "male_textured"
 );
+
+syncChoiceSelections();
 
 renderHairChoices();
 
