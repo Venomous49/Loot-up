@@ -4,6 +4,7 @@ import re
 p = Path('index.html')
 s = p.read_text(encoding='utf-8')
 
+# Root-level static character assets copied by the workflow.
 s = re.sub(
     r'function assetPath\(profile,stage\)\{.*?\n\}',
     '''function assetPath(profile,stage){\n\nreturn `${stages[stage].slug}.webp`;\n\n}''',
@@ -20,7 +21,7 @@ s = re.sub(
     flags=re.S
 )
 
-# Remove all old hard-coded URLs/paths from previous attempts.
+# Clean up paths left by previous experiments.
 s = re.sub(
     r'https://raw\.githubusercontent\.com/Venomous49/Loot-up/main/assets/characters/male/medium/brown/male_textured/([0-9]{2}-[a-z-]+\.webp)',
     r'\1',
@@ -35,13 +36,11 @@ s = re.sub(
 new_character = r'''function characterHTML(profile,stage){
 
 const base = assetPath(profile,stage);
-const outfit = outfitOverlayPath(profile.equipped_outfit_slug);
 
 return `
 <div class="character-scene-clean">
   <img class="scene-clean-image" src="${base}" alt="Looter" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
   <div class="character-missing" style="display:none">Asset réaliste manquant.</div>
-  ${outfit ? `<img class="scene-outfit-clean" src="${outfit}" alt="Tenue équipée" onerror="this.style.display='none'">` : ""}
 </div>`;
 
 }'''
@@ -54,24 +53,150 @@ s = re.sub(
     flags=re.S
 )
 
-marker = '/* RISELOOTER_STATIC_ROOT_V13 */'
+marker = '/* RISELOOTER_SIMPLIFIED_V14 */'
 css = r'''
-/* RISELOOTER_STATIC_ROOT_V13 */
-.hero{min-height:560px!important;position:relative!important;overflow:hidden!important;background:#070b0e!important}
-.hero:after{content:""!important;position:absolute!important;inset:0!important;z-index:4!important;pointer-events:none!important;background:linear-gradient(90deg,rgba(5,9,13,.995) 0%,rgba(5,9,13,.985) 26%,rgba(5,9,13,.80) 39%,rgba(5,9,13,.25) 54%,rgba(5,9,13,.03) 74%,rgba(5,9,13,0) 100%)!important}
-.character-holder{position:absolute!important;top:0!important;right:0!important;bottom:0!important;left:31%!important;width:auto!important;height:auto!important;z-index:1!important;transform:none!important;display:block!important;overflow:hidden!important;animation:none!important}
-.character-scene-clean{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;overflow:hidden!important;animation:none!important;transform:none!important}
-.character-scene-clean .scene-clean-image{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center 23%!important;transform:none!important;animation:none!important;filter:none!important;opacity:1!important;image-rendering:auto!important}
-.character-scene-clean:before{content:""!important;position:absolute!important;left:0!important;top:0!important;width:43%!important;height:130px!important;z-index:7!important;pointer-events:none!important;background:linear-gradient(135deg,#05090d 0%,#05090d 61%,rgba(5,9,13,.97) 75%,rgba(5,9,13,0) 100%)!important}
-.character-scene-clean:after{content:""!important;position:absolute!important;left:23%!important;right:10%!important;bottom:0!important;height:52px!important;z-index:7!important;pointer-events:none!important;background:linear-gradient(0deg,#05090d 0%,rgba(5,9,13,.96) 42%,rgba(5,9,13,0) 100%)!important}
-.scene-outfit-clean{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:contain!important;object-position:center bottom!important;z-index:6!important;animation:none!important;transform:none!important;filter:none!important;pointer-events:none!important}
-.scene-background,.scene-body,.scene-torso,.scene-head,.character-scene-real{display:none!important;animation:none!important;filter:none!important}
-.hero-copy,.next-evolution,.hero-track{z-index:9!important}
-.hero-track{padding-top:8px!important;background:linear-gradient(0deg,rgba(4,9,14,.99) 0%,rgba(4,9,14,.88) 60%,rgba(4,9,14,0) 100%)!important}
-.next-evolution{background:rgba(4,10,16,.96)!important;backdrop-filter:blur(3px)!important}
-.shadow-character{height:145px!important;margin:10px auto!important;overflow:hidden!important;border-radius:8px!important;position:relative!important;background:#080d12!important;box-shadow:inset 0 0 30px rgba(0,0,0,.82)!important}
-.shadow-character img{width:100%!important;height:100%!important;max-width:none!important;object-fit:cover!important;object-position:center 28%!important;transform:scale(1.02)!important;filter:brightness(.24) grayscale(1) contrast(1.28)!important;opacity:.98!important}
+/* RISELOOTER_SIMPLIFIED_V14 */
+
+/* Simplified navigation and sections */
+[data-nav="shop"],
+[data-nav="inventory"],
+#shop,
+#inventory,
+#dailyChest{
+  display:none!important;
+}
+
+/* Main hero: static, crisp artwork */
+.character-holder{
+  position:absolute!important;
+  top:0!important;
+  right:0!important;
+  bottom:0!important;
+  left:31%!important;
+  width:auto!important;
+  height:auto!important;
+  z-index:1!important;
+  transform:none!important;
+  display:block!important;
+  overflow:hidden!important;
+  animation:none!important;
+}
+.character-holder .character-scene-clean{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  overflow:hidden!important;
+  animation:none!important;
+  transform:none!important;
+}
+.character-holder .scene-clean-image{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:center 23%!important;
+  transform:none!important;
+  animation:none!important;
+  filter:none!important;
+  opacity:1!important;
+}
+
+/* Hide baked text on the left with a full-height horizontal fade.
+   Full height avoids the old hard horizontal edge crossing the face. */
+.character-holder .character-scene-clean:before{
+  content:""!important;
+  display:block!important;
+  position:absolute!important;
+  left:0!important;
+  top:0!important;
+  width:39%!important;
+  height:100%!important;
+  z-index:7!important;
+  pointer-events:none!important;
+  background:linear-gradient(90deg,#05090d 0%,rgba(5,9,13,.99) 48%,rgba(5,9,13,.72) 72%,rgba(5,9,13,0) 100%)!important;
+}
+.character-holder .character-scene-clean:after{
+  content:""!important;
+  display:block!important;
+  position:absolute!important;
+  left:20%!important;
+  right:7%!important;
+  bottom:0!important;
+  height:55px!important;
+  z-index:7!important;
+  pointer-events:none!important;
+  background:linear-gradient(0deg,#05090d 0%,rgba(5,9,13,.88) 45%,rgba(5,9,13,0) 100%)!important;
+}
+
+/* Next evolution: use the real next asset as a visible dark silhouette. */
+.next-evolution{
+  background:rgba(4,10,16,.96)!important;
+  backdrop-filter:blur(3px)!important;
+}
+.shadow-character{
+  height:145px!important;
+  margin:10px auto!important;
+  overflow:hidden!important;
+  border-radius:8px!important;
+  position:relative!important;
+  background:radial-gradient(circle at 50% 42%,#3a4650 0%,#202a32 48%,#10161c 100%)!important;
+  box-shadow:inset 0 0 24px rgba(0,0,0,.55)!important;
+}
+.shadow-character img{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  object-fit:cover!important;
+  object-position:center 28%!important;
+  transform:scale(1.02)!important;
+  filter:brightness(.16) grayscale(1) contrast(1.38)!important;
+  opacity:1!important;
+}
 .generic-shadow{display:none!important}
+
+/* Evolution path: every locked level shows the real character silhouette. */
+.evolution-card .character-scene-clean{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  overflow:hidden!important;
+}
+.evolution-card .character-scene-clean:before,
+.evolution-card .character-scene-clean:after{
+  display:none!important;
+  content:none!important;
+}
+.evolution-card .scene-clean-image{
+  display:block!important;
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:center 28%!important;
+  transform:scale(1.02)!important;
+  opacity:1!important;
+}
+.evolution-card.locked{
+  background:radial-gradient(circle at 50% 40%,#3c4852 0%,#222c34 48%,#10161b 100%)!important;
+}
+.evolution-card.locked .scene-clean-image{
+  filter:brightness(.15) grayscale(1) contrast(1.42)!important;
+  opacity:1!important;
+}
+.evolution-card.unlocked .scene-clean-image{
+  filter:none!important;
+}
+
+/* Remove every experimental animation layer from previous versions. */
+.scene-background,.scene-body,.scene-torso,.scene-head,.character-scene-real{
+  display:none!important;
+  animation:none!important;
+}
 '''
 
 if marker not in s:
