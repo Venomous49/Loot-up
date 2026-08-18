@@ -131,7 +131,9 @@ def masks(image, gender, style):
             "female_ponytail": [(.52, .05)],
             "female_short": [(.52, .07)],
         }[style]
-        base_candidate = dark_hair & geometry & ~face
+        hair_face = ellipse(x, y, .52, .285, .060, .145)
+        neck_and_chest = ellipse(x, y, .52, .48, .075, .20)
+        base_candidate = dark_hair & geometry & ~hair_face & ~neck_and_chest
         connected = connected_from_seeds(base_candidate, seeds)
         candidate = connected & person
         if candidate.sum() < 300:
@@ -162,7 +164,15 @@ def masks(image, gender, style):
         layer = Image.fromarray((mask.astype(np.uint8) * 255), "L")
         return np.asarray(layer.filter(ImageFilter.GaussianBlur(radius))) / 255.0
 
-    return soften(hair, 1.4), soften(skin, 2.0)
+    hair_alpha = soften(hair, 1.4)
+    if style in {"female_long", "female_wavy"}:
+        # The source hood contains dark warm folds directly connected to the
+        # hair. Fade the lower mask before it reaches the clothing so vivid
+        # colours cannot paint a solid block over the chest and shoulders.
+        lower_fade = np.clip((.66 - y) / .18, 0, 1)
+        hair_alpha *= lower_fade
+
+    return hair_alpha, soften(skin, 2.0)
 
 
 def tint(rgb, alpha, target, strength, minimum_luminance=.35):
@@ -193,8 +203,14 @@ def build():
                     hair_floor = .35
                     if hair_name == "purple":
                         dark_styles = {"female_ponytail", "female_short", "male_textured", "male_short", "male_undercut"}
-                        hair_floor = .62 if style in dark_styles else .40
-                    result = tint(skinned, hair_mask, hair_rgb, 1.0, hair_floor).astype(np.uint8)
+                        if style in dark_styles:
+                            hair_floor = .62
+                        elif style in {"female_long", "female_wavy"}:
+                            hair_floor = .20
+                        else:
+                            hair_floor = .40
+                    hair_strength = .78 if style in {"female_long", "female_wavy"} else 1.0
+                    result = tint(skinned, hair_mask, hair_rgb, hair_strength, hair_floor).astype(np.uint8)
                     path = OUTPUT / gender / skin_name / hair_name / f"{style}.webp"
                     path.parent.mkdir(parents=True, exist_ok=True)
                     Image.fromarray(result, "RGB").save(path, "WEBP", quality=91, method=6)
