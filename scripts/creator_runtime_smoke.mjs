@@ -29,19 +29,41 @@ async function previewPath() {
   return page.locator('#creatorPreview img.creator-real-preview').getAttribute('src');
 }
 
+async function assertSingleSelected(groupSelector, expectedValue, context) {
+  const selected = page.locator(`${groupSelector} .choice.selected`);
+  const count = await selected.count();
+  if (count !== 1) {
+    failures.push(`${context}: expected exactly one selected control in ${groupSelector}, got ${count}`);
+    return;
+  }
+  const value = await selected.first().getAttribute('data-value');
+  if (value !== expectedValue) {
+    failures.push(`${context}: selected ${groupSelector} value is ${value}, expected ${expectedValue}`);
+  }
+}
+
 try {
   await page.goto(baseURL, { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.waitForSelector('#creatorModal.show', { timeout: 15000 });
   await waitForLoadedImage('#creatorPreview img.creator-real-preview');
 
+  await assertSingleSelected('#genderChoices', 'male', 'initial creator state');
+  await assertSingleSelected('#skinChoices', 'medium', 'initial creator state');
+  await assertSingleSelected('#hairColorChoices', 'brown', 'initial creator state');
+  await assertSingleSelected('#hairStyleChoices', 'male_textured', 'initial creator state');
+
   for (const [gender, styles] of Object.entries(genders)) {
     await page.locator(`#genderChoices [data-value="${gender}"]`).click();
+    await assertSingleSelected('#genderChoices', gender, `${gender}: gender click`);
+    await assertSingleSelected('#hairStyleChoices', styles[0], `${gender}: gender resets hairstyle`);
 
     for (const skin of skins) {
       await page.locator(`#skinChoices [data-value="${skin}"]`).click();
+      await assertSingleSelected('#skinChoices', skin, `${gender}/${skin}: skin click`);
 
       for (const colour of colours) {
         await page.locator(`#hairColorChoices [data-value="${colour}"]`).click();
+        await assertSingleSelected('#hairColorChoices', colour, `${gender}/${skin}/${colour}: hair-colour click`);
 
         const thumbs = page.locator('#hairStyleChoices .hair-choice');
         const count = await thumbs.count();
@@ -55,14 +77,12 @@ try {
           }
 
           await button.click();
+          await assertSingleSelected('#hairStyleChoices', style, `${gender}/${skin}/${colour}/${style}: hairstyle click`);
           await waitForLoadedImage('#creatorPreview img.creator-real-preview');
 
           const src = await previewPath();
           const expected = `assets/creator/${gender}/${skin}/${colour}/${style}.webp`;
           if (!src || !src.includes(expected)) failures.push(`${expected}: preview routed to ${src}`);
-
-          const selected = await button.evaluate(el => el.classList.contains('selected'));
-          if (!selected) failures.push(`${expected}: clicked hairstyle is not selected`);
 
           const thumb = button.locator('img');
           if (await thumb.count() !== 1) {
@@ -80,6 +100,12 @@ try {
   const overlayCount = await page.locator('.creator-skin-overlay,.creator-hair-overlay').count();
   if (overlayCount !== 0) failures.push(`legacy creator overlays present in DOM: ${overlayCount}`);
 
+  const missingThumbs = await page.locator('#hairStyleChoices .hair-thumb-missing').count();
+  if (missingThumbs !== 0) failures.push(`creator contains ${missingThumbs} missing hairstyle thumbnails after traversal`);
+
+  const missingPreviewVisible = await page.locator('#creatorPreview .creator-asset-missing:visible').count();
+  if (missingPreviewVisible !== 0) failures.push('creator fallback placeholder became visible during valid preset traversal');
+
   const saveDisabled = await page.locator('#saveAvatar').isDisabled();
   if (saveDisabled) failures.push('saveAvatar remains disabled after valid preset loads');
 } catch (error) {
@@ -94,4 +120,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log('Creator runtime smoke passed: all 250 combinations route through real loaded preview/thumbnail assets with working controls and no overlays.');
+console.log('Creator runtime smoke passed: all 250 combinations route through real loaded preview/thumbnail assets with coherent selected controls, working buttons, clean fallbacks and no overlays.');
