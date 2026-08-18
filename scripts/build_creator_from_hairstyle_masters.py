@@ -202,14 +202,14 @@ def build():
                 for hair_name, hair_rgb in HAIRS.items():
                     hair_floor = .35
                     if hair_name == "purple":
-                        dark_styles = {"female_ponytail", "female_short", "male_textured", "male_short", "male_undercut"}
-                        if style in dark_styles:
-                            hair_floor = .62
-                        elif style in {"female_long", "female_wavy"}:
+                        dark_styles = {"male_textured", "male_short", "male_undercut"}
+                        if gender == "female":
                             hair_floor = .20
+                        elif style in dark_styles:
+                            hair_floor = .62
                         else:
                             hair_floor = .40
-                    hair_strength = .78 if style in {"female_long", "female_wavy"} else 1.0
+                    hair_strength = .78 if gender == "female" else 1.0
                     result = tint(skinned, hair_mask, hair_rgb, hair_strength, hair_floor).astype(np.uint8)
                     path = OUTPUT / gender / skin_name / hair_name / f"{style}.webp"
                     path.parent.mkdir(parents=True, exist_ok=True)
