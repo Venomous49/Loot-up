@@ -1669,6 +1669,26 @@ main{padding-top:10px!important}.panel{border-color:#1c3445!important;border-rad
 body.creator-test-active .creator-test-banner{display:block}
 body.creator-test-active #creatorModal .creator-note:after{content:' • MODE TEST : rien ne sera enregistré';color:#d7a9ff}
 
+
+/* RISELOOTER_CREATOR_OVERLAY_CLEANUP_V22 */
+/* Never draw synthetic skin/hair shapes over the character preview. */
+#creatorModal .creator-skin-overlay,
+#creatorModal .creator-hair-overlay,
+#creatorModal .creator-preview-stage .creator-skin-overlay,
+#creatorModal .creator-preview-stage .creator-hair-overlay{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  background:none!important;
+  clip-path:none!important;
+}
+/* Keep the validated source artwork crisp and untouched. */
+#creatorModal .creator-preview-person,
+#creatorModal .creator-preview > img{
+  filter:none!important;
+  mix-blend-mode:normal!important;
+}
+
 </style>
 </head>
 
