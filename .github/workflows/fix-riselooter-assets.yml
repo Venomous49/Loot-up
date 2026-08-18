@@ -1,7 +1,8 @@
 name: Apply RiseLooter static asset patch
 
-# Legacy maintenance workflow. It must NEVER rewrite index.html automatically.
-# Run manually only when the legacy static/silhouette assets need rebuilding.
+# Legacy maintenance workflow. Manual only.
+# IMPORTANT: this workflow is allowed to refresh legacy root evolution assets
+# and silhouettes, but it must NEVER rewrite index.html or creator routing.
 on:
   workflow_dispatch:
 
@@ -41,17 +42,23 @@ jobs:
           cp silhouettes/40-cyber-looter.png ./sil-40-cyber-looter.png
           cp silhouettes/50-rise-looter.png ./sil-50-rise-looter.png
 
-      - name: Patch index
-        run: python3 .github/scripts/patch_riselooter.py
-
-      - name: Commit changes
+      - name: Verify creator routing is untouched
+        shell: bash
         run: |
-          if git diff --quiet; then
+          set -euo pipefail
+          git diff --exit-code -- index.html
+          test "$(git status --short index.html | wc -l)" -eq 0
+
+      - name: Commit legacy static assets only
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- '*.webp' 'sil-*.png' 'silhouettes/*.png'; then
             echo "No changes needed"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html *.webp sil-*.png silhouettes/*.png
-          git commit -m "Publish evolution silhouettes at root"
+          git add -- '*.webp' 'sil-*.png' 'silhouettes/*.png'
+          git commit -m "Refresh legacy evolution silhouettes"
           git push
