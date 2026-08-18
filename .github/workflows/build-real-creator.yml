@@ -1,11 +1,10 @@
-name: Creator safety build
+name: Creator preset routing
 
 on:
   push:
     paths:
       - 'scripts/final_site_cleanup.py'
       - '.github/workflows/build-real-creator.yml'
-      - 'index.html'
   workflow_dispatch:
 
 permissions:
@@ -16,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  safety:
+  creator:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main
@@ -29,19 +28,19 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Apply safe complete-image creator mode
+      - name: Enable complete-image avatar presets
         run: python scripts/final_site_cleanup.py
 
-      - name: Verify no synthetic creator overlays are active
+      - name: Verify preset routing
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'cleanbase28' index.html
+          grep -q 'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=presets29' index.html
+          grep -q 'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp?v=presets29' index.html
           grep -q 'creator-skin-overlay' index.html
           grep -q 'display:none!important' index.html
-          grep -q '01-debutant.webp?v=cleanbase28' index.html
 
-      - name: Publish safety patch when needed
+      - name: Publish creator routing patch when needed
         shell: bash
         run: |
           set -euo pipefail
@@ -49,8 +48,8 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
           if git diff --cached --quiet; then
-            echo 'No safety changes to publish'
+            echo 'No creator routing changes to publish'
             exit 0
           fi
-          git commit -m 'Use clean complete-image creator fallback'
+          git commit -m 'Enable full-image avatar preset routing'
           git push
