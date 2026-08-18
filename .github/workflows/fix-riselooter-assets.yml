@@ -1,4 +1,4 @@
-name: Fix RiseLooter asset paths
+name: Polish RiseLooter visuals
 
 on:
   push:
@@ -8,22 +8,22 @@ permissions:
   contents: write
 
 jobs:
-  fix-assets:
+  polish-ui:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Fix index asset paths for Cloudflare direct upload
+      - name: Update RiseLooter character presentation
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
+
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
 
-          if '<base href="/">' not in s:
-              s = s.replace('<head>\n', '<head>\n<base href="/">\n', 1)
-
+          # Keep direct-upload-compatible asset paths.
           s = s.replace(
               'return `/assets/characters/male/medium/brown/male_textured/${stages[stage].slug}.webp`;',
               'return `/${stages[stage].slug}.webp`;'
@@ -33,10 +33,91 @@ jobs:
               'return "/01-debutant.webp";'
           )
 
+          s = re.sub(r'''\.hero\{.*?\n\}''', '''.hero{
+  min-height:560px;
+  position:relative;
+  overflow:hidden;
+  background:#070b0e;
+}''', s, count=1, flags=re.S)
+
+          s = re.sub(r'''\.hero:after\{.*?\n\}''', '''.hero:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:4;
+  background:linear-gradient(90deg,
+    rgba(5,9,13,.98) 0%,
+    rgba(5,9,13,.96) 24%,
+    rgba(5,9,13,.78) 36%,
+    rgba(5,9,13,.18) 56%,
+    rgba(5,9,13,.04) 100%);
+  pointer-events:none;
+}''', s, count=1, flags=re.S)
+
+          s = re.sub(r'''\.character-holder\{.*?\n\}''', '''.character-holder{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:1;
+  overflow:hidden;
+  display:block;
+  transform:none;
+}''', s, count=1, flags=re.S)
+
+          s = re.sub(r'''\.character-holder img\{.*?\n\}''', '''.character-holder img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center 45%;
+  transform:scale(1.14) translateY(-1.5%);
+  filter:saturate(.92) contrast(1.03);
+  animation:sceneIdle 6s ease-in-out infinite;
+}''', s, count=1, flags=re.S)
+
+          s = re.sub(r'''@keyframes characterIdle\{.*?\n\}''', '''@keyframes sceneIdle{
+  0%,100%{transform:scale(1.14) translateY(-1.5%)}
+  50%{transform:scale(1.145) translateY(-2.1%)}
+}''', s, count=1, flags=re.S)
+
+          s = re.sub(r'''\.shadow-character\{.*?\n\}''', '''.shadow-character{
+  height:145px;
+  margin:10px auto;
+  overflow:hidden;
+  border-radius:8px;
+  position:relative;
+  background:#070b0e;
+  box-shadow:inset 0 0 25px rgba(0,0,0,.65);
+}''', s, count=1, flags=re.S)
+
+          s = re.sub(r'''\.shadow-character img\{.*?\n\}''', '''.shadow-character img{
+  width:100%;
+  height:100%;
+  max-width:none;
+  object-fit:cover;
+  object-position:center 44%;
+  transform:scale(1.12);
+  filter:brightness(.16) grayscale(1) contrast(1.35);
+  opacity:1;
+}''', s, count=1, flags=re.S)
+
+          s = s.replace(
+              '.evolution-character{\n  position:absolute;\n  inset:10px 5px 42px;\n  display:grid;\n  place-items:center;\n}',
+              '.evolution-character{\n  position:absolute;\n  inset:10px 5px 42px;\n  display:grid;\n  place-items:center;\n  overflow:hidden;\n  border-radius:7px;\n}'
+          )
+
+          s = s.replace(
+              '.evolution-card.locked .evolution-character img{\n  filter:brightness(0);\n  opacity:.86;\n}',
+              '.evolution-card.locked .evolution-character img{\n  width:100%;\n  height:100%;\n  object-fit:cover;\n  object-position:center 44%;\n  transform:scale(1.12);\n  filter:brightness(.14) grayscale(1) contrast(1.35);\n  opacity:1;\n}'
+          )
+
+          # Keep the content panels in front of the scene.
+          s = s.replace('z-index:8;\n}', 'z-index:8;\n}', 1)
+
           p.write_text(s, encoding='utf-8')
           PY
 
-      - name: Commit fix if needed
+      - name: Commit visual polish if needed
         run: |
           if git diff --quiet; then
             echo "No changes needed"
@@ -45,5 +126,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "Use root asset paths for Cloudflare direct upload"
+          git commit -m "Polish character scene and locked evolution silhouettes"
           git push
