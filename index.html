@@ -1540,6 +1540,31 @@ main{
 .evolution-card .character-scene-clean:before,.evolution-card .character-scene-clean:after{display:none!important;content:none!important}
 .scene-background,.scene-body,.scene-torso,.scene-head,.character-scene-real{display:none!important;animation:none!important}
 
+
+/* RISELOOTER_REAL_SILHOUETTES_V16 */
+[data-nav="shop"],[data-nav="inventory"],#shop,#inventory,#dailyChest{display:none!important}
+
+/* Main artwork remains static and crisp. */
+.character-holder{animation:none!important;transform:none!important;overflow:hidden!important}
+.character-holder .character-scene-clean{position:absolute!important;inset:0!important;overflow:hidden!important}
+.character-holder .scene-clean-image{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center 23%!important;filter:none!important;opacity:1!important;transform:none!important;animation:none!important}
+.character-holder .character-scene-clean:before{content:""!important;position:absolute!important;inset:0 auto 0 0!important;width:35%!important;height:100%!important;z-index:7!important;pointer-events:none!important;background:linear-gradient(90deg,#05090d 0%,rgba(5,9,13,.98) 38%,rgba(5,9,13,.58) 70%,rgba(5,9,13,0) 100%)!important}
+.character-holder .character-scene-clean:after{display:none!important;content:none!important}
+
+/* Next evolution preview: actual generated silhouette on a light smoky card. */
+.shadow-character{height:145px!important;margin:10px auto!important;overflow:hidden!important;border-radius:8px!important;position:relative!important;background:#b8bec3!important;box-shadow:inset 0 0 24px rgba(0,0,0,.28)!important}
+.shadow-character .next-silhouette{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center 20%!important;filter:none!important;opacity:1!important;transform:none!important}
+.generic-shadow{display:none!important}
+
+/* Evolution path: locked cards use dedicated light-background silhouette images. */
+.evolution-card{background:#111a22!important}
+.evolution-character{position:absolute!important;inset:8px 5px 42px!important;display:block!important;overflow:hidden!important;border-radius:7px!important}
+.evolution-card.locked .evolution-character{background:#b8bec3!important}
+.evolution-card .evolution-silhouette,.evolution-card .evolution-real{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center 20%!important;filter:none!important;opacity:1!important;transform:none!important}
+.evolution-card.unlocked .evolution-character{background:#0b1117!important}
+.evolution-card.locked .evolution-name{color:#fff!important}
+.scene-background,.scene-body,.scene-torso,.scene-head,.character-scene-real{display:none!important;animation:none!important}
+
 </style>
 </head>
 
@@ -2290,6 +2315,10 @@ function creatorAssetPath(){
 return "01-debutant.webp";
 }
 
+function silhouettePath(stage){
+return `silhouettes/${stages[stage].slug}.png`;
+}
+
 function outfitOverlayPath(slug){
 
 if(
@@ -2532,59 +2561,24 @@ ${d}
 
 function renderEvolutionGrid(profile){
 
-const level =
-profile.level || 1;
+const level = profile.level || 1;
 
-$("evolutionGrid").innerHTML =
+$("evolutionGrid").innerHTML = stages.map((stage,i) => {
+  const unlocked = level >= stage.level;
+  const visual = unlocked
+    ? `<img class="evolution-real" src="${assetPath(profile,i)}" alt="${stage.name}" onerror="this.style.display='none'">`
+    : `<img class="evolution-silhouette" src="${silhouettePath(i)}" alt="Silhouette ${stage.name}" onerror="this.style.display='none'">`;
 
-stages.map(
-(s,i) => {
-
-const unlocked =
-level >= s.level;
-
-return `
-
-<div
-class="
-evolution-card
-${unlocked ? "unlocked" : "locked"}
-">
-
-<div class="evolution-character">
-
-${characterHTML(profile,i)}
-
-</div>
-
-<div class="evolution-name">
-
-NIVEAU ${s.level}
-
-<br>
-
-<b>
-${s.name}
-</b>
-
-<br>
-
-${
-unlocked
-?
-escapeHTML(s.desc)
-:
-"Évolution à découvrir"
-}
-
-</div>
-
-</div>
-
-`;
-
-}
-).join("");
+  return `
+  <div class="evolution-card ${unlocked ? "unlocked" : "locked"}">
+    <div class="evolution-character">${visual}</div>
+    <div class="evolution-name">
+      NIVEAU ${stage.level}<br>
+      <b>${stage.name}</b><br>
+      ${unlocked ? escapeHTML(stage.desc) : "Évolution à découvrir"}
+    </div>
+  </div>`;
+}).join("");
 
 }
 
@@ -2759,21 +2753,7 @@ required - (profile.xp || 0)
 " XP avant d'évoluer.";
 
 $("nextEvolutionShadow").innerHTML = `
-
-<img
-src="${assetPath(profile,idx + 1)}"
-alt="Silhouette prochaine évolution"
-
-onerror="
-this.style.display='none';
-this.nextElementSibling.style.display='block';
-">
-
-<div
-class="generic-shadow"
-style="display:none">
-</div>
-
+<img class="next-silhouette" src="${silhouettePath(idx + 1)}" alt="Silhouette prochaine évolution" onerror="this.style.display='none'">
 `;
 
 }
