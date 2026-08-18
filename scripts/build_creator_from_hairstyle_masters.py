@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+import cv2
 from PIL import Image, ImageFilter, ImageOps
 
 
@@ -46,35 +47,115 @@ def ellipse(xx, yy, cx, cy, rx, ry):
     return ((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2 <= 1
 
 
+def connected_from_seeds(mask, seeds, scale=4):
+    """Keep only dark regions connected to known points inside the hairstyle."""
+    h, w = mask.shape
+    small = np.asarray(
+        Image.fromarray(mask.astype(np.uint8) * 255, "L").resize(
+            (max(1, w // scale), max(1, h // scale)), Image.Resampling.NEAREST
+        )
+    ) > 0
+    sh, sw = small.shape
+    selected = np.zeros_like(small, dtype=bool)
+
+    for sx, sy in seeds:
+        px, py = min(sw - 1, int(sx * sw)), min(sh - 1, int(sy * sh))
+        candidates = np.argwhere(small)
+        if candidates.size == 0:
+            continue
+        distances = (candidates[:, 1] - px) ** 2 + (candidates[:, 0] - py) ** 2
+        start_y, start_x = candidates[int(np.argmin(distances))]
+        if distances.min() > (max(sw, sh) * .055) ** 2:
+            continue
+
+        stack = [(int(start_y), int(start_x))]
+        visited = np.zeros_like(small, dtype=bool)
+        visited[start_y, start_x] = True
+        while stack:
+            cy, cx = stack.pop()
+            selected[cy, cx] = True
+            for ny, nx in ((cy - 1, cx), (cy + 1, cx), (cy, cx - 1), (cy, cx + 1)):
+                if 0 <= ny < sh and 0 <= nx < sw and small[ny, nx] and not visited[ny, nx]:
+                    visited[ny, nx] = True
+                    stack.append((ny, nx))
+
+    region = Image.fromarray(selected.astype(np.uint8) * 255, "L").resize((w, h), Image.Resampling.NEAREST)
+    return np.asarray(region) > 0
+
+
+def foreground_mask(image, gender):
+    """Segment the person so dark walls can never enter a hair colour mask."""
+    original_w, original_h = image.size
+    preview = ImageOps.contain(image, (512, 512), Image.Resampling.LANCZOS)
+    rgb = np.asarray(preview)
+    h, w = rgb.shape[:2]
+    mask = np.zeros((h, w), np.uint8)
+    if gender == "female":
+        rect = (int(.25 * w), 1, int(.50 * w), h - 2)
+    else:
+        rect = (int(.40 * w), 1, int(.40 * w), h - 2)
+    background = np.zeros((1, 65), np.float64)
+    foreground = np.zeros((1, 65), np.float64)
+    cv2.grabCut(rgb, mask, rect, background, foreground, 5, cv2.GC_INIT_WITH_RECT)
+    person = np.where((mask == cv2.GC_FGD) | (mask == cv2.GC_PR_FGD), 255, 0).astype(np.uint8)
+    person = Image.fromarray(person, "L").resize((original_w, original_h), Image.Resampling.BILINEAR)
+    return np.asarray(person) > 96
+
+
 def masks(image, gender, style):
     rgb = np.asarray(image).astype(np.float32)
     h, w = rgb.shape[:2]
     yy, xx = np.mgrid[0:h, 0:w]
     x, y = xx / w, yy / h
     r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    person = foreground_mask(image, gender)
 
-    # Existing hair is dark and neutral/warm. Geometry keeps alley and clothes out.
-    dark_hair = (r < 125) & (g < 105) & (b < 100) & (r >= b * .82)
+    # Existing hair is dark and neutral/warm. Curved, style-specific geometry
+    # prevents dark alley pixels from being recoloured with the hair.
+    warm_or_black = (r > g * 1.045) | ((r < 45) & (g < 42) & (b < 40))
+    dark_hair = (r < 125) & (g < 108) & (b < 104) & (r >= b * .82) & warm_or_black
     if gender == "female":
         face = ellipse(x, y, .52, .285, .092, .185)
-        bounds = {
-            "female_long": ((x > .31) & (x < .69) & (y < .88)),
-            "female_wavy": ((x > .30) & (x < .70) & (y < .91)),
-            "female_bob": ((x > .38) & (x < .64) & (y < .53)),
-            "female_ponytail": ((x > .39) & (x < .65) & (y < .58)),
-            "female_short": ((x > .40) & (x < .63) & (y < .39)),
+        cap = ellipse(x, y, .52, .205, .135, .205)
+        geometry = {
+            "female_long": cap | ellipse(x, y, .425, .50, .105, .39) | ellipse(x, y, .615, .50, .105, .39),
+            "female_wavy": cap | ellipse(x, y, .405, .51, .115, .40) | ellipse(x, y, .635, .51, .115, .40),
+            "female_bob": ellipse(x, y, .52, .245, .155, .245),
+            "female_ponytail": cap | ellipse(x, y, .52, .075, .080, .070) | ellipse(x, y, .625, .30, .050, .22),
+            "female_short": ellipse(x, y, .52, .175, .120, .135),
         }[style]
-        hair = dark_hair & bounds & ~face
+        seeds = {
+            "female_long": [(.52, .07)],
+            "female_wavy": [(.52, .07)],
+            "female_bob": [(.52, .07)],
+            "female_ponytail": [(.52, .05)],
+            "female_short": [(.52, .07)],
+        }[style]
+        base_candidate = dark_hair & geometry & ~face
+        candidate = base_candidate & person
+        if candidate.sum() < 300:
+            candidate = base_candidate
+        hair = candidate
         anatomy = face | ((x > .46) & (x < .58) & (y > .39) & (y < .60))
     else:
         face = ellipse(x, y, .585, .145, .070, .070)
-        bounds = (x > .49) & (x < .68) & (y > .025) & (y < .17)
-        hair = dark_hair & bounds & ~face
+        geometry = {
+            "male_textured": ellipse(x, y, .585, .088, .060, .058),
+            "male_short": ellipse(x, y, .585, .095, .062, .050),
+            "male_medium": ellipse(x, y, .585, .103, .085, .078),
+            "male_undercut": ellipse(x, y, .585, .090, .082, .070),
+            "male_slick": ellipse(x, y, .585, .090, .075, .062),
+        }[style]
+        base_candidate = dark_hair & geometry & ~face
+        candidate = base_candidate & person
+        if candidate.sum() < 180:
+            candidate = base_candidate
+        hair = candidate
         anatomy = face | ((x > .52) & (x < .65) & (y > .17) & (y < .31))
         anatomy |= ((x > .39) & (x < .76) & (y > .25) & (y < .72))
 
     skin_colour = (r > g * 1.05) & (g > b * 1.04) & (r > 48) & (b < 185)
-    skin = skin_colour & anatomy
+    skin = skin_colour & anatomy & person
 
     def soften(mask, radius):
         layer = Image.fromarray((mask.astype(np.uint8) * 255), "L")
