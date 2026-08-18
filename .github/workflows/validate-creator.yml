@@ -49,9 +49,10 @@ jobs:
           grep -q '"directory": "./"' wrangler.jsonc
           grep -q '"not_found_handling": "single-page-application"' wrangler.jsonc
           test -s .assetsignore
-          grep -q '^\.git/$' .assetsignore
-          grep -q '^\.github/$' .assetsignore
-          grep -q '^scripts/$' .assetsignore
+          grep -q '^\.git$' .assetsignore
+          grep -q '^\.github$' .assetsignore
+          grep -q '^scripts$' .assetsignore
+          grep -q '^assets/creator_sources$' .assetsignore
           test -s index.html
           test "$(find assets/creator/male -type f -name '*.webp' | wc -l)" -eq 125
           test "$(find assets/creator/female -type f -name '*.webp' | wc -l)" -eq 125
