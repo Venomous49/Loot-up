@@ -6,6 +6,7 @@ on:
       - 'scripts/final_site_cleanup.py'
       - 'scripts/build_female_creator_variants.py'
       - 'assets/source/female_base.webp.b64'
+      - 'assets/source/female_base.webp.b64.part2'
       - '.github/workflows/build-real-creator.yml'
   workflow_dispatch:
 
@@ -51,8 +52,9 @@ jobs:
             assets/creator/female/medium/brown/female_long.webp \
             assets/creator/female/light/blond/female_bob.webp \
             assets/creator/female/dark/black/female_short.webp; do test -s "$f"; done
-          grep -q 'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=presets30' index.html
-          grep -q 'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp?v=presets30' index.html
+          grep -q 'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=presets31' index.html
+          grep -q 'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp?v=presets31' index.html
+          grep -q '\["gender","skin","hairColor"\].includes(field)' index.html
           grep -q '#creatorModal .creator-skin-overlay' index.html
           grep -q 'display:none!important' index.html
           python - <<'PY'
