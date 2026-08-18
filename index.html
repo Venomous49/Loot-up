@@ -1718,7 +1718,7 @@ body.creator-test-active #creatorModal .creator-note:after{content:' • MODE TE
 
 
 /* RISELOOTER_FINAL_CLEAN_V25 */
-/* Only complete images are displayed. Synthetic head/skin/hair overlays are forbidden. */
+/* Complete-image presets only: no synthetic head/skin/hair overlays. */
 #creatorModal .creator-skin-overlay,
 #creatorModal .creator-hair-overlay{display:none!important;visibility:hidden!important;opacity:0!important}
 #creatorModal .creator-preview{background:#03080d!important;overflow:hidden!important}
@@ -2414,10 +2414,7 @@ function assetPath(profile,stage){
 }
 
 function creatorAssetPath(){
-  if(avatarDraft.gender === "female"){
-    return `assets/creator/female/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=fullpreset28`;
-  }
-  return `01-debutant.webp?v=cleanbase28`;
+  return `assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=presets29`;
 }
 
 function fallbackAssetPath(stage){
@@ -2483,7 +2480,7 @@ const list = avatarDraft.gender === "female" ? femaleHair : maleHair;
 if(!list.some(x => x[0] === avatarDraft.hairStyle)) avatarDraft.hairStyle=list[0][0];
 
 $("hairStyleChoices").innerHTML = list.map(([value,label]) => {
-  const thumb = avatarDraft.gender === "male" ? `01-debutant.webp?v=cleanbase28` : `assets/creator/female/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp?v=fullpreset28`;
+  const thumb = `assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp?v=presets29`;
   return `<button class="choice hair-choice ${avatarDraft.hairStyle===value?"selected":""}" data-value="${value}">
     <span class="hair-thumb" style="background-image:url('${thumb}')"></span>
     <span>${label}</span>
