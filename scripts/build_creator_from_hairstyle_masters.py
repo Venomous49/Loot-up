@@ -132,9 +132,10 @@ def masks(image, gender, style):
             "female_short": [(.52, .07)],
         }[style]
         base_candidate = dark_hair & geometry & ~face
-        candidate = base_candidate & person
+        connected = connected_from_seeds(base_candidate, seeds)
+        candidate = connected & person
         if candidate.sum() < 300:
-            candidate = base_candidate
+            candidate = connected
         hair = candidate
         anatomy = face | ((x > .46) & (x < .58) & (y > .39) & (y < .60))
     else:
@@ -164,11 +165,11 @@ def masks(image, gender, style):
     return soften(hair, 1.4), soften(skin, 2.0)
 
 
-def tint(rgb, alpha, target, strength):
+def tint(rgb, alpha, target, strength, minimum_luminance=.35):
     src = rgb.astype(np.float32)
     luminance = .299 * src[..., 0] + .587 * src[..., 1] + .114 * src[..., 2]
     target = np.asarray(target, dtype=np.float32)
-    coloured = target[None, None, :] * np.clip(luminance[..., None] / 105.0, .35, 1.75)
+    coloured = target[None, None, :] * np.clip(luminance[..., None] / 105.0, minimum_luminance, 1.75)
     a = (alpha * strength)[..., None]
     return np.clip(src * (1 - a) + coloured * a, 0, 255)
 
@@ -189,7 +190,11 @@ def build():
             for skin_name, skin_rgb in SKINS.items():
                 skinned = tint(base, skin_mask, skin_rgb, .78)
                 for hair_name, hair_rgb in HAIRS.items():
-                    result = tint(skinned, hair_mask, hair_rgb, .94).astype(np.uint8)
+                    hair_floor = .35
+                    if hair_name == "purple":
+                        dark_styles = {"female_ponytail", "female_short", "male_textured", "male_short", "male_undercut"}
+                        hair_floor = .62 if style in dark_styles else .40
+                    result = tint(skinned, hair_mask, hair_rgb, 1.0, hair_floor).astype(np.uint8)
                     path = OUTPUT / gender / skin_name / hair_name / f"{style}.webp"
                     path.parent.mkdir(parents=True, exist_ok=True)
                     Image.fromarray(result, "RGB").save(path, "WEBP", quality=91, method=6)
