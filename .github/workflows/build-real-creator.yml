@@ -16,6 +16,7 @@ concurrency:
 jobs:
   creator:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
@@ -36,7 +37,39 @@ jobs:
       - name: Validate generated creator library
         run: python scripts/validate_creator_library.py
 
-      - name: Publish only after successful validation
+      - name: Setup Node for runtime verification
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start static site for generated-library smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/loot-up-http.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/index.html >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/loot-up-http.log
+          exit 1
+
+      - name: Exercise all creator controls against generated assets
+        run: node scripts/creator_runtime_smoke.mjs
+
+      - name: Prove generator did not touch production routing
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code -- index.html
+          test "$(git status --short index.html | wc -l)" -eq 0
+
+      - name: Publish only after successful static and browser validation
         shell: bash
         run: |
           set -euo pipefail
