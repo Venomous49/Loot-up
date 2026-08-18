@@ -24,13 +24,13 @@ else:
 new_character=r'''function characterHTML(profile,stage){
 const preferred=assetPath(profile,stage);
 const fallback=fallbackAssetPath(stage);
-return `<div class="character-scene-clean"><img class="scene-clean-image" src="${preferred}" alt="Looter" data-fallback="${fallback}" onerror="if(this.src.indexOf(this.dataset.fallback)===-1){this.src=this.dataset.fallback}else{this.style.display='none';this.nextElementSibling.style.display='block'}"><div class="character-missing" style="display:none">Asset réaliste manquant.</div></div>`;
+return `<div class="character-scene-clean"><img class="scene-clean-image" src="${preferred}" alt="Looter" data-fallback="${fallback}" data-tried-fallback="0" onerror="if(this.dataset.triedFallback!=='1'){this.dataset.triedFallback='1';this.src=this.dataset.fallback}else{this.style.display='none';this.nextElementSibling.style.display='block'}"><div class="character-missing" style="display:none">Asset réaliste manquant.</div></div>`;
 }'''
 s=re.sub(r'function characterHTML\(profile,stage\)\{.*?\n\}\n\n/\* ==========================================================\nAPERÇU CRÉATEUR', new_character+'\n\n/* ==========================================================\nAPERÇU CRÉATEUR', s, count=1, flags=re.S)
 
 new_preview=r'''function updateCreatorPreview(){
 $("creatorPreview").innerHTML = `
-<img src="${creatorAssetPath()}" alt="Aperçu Looter" data-fallback="01-debutant.webp" onerror="if(this.src.indexOf(this.dataset.fallback)===-1){this.src=this.dataset.fallback}else{this.style.display='none';this.nextElementSibling.style.display='block'}">
+<img src="${creatorAssetPath()}" alt="Aperçu Looter" data-fallback="01-debutant.webp" data-tried-fallback="0" onerror="if(this.dataset.triedFallback!=='1'){this.dataset.triedFallback='1';this.src=this.dataset.fallback}else{this.style.display='none';this.nextElementSibling.style.display='block'}">
 <div class="creator-empty" style="display:none">Aperçu indisponible pour cette combinaison.</div>`;
 }'''
 s=re.sub(r'function updateCreatorPreview\(\)\{.*?\n\}\n\n/\* ==========================================================\nCOIFFURES', new_preview+'\n\n/* ==========================================================\nCOIFFURES', s, count=1, flags=re.S)
@@ -42,7 +42,7 @@ const level = profile.level || 1;
 $("evolutionGrid").innerHTML = stages.map((stage,i) => {
   const unlocked = level >= stage.level;
   const visual = unlocked
-    ? `<img class="evolution-real" src="${assetPath(profile,i)}" data-fallback="${fallbackAssetPath(i)}" alt="${stage.name}" onerror="if(this.src.indexOf(this.dataset.fallback)===-1){this.src=this.dataset.fallback}else{this.style.display='none'}">`
+    ? `<img class="evolution-real" src="${assetPath(profile,i)}" data-fallback="${fallbackAssetPath(i)}" data-tried-fallback="0" alt="${stage.name}" onerror="if(this.dataset.triedFallback!=='1'){this.dataset.triedFallback='1';this.src=this.dataset.fallback}else{this.style.display='none'}">`
     : `<img class="evolution-silhouette" src="${silhouettePath(i)}" alt="">`;
   return `
   <div class="evolution-card ${unlocked ? "unlocked" : "locked"}">
@@ -92,9 +92,7 @@ main{padding-top:10px!important}.panel{border-color:#1c3445!important;border-rad
 .hero-track{left:25px!important;right:25px!important;bottom:13px!important;display:grid!important;grid-template-columns:repeat(8,1fr)!important;align-items:end!important;background:none!important;padding:0!important}.track-node{font-size:9px!important;color:#7e909d!important}.track-circle{width:28px!important;height:28px!important;font-size:10px!important;background:#07111a!important}.track-node.unlocked{color:#d078ff!important}
 .progress{padding:22px!important}.progress h3{font-size:13px!important;margin-bottom:20px!important}.progress-grid{gap:28px!important}.level-number{font-size:61px!important;color:#963fff!important}.progress-bar{height:9px!important;max-width:285px!important}.progress-stats{margin-top:25px!important}.pstat{padding-top:19px!important;font-size:13px!important}.pstat b{font-size:22px!important}
 .two-cols{gap:12px!important}.challenge{padding:12px 4px!important;font-size:14px!important}.bonus{font-size:14px!important}.days{margin:16px 0!important;gap:11px!important}.day{width:35px!important;height:35px!important}.streak-big{font-size:30px!important}
-/* Hide the full missions catalogue on the landing composition; challenge clicks still scroll to it when needed. */
 #missions{margin-top:12px!important}
-/* Evolution path exactly as the reference composition. */
 .evolution-grid{display:grid!important;grid-template-columns:repeat(8,minmax(0,1fr))!important;gap:12px!important;overflow:visible!important}
 .evolution-card{height:205px!important;position:relative!important;overflow:visible!important;border:1px solid #294052!important;border-radius:8px!important;background:#08131c!important}
 .evolution-card.unlocked{border-color:#8b3bff!important;box-shadow:0 0 15px rgba(139,59,255,.45)!important}
@@ -105,7 +103,6 @@ main{padding-top:10px!important}.panel{border-color:#1c3445!important;border-rad
 .evolution-card.locked:before{content:"🔒"!important;position:absolute!important;right:8px!important;top:8px!important;z-index:10!important;width:23px!important;height:23px!important;display:grid!important;place-items:center!important;border-radius:50%!important;background:rgba(255,255,255,.88)!important;color:#23303a!important;font-size:12px!important}
 .evolution-card:not(:last-child):after{content:"›"!important;position:absolute!important;right:-11px!important;top:78px!important;z-index:20!important;color:#fff!important;font-size:28px!important;font-weight:900!important;text-shadow:0 2px 7px #000!important}
 .evolution-name{left:7px!important;right:7px!important;bottom:6px!important;font-size:9px!important;line-height:1.08!important;text-shadow:0 2px 5px #000!important}.evolution-name span{font-size:9px!important}.evolution-name b{font-size:12px!important}.evolution-name small{font-size:9px!important;color:#fff!important}
-/* Creator stays part of first-login flow and visually matches the site. */
 #creatorModal .modal-box{width:min(620px,96%)!important;background:#061019!important;border-color:#294052!important}#creatorModal h2{margin-top:0!important}.creator-preview{height:330px!important;background:#03090d!important;border-color:#294052!important}.creator-preview img{width:100%!important;height:100%!important;object-fit:cover!important;object-position:center 22%!important;animation:none!important}.choice{background:#0b1721!important;border-color:#2a4050!important}.choice.selected{background:#24113d!important;border-color:#9a45ff!important;box-shadow:0 0 12px rgba(143,63,255,.35)!important}
 @media(max-width:1050px){.dashboard,.two-cols{grid-template-columns:1fr!important}.evolution-grid{grid-template-columns:repeat(4,1fr)!important}.evolution-card{height:220px!important}.character-holder{left:34%!important}}
 @media(max-width:680px){.wrapper{width:96%!important}.evolution-grid{grid-template-columns:repeat(2,1fr)!important}.evolution-card{height:220px!important}.next-evolution{width:175px!important}.hero{min-height:500px!important}.character-holder{left:25%!important}.header-right .coin-pill{display:none!important}}
