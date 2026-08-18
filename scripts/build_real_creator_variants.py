@@ -9,186 +9,154 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 base = cv2.imread(str(SOURCE), cv2.IMREAD_COLOR)
 if base is None:
-    raise SystemExit('Missing validated 01-debutant.webp source artwork')
+    raise SystemExit('Missing 01-debutant.webp')
 
 h, w = base.shape[:2]
 hsv = cv2.cvtColor(base, cv2.COLOR_BGR2HSV)
 H, S, V = cv2.split(hsv)
-yy, xx = np.mgrid[0:h, 0:w]
 
-# IMPORTANT: the previous broad head rectangle included dark wall/background
-# pixels. When transformed as hair it produced the large square visible in the
-# creator. The mask below is intentionally tiny and elliptical around the real
-# hair only, so no background or torso pixel can ever become part of a style.
-cx, cy = w * .585, h * .105
-rx, ry = w * .085, h * .095
-hair_zone = (((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2) <= 1.0
-hair_zone &= yy < h * .205
-hair_candidate = hair_zone & (V < 125) & (S > 8)
-raw = (hair_candidate.astype(np.uint8) * 255)
+# IMPORTANT: the hair mask is a tight polygon entirely ABOVE the face.
+# No ellipse, rectangle, skin overlay or browser-side transformation is used.
+# Coordinates are relative so the same logic works if the artwork resolution changes.
+poly = np.array([
+    [int(w*.535), int(h*.045)],
+    [int(w*.565), int(h*.018)],
+    [int(w*.600), int(h*.020)],
+    [int(w*.625), int(h*.050)],
+    [int(w*.632), int(h*.082)],
+    [int(w*.620), int(h*.115)],
+    [int(w*.598), int(h*.128)],
+    [int(w*.570), int(h*.120)],
+    [int(w*.545), int(h*.098)],
+    [int(w*.530), int(h*.070)],
+], np.int32)
+zone = np.zeros((h,w), np.uint8)
+cv2.fillPoly(zone, [poly], 255)
+# Keep dark textured pixels only inside the polygon. This excludes forehead/eyes/skin.
+hair_candidate = ((V < 145) & (S > 8)).astype(np.uint8) * 255
+hair_mask = cv2.bitwise_and(zone, hair_candidate)
+hair_mask = cv2.morphologyEx(hair_mask, cv2.MORPH_CLOSE, np.ones((3,3),np.uint8), iterations=1)
+hair_mask = cv2.morphologyEx(hair_mask, cv2.MORPH_OPEN, np.ones((2,2),np.uint8), iterations=1)
+hair_mask = cv2.GaussianBlur(hair_mask, (3,3), 0)
+if cv2.countNonZero(hair_mask) < 20:
+    raise SystemExit('Hair mask too small: refusing to publish')
 
-# Keep only connected components that live in the upper central hair zone.
-num, labels, stats, cents = cv2.connectedComponentsWithStats(raw, 8)
-mask = np.zeros_like(raw)
-for i in range(1, num):
-    area = stats[i, cv2.CC_STAT_AREA]
-    ccx, ccy = cents[i]
-    if area < 8:
-        continue
-    if abs(ccx - cx) <= rx * .95 and abs(ccy - cy) <= ry * .95:
-        mask[labels == i] = 255
-
-# Intersect again with the ellipse after morphology: hard guarantee that the
-# mask cannot grow into the background.
-mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8), iterations=1)
-mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((2, 2), np.uint8), iterations=1)
-mask[~hair_zone] = 0
-hair_mask = cv2.GaussianBlur(mask, (3, 3), 0)
-
-if cv2.countNonZero(hair_mask) < 30:
-    raise SystemExit('Hair mask unexpectedly small; aborting rather than publishing broken assets')
-
-# Skin recolouring is likewise restricted to plausible anatomy regions.
-skin_candidate = (H < 28) & (S > 28) & (S < 220) & (V > 42)
-face = (xx > w * .46) & (xx < w * .66) & (yy > h * .09) & (yy < h * .31)
-left_arm = (xx > w * .29) & (xx < w * .47) & (yy > h * .27) & (yy < h * .64)
-right_arm = (xx > w * .57) & (xx < w * .78) & (yy > h * .27) & (yy < h * .66)
-legs = (xx > w * .32) & (xx < w * .70) & (yy > h * .57) & (yy < h * .92)
-skin_mask = (skin_candidate & (face | left_arm | right_arm | legs)).astype(np.uint8) * 255
-skin_mask = cv2.morphologyEx(skin_mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
-skin_mask = cv2.GaussianBlur(skin_mask, (5, 5), 0)
+# Skin recolouring is restricted to plausible skin pixels and anatomy regions only.
+# It never paints a geometric shape: only already-skin-coloured source pixels are tinted.
+skin_candidate = (H < 28) & (S > 35) & (S < 230) & (V > 45)
+region = np.zeros((h,w), np.uint8)
+cv2.rectangle(region, (int(w*.535),int(h*.115)), (int(w*.635),int(h*.305)), 255, -1) # face/neck
+cv2.rectangle(region, (int(w*.375),int(h*.285)), (int(w*.705),int(h*.650)), 255, -1) # hands/arms
+cv2.rectangle(region, (int(w*.400),int(h*.555)), (int(w*.690),int(h*.925)), 255, -1) # exposed legs
+skin_mask = ((skin_candidate.astype(np.uint8)*255) & region)
+skin_mask = cv2.morphologyEx(skin_mask, cv2.MORPH_OPEN, np.ones((3,3),np.uint8), iterations=1)
+skin_mask = cv2.GaussianBlur(skin_mask, (5,5), 0)
 
 SKINS = {
-    'light': (218, 171, 137),
-    'warm': (190, 128, 82),
-    'medium': (150, 97, 60),
-    'deep': (105, 66, 39),
-    'dark': (62, 38, 25),
+    'light': (218,171,137),
+    'warm': (190,128,82),
+    'medium': (150,97,60),
+    'deep': (105,66,39),
+    'dark': (62,38,25),
 }
 HAIRS = {
-    'black': (22, 18, 18),
-    'brown': (58, 38, 28),
-    'blond': (186, 144, 82),
-    'red': (126, 55, 30),
-    'purple': (78, 42, 108),
+    'black': (22,18,18),
+    'brown': (58,38,28),
+    'blond': (186,144,82),
+    'red': (126,55,30),
+    'purple': (78,42,108),
 }
-STYLES = ['male_textured', 'male_short', 'male_medium', 'male_undercut', 'male_slick']
+STYLES = ['male_textured','male_short','male_medium','male_undercut','male_slick']
 
 
-def tint_preserve_luma(src_bgr, alpha_mask, rgb, strength=1.0):
-    src = src_bgr.astype(np.float32)
-    target = np.array([rgb[2], rgb[1], rgb[0]], dtype=np.float32)
-    gray = cv2.cvtColor(src_bgr, cv2.COLOR_BGR2GRAY).astype(np.float32)
-    lum = np.clip(gray / 118.0, .40, 1.60)[..., None]
-    coloured = np.clip(target[None, None, :] * lum, 0, 255)
-    a = (alpha_mask.astype(np.float32) / 255.0 * strength)[..., None]
-    return np.clip(src * (1 - a) + coloured * a, 0, 255).astype(np.uint8)
+def tint_preserve_luma(src, mask, rgb, strength):
+    srcf = src.astype(np.float32)
+    gray = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY).astype(np.float32)
+    target = np.array([rgb[2],rgb[1],rgb[0]], np.float32)
+    lum = np.clip(gray / 105.0, .38, 1.65)[...,None]
+    coloured = np.clip(target[None,None,:] * lum, 0, 255)
+    a = (mask.astype(np.float32)/255.0*strength)[...,None]
+    return np.clip(srcf*(1-a)+coloured*a,0,255).astype(np.uint8)
+
+ys,xs = np.where(hair_mask > 18)
+if len(xs) == 0:
+    raise SystemExit('Empty hair mask')
+pad = max(2, int(w*.003))
+x0,x1 = max(0,xs.min()-pad), min(w-1,xs.max()+pad)
+y0,y1 = max(0,ys.min()-pad), min(h-1,ys.max()+pad)
+base_patch = base[y0:y1+1,x0:x1+1].copy()
+base_alpha = hair_mask[y0:y1+1,x0:x1+1].copy()
+center_x = (x0+x1)//2
+
+# Remove ONLY original hair pixels. The face is below the polygon and cannot be touched.
+inpaint_mask = cv2.dilate((hair_mask>18).astype(np.uint8)*255, np.ones((3,3),np.uint8), iterations=1)
+inpaint_mask[zone==0] = 0
 
 
-def bbox_from_mask(alpha_mask):
-    ys, xs = np.where(alpha_mask > 24)
-    if len(xs) == 0:
-        raise SystemExit('Empty hair mask')
-    pad = 2
-    return max(0, xs.min()-pad), min(w-1, xs.max()+pad), max(0, ys.min()-pad), min(h-1, ys.max()+pad)
-
-
-x0, x1, y0, y1 = bbox_from_mask(hair_mask)
-base_patch = base[y0:y1+1, x0:x1+1].copy()
-base_alpha = hair_mask[y0:y1+1, x0:x1+1].copy()
-
-
-def safe_resize(patch, alpha, sx, sy):
-    nw = max(3, int(round(patch.shape[1] * sx)))
-    nh = max(3, int(round(patch.shape[0] * sy)))
-    p = cv2.resize(patch, (nw, nh), interpolation=cv2.INTER_CUBIC)
-    a = cv2.resize(alpha, (nw, nh), interpolation=cv2.INTER_CUBIC)
-    return p, a
-
-
-def build_style(style, hair_rgb):
-    patch = tint_preserve_luma(base_patch, base_alpha, hair_rgb, .96)
+def build_hair(style, hair_rgb):
+    patch = tint_preserve_luma(base_patch, base_alpha, hair_rgb, .98)
     alpha = base_alpha.copy()
-    ph, pw = alpha.shape
-
-    sx = sy = 1.0
-    shear = 0.0
-    side_trim = 0.0
-    y_shift = 0
-
+    ph,pw = alpha.shape
+    sx=sy=1.0; dx=dy=0; shear=0.0
     if style == 'male_short':
-        sy = .72
-        y_shift = int(ph * .23)
+        sx,sy = .88,.62; dy=int(ph*.30)
     elif style == 'male_medium':
-        sx, sy = 1.08, 1.14
-        y_shift = -int(ph * .04)
+        sx,sy = 1.18,1.30; dy=-int(ph*.12)
     elif style == 'male_undercut':
-        sx, sy = .94, .93
-        side_trim = .15
-        y_shift = int(ph * .03)
+        sx,sy = .94,.78; dy=int(ph*.16)
     elif style == 'male_slick':
-        sx, sy = 1.03, .92
-        shear = .16
-        y_shift = int(ph * .02)
+        sx,sy = 1.12,.74; dx=int(pw*.14); dy=int(ph*.18); shear=.24
 
-    patch, alpha = safe_resize(patch, alpha, sx, sy)
-    ah, aw = alpha.shape
+    nw,nh = max(4,int(pw*sx)), max(4,int(ph*sy))
+    patch = cv2.resize(patch,(nw,nh),interpolation=cv2.INTER_CUBIC)
+    alpha = cv2.resize(alpha,(nw,nh),interpolation=cv2.INTER_CUBIC)
 
-    if side_trim:
-        for row in range(ah):
-            t = row / max(1, ah-1)
-            cut = int(aw * side_trim * t)
+    if style == 'male_undercut':
+        ah,aw=alpha.shape
+        for r in range(ah):
+            t=r/max(1,ah-1)
+            cut=int(aw*.24*t)
             if cut:
-                alpha[row, :cut] = 0
-                alpha[row, aw-cut:] = 0
-
+                alpha[r,:cut]=0; alpha[r,aw-cut:]=0
     if shear:
-        M = np.float32([[1, shear, -aw * shear * .45], [0, 1, 0]])
-        patch = cv2.warpAffine(patch, M, (aw, ah), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT)
-        alpha = cv2.warpAffine(alpha, M, (aw, ah), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+        M=np.float32([[1,shear,-nw*.10],[0,1,0]])
+        patch=cv2.warpAffine(patch,M,(nw,nh),flags=cv2.INTER_CUBIC,borderMode=cv2.BORDER_REFLECT)
+        alpha=cv2.warpAffine(alpha,M,(nw,nh),flags=cv2.INTER_CUBIC,borderMode=cv2.BORDER_CONSTANT,borderValue=0)
 
-    alpha = cv2.GaussianBlur(alpha, (3,3), 0)
-
-    layer = np.zeros_like(base)
-    layer_a = np.zeros((h,w), np.uint8)
-    center_x = int(round((x0+x1)/2))
-    left = center_x - aw//2
-    top = y0 + y_shift
-    right, bottom = left + aw, top + ah
-
-    # Clamp placement safely to image bounds.
-    sx0, sy0 = max(0,-left), max(0,-top)
-    sx1, sy1 = aw-max(0,right-w), ah-max(0,bottom-h)
-    dx0, dy0 = max(0,left), max(0,top)
-    dx1, dy1 = min(w,right), min(h,bottom)
-    if dx1 > dx0 and dy1 > dy0:
-        layer[dy0:dy1,dx0:dx1] = patch[sy0:sy1,sx0:sx1]
-        layer_a[dy0:dy1,dx0:dx1] = alpha[sy0:sy1,sx0:sx1]
-
-    # Absolute safety crop: no generated hairstyle alpha is allowed outside a
-    # small ellipse around the head. This permanently prevents square artefacts.
-    style_zone = (((xx-cx)/(rx*1.22))**2 + ((yy-(cy+.01*h))/(ry*1.20))**2) <= 1.0
-    layer_a[~style_zone] = 0
-    return layer, layer_a
+    alpha=cv2.GaussianBlur(alpha,(3,3),0)
+    return patch,alpha,dx,dy
 
 
-# Remove only the original real hair, never a rectangular region.
-inpaint_mask = cv2.dilate((hair_mask > 20).astype(np.uint8)*255, np.ones((3,3),np.uint8), iterations=1)
-inpaint_mask[~hair_zone] = 0
-hairless = cv2.inpaint(base, inpaint_mask, 2, cv2.INPAINT_TELEA)
+def composite_variant(skin_rgb, hair_rgb, style):
+    skinned=tint_preserve_luma(base,skin_mask,skin_rgb,.80)
+    clean=cv2.inpaint(skinned,inpaint_mask,3,cv2.INPAINT_TELEA)
+    patch,alpha,dx,dy=build_hair(style,hair_rgb)
+    ah,aw=alpha.shape
+    left=int(center_x-aw/2+dx); top=int(y0+dy)
+    right,bottom=left+aw,top+ah
+    sx0,sy0=max(0,-left),max(0,-top)
+    sx1,sy1=aw-max(0,right-w),ah-max(0,bottom-h)
+    dx0,dy0=max(0,left),max(0,top)
+    dx1,dy1=min(w,right),min(h,bottom)
+    if dx1>dx0 and dy1>dy0:
+        a=(alpha[sy0:sy1,sx0:sx1].astype(np.float32)/255.0)[...,None]
+        roi=clean[dy0:dy1,dx0:dx1].astype(np.float32)
+        pp=patch[sy0:sy1,sx0:sx1].astype(np.float32)
+        clean[dy0:dy1,dx0:dx1]=np.clip(roi*(1-a)+pp*a,0,255).astype(np.uint8)
+    return clean
 
-for skin_name, skin_rgb in SKINS.items():
-    skinned = tint_preserve_luma(base, skin_mask, skin_rgb, .82)
-    rm = (inpaint_mask.astype(np.float32)/255.0)[...,None]
-    clean = np.clip(skinned.astype(np.float32)*(1-rm) + hairless.astype(np.float32)*rm,0,255).astype(np.uint8)
-
-    for hair_name, hair_rgb in HAIRS.items():
+count=0
+for skin_name,skin_rgb in SKINS.items():
+    for hair_name,hair_rgb in HAIRS.items():
+        outdir=OUT/skin_name/hair_name
+        outdir.mkdir(parents=True,exist_ok=True)
         for style in STYLES:
-            layer, a8 = build_style(style, hair_rgb)
-            a = (a8.astype(np.float32)/255.0)[...,None]
-            comp = np.clip(clean.astype(np.float32)*(1-a) + layer.astype(np.float32)*a,0,255).astype(np.uint8)
-            outdir = OUT / skin_name / hair_name
-            outdir.mkdir(parents=True, exist_ok=True)
-            cv2.imwrite(str(outdir / f'{style}.webp'), comp, [cv2.IMWRITE_WEBP_QUALITY, 94])
+            out=composite_variant(skin_rgb,hair_rgb,style)
+            path=outdir/f'{style}.webp'
+            if not cv2.imwrite(str(path),out,[cv2.IMWRITE_WEBP_QUALITY,92]):
+                raise SystemExit(f'Failed writing {path}')
+            count+=1
 
-print('Generated', len(SKINS)*len(HAIRS)*len(STYLES), 'safe full-image male creator variants')
+if count != 125:
+    raise SystemExit(f'Expected 125 presets, got {count}')
+print(f'Generated {count} complete male preset images without face overlays')
