@@ -1,13 +1,9 @@
 name: Creator preset build
 
+# Female preset generation is deliberately manual-only until visual QA passes.
+# This prevents technically valid but visually bad hair masks from being
+# published automatically to the production branch.
 on:
-  push:
-    paths:
-      - 'scripts/final_site_cleanup.py'
-      - 'scripts/build_female_creator_variants.py'
-      - 'assets/source/female_base.webp.b64'
-      - 'assets/source/female_base.webp.b64.part2'
-      - '.github/workflows/build-real-creator.yml'
   workflow_dispatch:
 
 permissions:
@@ -74,19 +70,17 @@ jobs:
           assert a.shape==b.shape==c.shape
           assert cv2.absdiff(a,b).mean()>0.35,'female hair styles are not visually distinct'
           assert cv2.absdiff(a,c).mean()>0.35,'female skin/hair presets are not visually distinct'
-          print('250 creator assets validated')
+          print('250 creator assets structurally validated; visual review still required before production publish')
           PY
 
-      - name: Publish generated presets and routing
+      - name: Prepare generated presets for review
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html assets/creator/female assets/source/female_base.webp
-          if git diff --cached --quiet; then
-            echo 'No creator changes to publish'
-            exit 0
-          fi
-          git commit -m 'Publish complete male and female avatar presets'
-          git push
+          mkdir -p creator-review
+          cp assets/creator/female/medium/brown/female_long.webp creator-review/
+          cp assets/creator/female/medium/brown/female_wavy.webp creator-review/
+          cp assets/creator/female/medium/brown/female_bob.webp creator-review/
+          cp assets/creator/female/medium/brown/female_ponytail.webp creator-review/
+          cp assets/creator/female/medium/brown/female_short.webp creator-review/
+          echo 'Generated presets intentionally not committed automatically. Visual QA required.'
