@@ -5,8 +5,11 @@ on:
     paths:
       - 'index.html'
       - 'assets/creator/**'
+      - 'assets/creator_sources/**'
       - 'scripts/validate_creator_library.py'
       - '.github/workflows/**'
+      - 'wrangler.jsonc'
+      - '.assetsignore'
   workflow_dispatch:
 
 permissions:
@@ -21,13 +24,34 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install --quiet 'numpy<3' opencv-python-headless
-      - name: Validate all 250 pre-rendered creator assets
+      - name: Validate all 250 pre-rendered creator assets and UI routing
         run: python scripts/validate_creator_library.py
-      - name: Reject legacy workflows that can rewrite creator routing
+      - name: Reject workflows that can rewrite production creator routing
         shell: bash
         run: |
           set -euo pipefail
+          # Old patchers must never be executed by a workflow again.
           ! grep -R --line-number --fixed-strings 'patch_riselooter.py' .github/workflows
-          ! grep -R --line-number -E 'git add .*index\.html|git add index\.html' .github/workflows/fix-riselooter-assets.yml
-          ! grep -R --line-number -E 'python(3)? scripts/final_site_cleanup\.py' .github/workflows/fix-riselooter-assets.yml
+          ! grep -R --line-number -E 'python(3)? scripts/(activate_real_creator|apply_creator_interface|enable_creator_test|final_site_cleanup|remove_creator_overlays)\.py' .github/workflows
+
+          # No workflow is allowed to stage index.html for an automated commit.
+          ! grep -R --line-number -E 'git add([^\n]*[[:space:]])?index\.html|git add[^\n]*\.html' .github/workflows
+
+          # The legacy evolution workflow explicitly proves index.html stayed untouched.
           grep -q 'git diff --exit-code -- index.html' .github/workflows/fix-riselooter-assets.yml
+          grep -q 'test "$(git status --short index.html | wc -l)" -eq 0' .github/workflows/fix-riselooter-assets.yml
+
+      - name: Validate Cloudflare static-asset configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '"name": "loot-up"' wrangler.jsonc
+          grep -q '"directory": "./"' wrangler.jsonc
+          grep -q '"not_found_handling": "single-page-application"' wrangler.jsonc
+          test -s .assetsignore
+          grep -q '^\.git/$' .assetsignore
+          grep -q '^\.github/$' .assetsignore
+          grep -q '^scripts/$' .assetsignore
+          test -s index.html
+          test "$(find assets/creator/male -type f -name '*.webp' | wc -l)" -eq 125
+          test "$(find assets/creator/female -type f -name '*.webp' | wc -l)" -eq 125
