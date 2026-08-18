@@ -1,9 +1,11 @@
-name: Creator preset routing
+name: Creator preset build
 
 on:
   push:
     paths:
       - 'scripts/final_site_cleanup.py'
+      - 'scripts/build_female_creator_variants.py'
+      - 'assets/source/female_base.webp.b64'
       - '.github/workflows/build-real-creator.yml'
   workflow_dispatch:
 
@@ -28,28 +30,62 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Enable complete-image avatar presets
+      - name: Install deterministic image dependencies
+        run: python -m pip install --quiet 'numpy<3' opencv-python-headless
+
+      - name: Generate 125 female full-image presets
+        run: python scripts/build_female_creator_variants.py
+
+      - name: Enable direct full-image preset routing
         run: python scripts/final_site_cleanup.py
 
-      - name: Verify preset routing
+      - name: Validate creator library and routing
         shell: bash
         run: |
           set -euo pipefail
+          test "$(find assets/creator/male -type f -name '*.webp' | wc -l)" -eq 125
+          test "$(find assets/creator/female -type f -name '*.webp' | wc -l)" -eq 125
+          for f in \
+            assets/creator/male/medium/brown/male_textured.webp \
+            assets/creator/male/light/blond/male_short.webp \
+            assets/creator/female/medium/brown/female_long.webp \
+            assets/creator/female/light/blond/female_bob.webp \
+            assets/creator/female/dark/black/female_short.webp; do test -s "$f"; done
           grep -q 'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=presets29' index.html
           grep -q 'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp?v=presets29' index.html
-          grep -q 'creator-skin-overlay' index.html
+          grep -q '#creatorModal .creator-skin-overlay' index.html
           grep -q 'display:none!important' index.html
+          python - <<'PY'
+          from pathlib import Path
+          import cv2
+          roots=[Path('assets/creator/male'),Path('assets/creator/female')]
+          for root in roots:
+              files=list(root.rglob('*.webp'))
+              assert len(files)==125,(root,len(files))
+              for f in files:
+                  im=cv2.imread(str(f))
+                  assert im is not None and im.size>0,f
+                  assert im.std()>12,f'near blank: {f}'
+          # Ensure female presets are real distinct full files, not aliases.
+          a=cv2.imread('assets/creator/female/medium/brown/female_long.webp')
+          b=cv2.imread('assets/creator/female/medium/brown/female_short.webp')
+          c=cv2.imread('assets/creator/female/light/blond/female_long.webp')
+          assert a.shape==b.shape==c.shape
+          assert cv2.absdiff(a,b).mean()>0.35,'female hair styles are not visually distinct'
+          assert cv2.absdiff(a,c).mean()>0.35,'female skin/hair presets are not visually distinct'
+          print('250 creator assets validated')
+          PY
 
-      - name: Publish creator routing patch when needed
+      - name: Publish generated presets and routing
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html
+          git add index.html assets/creator/female assets/source/female_base.webp
           if git diff --cached --quiet; then
-            echo 'No creator routing changes to publish'
+            echo 'No creator changes to publish'
             exit 0
           fi
-          git commit -m 'Enable full-image avatar preset routing'
+          git commit -m 'Publish complete male and female avatar presets'
           git push
