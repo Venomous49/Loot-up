@@ -1,13 +1,11 @@
-name: Build clean creator variants
+name: Creator safety build
 
 on:
   push:
     paths:
-      - 'scripts/build_real_creator_variants.py'
-      - 'scripts/activate_real_creator.py'
       - 'scripts/final_site_cleanup.py'
       - '.github/workflows/build-real-creator.yml'
-      - '01-debutant.webp'
+      - 'index.html'
   workflow_dispatch:
 
 permissions:
@@ -18,10 +16,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  safety:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout exact main revision
+      - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
@@ -31,61 +29,28 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install deterministic image dependencies
-        run: python -m pip install --quiet 'numpy<3' opencv-python-headless
-
-      - name: Generate clean image variants from validated full artwork
-        run: python scripts/build_real_creator_variants.py
-
-      - name: Patch creator to use generated files
-        run: python scripts/activate_real_creator.py
-
-      - name: Apply final site cleanup
+      - name: Apply safe complete-image creator mode
         run: python scripts/final_site_cleanup.py
 
-      - name: Sanity checks
+      - name: Verify no synthetic creator overlays are active
         shell: bash
         run: |
           set -euo pipefail
-          test -f assets/creator/male/medium/brown/male_textured.webp
-          test -f assets/creator/male/light/blond/male_short.webp
-          test -f assets/creator/male/dark/black/male_slick.webp
-          COUNT=$(find assets/creator/male -type f -name '*.webp' | wc -l)
-          echo "Generated $COUNT creator assets"
-          test "$COUNT" -eq 125
-          grep -q 'RISELOOTER_REAL_CREATOR_V23' index.html
-          grep -q 'RISELOOTER_FINAL_CLEAN_V25' index.html
-          grep -q 'assets/creator/male/' index.html
-          grep -q 'data-nav="missions"' index.html
-          grep -q 'data-nav="challenges"' index.html
-          grep -q 'data-nav="leaderboard"' index.html
-          grep -q 'data-nav="referral"' index.html
-          grep -q '#shop,#inventory,#dailyChest' index.html
-          python - <<'PY'
-          from pathlib import Path
-          import cv2
-          files=list(Path('assets/creator/male').rglob('*.webp'))
-          assert len(files)==125
-          for f in [
-              Path('assets/creator/male/medium/brown/male_textured.webp'),
-              Path('assets/creator/male/medium/blond/male_medium.webp'),
-              Path('assets/creator/male/dark/black/male_slick.webp')]:
-              im=cv2.imread(str(f))
-              assert im is not None and im.size > 0, f
-              assert im.std() > 15, f'near-blank asset: {f}'
-          print('Image smoke tests passed')
-          PY
+          grep -q 'cleanbase28' index.html
+          grep -q 'creator-skin-overlay' index.html
+          grep -q 'display:none!important' index.html
+          grep -q '01-debutant.webp?v=cleanbase28' index.html
 
-      - name: Commit final creator assets and integration
+      - name: Publish safety patch when needed
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html assets/creator/male
+          git add index.html
           if git diff --cached --quiet; then
-            echo 'No creator changes to publish'
+            echo 'No safety changes to publish'
             exit 0
           fi
-          git commit -m 'Publish clean character creator assets'
+          git commit -m 'Use clean complete-image creator fallback'
           git push
