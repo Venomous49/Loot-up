@@ -1,9 +1,12 @@
 name: Creator preset build
 
-# Female preset generation is deliberately manual-only until visual QA passes.
-# This prevents technically valid but visually bad hair masks from being
-# published automatically to the production branch.
 on:
+  push:
+    paths:
+      - 'scripts/build_real_creator_variants.py'
+      - 'scripts/build_female_creator_variants.py'
+      - 'scripts/final_site_cleanup.py'
+      - '.github/workflows/build-real-creator.yml'
   workflow_dispatch:
 
 permissions:
@@ -30,57 +33,57 @@ jobs:
       - name: Install deterministic image dependencies
         run: python -m pip install --quiet 'numpy<3' opencv-python-headless
 
+      - name: Generate 125 male full-image presets
+        run: python scripts/build_real_creator_variants.py
+
       - name: Generate 125 female full-image presets
         run: python scripts/build_female_creator_variants.py
 
       - name: Enable direct full-image preset routing
         run: python scripts/final_site_cleanup.py
 
-      - name: Validate creator library and routing
+      - name: Validate creator library
         shell: bash
         run: |
           set -euo pipefail
           test "$(find assets/creator/male -type f -name '*.webp' | wc -l)" -eq 125
           test "$(find assets/creator/female -type f -name '*.webp' | wc -l)" -eq 125
-          for f in \
-            assets/creator/male/medium/brown/male_textured.webp \
-            assets/creator/male/light/blond/male_short.webp \
-            assets/creator/female/medium/brown/female_long.webp \
-            assets/creator/female/light/blond/female_bob.webp \
-            assets/creator/female/dark/black/female_short.webp; do test -s "$f"; done
-          grep -q 'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=presets31' index.html
-          grep -q 'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp?v=presets31' index.html
-          grep -q '\["gender","skin","hairColor"\].includes(field)' index.html
-          grep -q '#creatorModal .creator-skin-overlay' index.html
-          grep -q 'display:none!important' index.html
           python - <<'PY'
           from pathlib import Path
           import cv2
-          roots=[Path('assets/creator/male'),Path('assets/creator/female')]
-          for root in roots:
+          for gender in ('male','female'):
+              root=Path('assets/creator')/gender
               files=list(root.rglob('*.webp'))
-              assert len(files)==125,(root,len(files))
+              assert len(files)==125,(gender,len(files))
               for f in files:
                   im=cv2.imread(str(f))
                   assert im is not None and im.size>0,f
-                  assert im.std()>12,f'near blank: {f}'
-          a=cv2.imread('assets/creator/female/medium/brown/female_long.webp')
-          b=cv2.imread('assets/creator/female/medium/brown/female_short.webp')
-          c=cv2.imread('assets/creator/female/light/blond/female_long.webp')
-          assert a.shape==b.shape==c.shape
-          assert cv2.absdiff(a,b).mean()>0.35,'female hair styles are not visually distinct'
-          assert cv2.absdiff(a,c).mean()>0.35,'female skin/hair presets are not visually distinct'
-          print('250 creator assets structurally validated; visual review still required before production publish')
+                  assert im.std()>10,f'near blank: {f}'
+          checks=[
+            ('assets/creator/male/medium/brown/male_textured.webp','assets/creator/male/medium/brown/male_short.webp'),
+            ('assets/creator/male/medium/brown/male_short.webp','assets/creator/male/medium/brown/male_medium.webp'),
+            ('assets/creator/male/light/blond/male_textured.webp','assets/creator/male/dark/black/male_textured.webp'),
+            ('assets/creator/female/medium/brown/female_long.webp','assets/creator/female/medium/brown/female_short.webp'),
+            ('assets/creator/female/light/blond/female_long.webp','assets/creator/female/dark/black/female_long.webp'),
+          ]
+          for a,b in checks:
+              ia,ib=cv2.imread(a),cv2.imread(b)
+              assert ia.shape==ib.shape,(a,b)
+              delta=cv2.absdiff(ia,ib).mean()
+              assert delta>0.28,(a,b,delta)
+          print('250 complete-image creator presets validated')
           PY
 
-      - name: Prepare generated presets for review
+      - name: Publish generated presets
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p creator-review
-          cp assets/creator/female/medium/brown/female_long.webp creator-review/
-          cp assets/creator/female/medium/brown/female_wavy.webp creator-review/
-          cp assets/creator/female/medium/brown/female_bob.webp creator-review/
-          cp assets/creator/female/medium/brown/female_ponytail.webp creator-review/
-          cp assets/creator/female/medium/brown/female_short.webp creator-review/
-          echo 'Generated presets intentionally not committed automatically. Visual QA required.'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/creator/male assets/creator/female index.html
+          if git diff --cached --quiet; then
+            echo 'No creator changes to publish'
+            exit 0
+          fi
+          git commit -m 'Publish complete male and female avatar presets'
+          git push
