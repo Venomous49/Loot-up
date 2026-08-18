@@ -1,0 +1,25 @@
+name: Validate creator library
+
+on:
+  push:
+    paths:
+      - 'index.html'
+      - 'assets/creator/**'
+      - 'scripts/validate_creator_library.py'
+      - '.github/workflows/validate-creator.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --quiet 'numpy<3' opencv-python-headless
+      - name: Validate all 250 pre-rendered creator assets
+        run: python scripts/validate_creator_library.py
