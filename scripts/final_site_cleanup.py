@@ -16,15 +16,27 @@ asset_fn = r'''function assetPath(profile,stage){
 }'''
 s = re.sub(r'function assetPath\(profile,stage\)\{.*?\n\}', asset_fn, s, count=1, flags=re.S)
 
-creator_fn = r'''function creatorAssetPath(){
+# Remove every existing creator asset/fallback helper before re-inserting one
+# canonical pair. This keeps repeated workflow runs idempotent and prevents
+# duplicate creatorFallbackPath definitions from accumulating in index.html.
+s = re.sub(r'\n?function creatorAssetPath\(\)\{.*?\n\}', '', s, flags=re.S)
+s = re.sub(r'\n?function creatorFallbackPath\(gender=avatarDraft\.gender\)\{.*?\n\}', '', s, flags=re.S)
+
+creator_helpers = r'''
+function creatorAssetPath(){
   return `assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=presets31`;
 }
 
 function creatorFallbackPath(gender=avatarDraft.gender){
   const style = gender === "female" ? "female_long" : "male_textured";
   return `assets/creator/${gender}/medium/brown/${style}.webp?v=presets31`;
-}'''
-s = re.sub(r'function creatorAssetPath\(\)\{.*?\n\}', creator_fn, s, count=1, flags=re.S)
+}
+'''
+anchor = 'function fallbackAssetPath(stage){'
+pos = s.find(anchor)
+if pos == -1:
+    raise SystemExit('fallbackAssetPath anchor not found')
+s = s[:pos] + creator_helpers + '\n' + s[pos:]
 
 character_fn = r'''function characterHTML(profile,stage){
 const preferred=assetPath(profile,stage);
@@ -104,4 +116,4 @@ else:
     s = s[:pos] + '\n' + css + '\n' + s[pos:]
 
 p.write_text(s, encoding='utf-8')
-print('Creator preset routing, thumbnail refresh and fallbacks enabled')
+print('Creator preset routing, thumbnail refresh and fallbacks enabled idempotently')
