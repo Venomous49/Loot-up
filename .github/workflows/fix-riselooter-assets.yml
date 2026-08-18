@@ -15,6 +15,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install image tools
+        run: python3 -m pip install --quiet opencv-python-headless numpy
+
       - name: Copy character assets to repository root
         run: |
           cp assets/characters/male/medium/brown/male_textured/01-debutant.webp ./01-debutant.webp
@@ -25,6 +28,9 @@ jobs:
           cp assets/characters/male/medium/brown/male_textured/30-elite.webp ./30-elite.webp
           cp assets/characters/male/medium/brown/male_textured/40-cyber-looter.webp ./40-cyber-looter.webp
           cp assets/characters/male/medium/brown/male_textured/50-rise-looter.webp ./50-rise-looter.webp
+
+      - name: Build real silhouette previews
+        run: python3 .github/scripts/build_silhouettes.py
 
       - name: Patch index
         run: python3 .github/scripts/patch_riselooter.py
@@ -37,6 +43,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html *.webp
-          git commit -m "Restore static character assets at repository root"
+          git add index.html *.webp silhouettes/*.png
+          git commit -m "Render real evolution silhouettes"
           git push
