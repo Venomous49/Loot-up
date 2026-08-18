@@ -2316,7 +2316,7 @@ return "01-debutant.webp";
 }
 
 function silhouettePath(stage){
-return `silhouettes/${stages[stage].slug}.png`;
+return `sil-${stages[stage].slug}.png`;
 }
 
 function outfitOverlayPath(slug){
@@ -2567,7 +2567,7 @@ $("evolutionGrid").innerHTML = stages.map((stage,i) => {
   const unlocked = level >= stage.level;
   const visual = unlocked
     ? `<img class="evolution-real" src="${assetPath(profile,i)}" alt="${stage.name}" onerror="this.style.display='none'">`
-    : `<img class="evolution-silhouette" src="${silhouettePath(i)}" alt="Silhouette ${stage.name}" onerror="this.style.display='none'">`;
+    : `<img class="evolution-silhouette" src="${silhouettePath(i)}" alt="" onerror="this.style.display='none'">`;
 
   return `
   <div class="evolution-card ${unlocked ? "unlocked" : "locked"}">
@@ -2753,7 +2753,7 @@ required - (profile.xp || 0)
 " XP avant d'évoluer.";
 
 $("nextEvolutionShadow").innerHTML = `
-<img class="next-silhouette" src="${silhouettePath(idx + 1)}" alt="Silhouette prochaine évolution" onerror="this.style.display='none'">
+<img class="next-silhouette" src="${silhouettePath(idx + 1)}" alt="" onerror="this.style.display='none'">
 `;
 
 }
