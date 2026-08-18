@@ -4,23 +4,17 @@ import re
 p = Path('index.html')
 s = p.read_text(encoding='utf-8')
 
-# SAFETY FIRST: never show a distorted/generated head. Until the full preset
-# library is rebuilt from clean complete images, the male creator uses the
-# validated original artwork as a clean fallback. No browser-side overlay,
-# tint, mask or synthetic head is allowed.
+# Creator presets are complete pre-rendered images. Never build a face/hair
+# from browser-side overlays: simply select the matching full image.
 creator_fn = r'''function creatorAssetPath(){
-  if(avatarDraft.gender === "female"){
-    return `assets/creator/female/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=fullpreset28`;
-  }
-  return `01-debutant.webp?v=cleanbase28`;
+  return `assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=presets29`;
 }'''
 s = re.sub(r'function creatorAssetPath\(\)\{.*?\n\}', creator_fn, s, count=1, flags=re.S)
 
-# While the new full-image preset library is being rebuilt, male hairstyle
-# thumbnails also use the clean validated artwork instead of corrupted variants.
+# Every hairstyle button previews the exact selected gender/skin/hair colour.
 s = re.sub(
-    r'const thumb = `assets/creator/\$\{avatarDraft\.gender\}/\$\{avatarDraft\.skin\}/\$\{avatarDraft\.hairColor\}/\$\{value\}\.webp\?v=[^`]+`;',
-    'const thumb = avatarDraft.gender === "male" ? `01-debutant.webp?v=cleanbase28` : `assets/creator/female/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp?v=fullpreset28`;',
+    r'const thumb = .*?;',
+    'const thumb = `assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp?v=presets29`;',
     s,
     count=1,
 )
@@ -29,7 +23,7 @@ marker_start = '/* RISELOOTER_FINAL_CLEAN_V25 */'
 marker_end = '/* /RISELOOTER_FINAL_CLEAN_V25 */'
 css = r'''
 /* RISELOOTER_FINAL_CLEAN_V25 */
-/* Only complete images are displayed. Synthetic head/skin/hair overlays are forbidden. */
+/* Complete-image presets only: no synthetic head/skin/hair overlays. */
 #creatorModal .creator-skin-overlay,
 #creatorModal .creator-hair-overlay{display:none!important;visibility:hidden!important;opacity:0!important}
 #creatorModal .creator-preview{background:#03080d!important;overflow:hidden!important}
@@ -61,4 +55,4 @@ else:
     s = s[:pos] + '\n' + css + '\n' + s[pos:]
 
 p.write_text(s, encoding='utf-8')
-print('Creator safety cleanup applied: no distorted synthetic head can be displayed')
+print('Creator preset routing enabled for male and female full-image assets')
