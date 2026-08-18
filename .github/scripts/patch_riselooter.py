@@ -4,11 +4,9 @@ import re
 p = Path('index.html')
 s = p.read_text(encoding='utf-8')
 
-RAW = 'https://raw.githubusercontent.com/Venomous49/Loot-up/main/assets/characters/male/medium/brown/male_textured'
-
 s = re.sub(
     r'function assetPath\(profile,stage\)\{.*?\n\}',
-    '''function assetPath(profile,stage){\n\nreturn `https://raw.githubusercontent.com/Venomous49/Loot-up/main/assets/characters/male/medium/brown/male_textured/${stages[stage].slug}.webp`;\n\n}''',
+    '''function assetPath(profile,stage){\n\nreturn `${stages[stage].slug}.webp`;\n\n}''',
     s,
     count=1,
     flags=re.S
@@ -16,17 +14,23 @@ s = re.sub(
 
 s = re.sub(
     r'function creatorAssetPath\(\)\{.*?\n\}',
-    '''function creatorAssetPath(){\n\nreturn "https://raw.githubusercontent.com/Venomous49/Loot-up/main/assets/characters/male/medium/brown/male_textured/01-debutant.webp";\n\n}''',
+    '''function creatorAssetPath(){\n\nreturn "01-debutant.webp";\n\n}''',
     s,
     count=1,
     flags=re.S
 )
 
-# Repair any old local/root paths left by previous patches.
-s = s.replace('src="/01-debutant.webp"', f'src="{RAW}/01-debutant.webp"')
-s = s.replace('src="assets/characters/male/medium/brown/male_textured/01-debutant.webp"', f'src="{RAW}/01-debutant.webp"')
-s = s.replace('"/01-debutant.webp"', f'"{RAW}/01-debutant.webp"')
-s = s.replace('"assets/characters/male/medium/brown/male_textured/01-debutant.webp"', f'"{RAW}/01-debutant.webp"')
+# Remove all old hard-coded URLs/paths from previous attempts.
+s = re.sub(
+    r'https://raw\.githubusercontent\.com/Venomous49/Loot-up/main/assets/characters/male/medium/brown/male_textured/([0-9]{2}-[a-z-]+\.webp)',
+    r'\1',
+    s
+)
+s = re.sub(
+    r'/?assets/characters/male/medium/brown/male_textured/([0-9]{2}-[a-z-]+\.webp)',
+    r'\1',
+    s
+)
 
 new_character = r'''function characterHTML(profile,stage){
 
@@ -50,9 +54,9 @@ s = re.sub(
     flags=re.S
 )
 
-marker = '/* RISELOOTER_CLEAN_STATIC_V12 */'
+marker = '/* RISELOOTER_STATIC_ROOT_V13 */'
 css = r'''
-/* RISELOOTER_CLEAN_STATIC_V12 */
+/* RISELOOTER_STATIC_ROOT_V13 */
 .hero{min-height:560px!important;position:relative!important;overflow:hidden!important;background:#070b0e!important}
 .hero:after{content:""!important;position:absolute!important;inset:0!important;z-index:4!important;pointer-events:none!important;background:linear-gradient(90deg,rgba(5,9,13,.995) 0%,rgba(5,9,13,.985) 26%,rgba(5,9,13,.80) 39%,rgba(5,9,13,.25) 54%,rgba(5,9,13,.03) 74%,rgba(5,9,13,0) 100%)!important}
 .character-holder{position:absolute!important;top:0!important;right:0!important;bottom:0!important;left:31%!important;width:auto!important;height:auto!important;z-index:1!important;transform:none!important;display:block!important;overflow:hidden!important;animation:none!important}
@@ -61,7 +65,7 @@ css = r'''
 .character-scene-clean:before{content:""!important;position:absolute!important;left:0!important;top:0!important;width:43%!important;height:130px!important;z-index:7!important;pointer-events:none!important;background:linear-gradient(135deg,#05090d 0%,#05090d 61%,rgba(5,9,13,.97) 75%,rgba(5,9,13,0) 100%)!important}
 .character-scene-clean:after{content:""!important;position:absolute!important;left:23%!important;right:10%!important;bottom:0!important;height:52px!important;z-index:7!important;pointer-events:none!important;background:linear-gradient(0deg,#05090d 0%,rgba(5,9,13,.96) 42%,rgba(5,9,13,0) 100%)!important}
 .scene-outfit-clean{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:contain!important;object-position:center bottom!important;z-index:6!important;animation:none!important;transform:none!important;filter:none!important;pointer-events:none!important}
-.scene-background,.scene-body,.scene-torso,.scene-head,.character-scene-real{animation:none!important;filter:none!important}
+.scene-background,.scene-body,.scene-torso,.scene-head,.character-scene-real{display:none!important;animation:none!important;filter:none!important}
 .hero-copy,.next-evolution,.hero-track{z-index:9!important}
 .hero-track{padding-top:8px!important;background:linear-gradient(0deg,rgba(4,9,14,.99) 0%,rgba(4,9,14,.88) 60%,rgba(4,9,14,0) 100%)!important}
 .next-evolution{background:rgba(4,10,16,.96)!important;backdrop-filter:blur(3px)!important}
