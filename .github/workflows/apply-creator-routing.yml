@@ -26,18 +26,23 @@ jobs:
       - name: Apply direct complete-image routing
         run: python scripts/final_site_cleanup.py
 
-      - name: Validate male creator routing
+      - name: Validate creator routing
         shell: bash
         run: |
           set -euo pipefail
           test "$(find assets/creator/male -type f -name '*.webp' | wc -l)" -eq 125
+          test "$(find assets/creator/female -type f -name '*.webp' | wc -l)" -eq 125
           for f in \
             assets/creator/male/medium/brown/male_textured.webp \
             assets/creator/male/light/blond/male_short.webp \
-            assets/creator/male/dark/red/male_slick.webp; do test -s "$f"; done
+            assets/creator/male/dark/red/male_slick.webp \
+            assets/creator/female/medium/brown/female_long.webp \
+            assets/creator/female/light/blond/female_bob.webp \
+            assets/creator/female/dark/red/female_short.webp; do test -s "$f"; done
           grep -q 'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=presets31' index.html
           grep -q 'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp?v=presets31' index.html
           grep -q '\["gender","skin","hairColor"\].includes(field)' index.html
+          test "$(grep -c '^function creatorFallbackPath(gender=avatarDraft.gender){' index.html)" -eq 1
           ! grep -q '01-debutant.webp?v=cleanbase28' index.html
 
       - name: Publish verified routing only
