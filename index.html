@@ -1661,10 +1661,19 @@ main{padding-top:10px!important}.panel{border-color:#1c3445!important;border-rad
 @media(max-width:900px){.creator-shell{grid-template-columns:1fr}.creator-benefits{grid-template-columns:1fr 1fr;gap:18px}.creator-benefit{border:0;padding:0}#creatorModal .creator-preview{height:500px}}
 @media(max-width:560px){#creatorModal .choices,#hairStyleChoices{grid-template-columns:repeat(3,1fr)!important}.creator-benefits{grid-template-columns:1fr}.creator-path-row{grid-template-columns:repeat(4,1fr)}}
 
+
+/* RISELOOTER_CREATOR_TEST_V20 */
+#creatorTestButton{background:#0b1721!important;border:1px solid #7f36e8!important;color:#d7a9ff!important}
+#creatorTestButton:hover{background:#24113d!important}
+.creator-test-banner{position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:1000;padding:7px 12px;border:1px solid #7f36e8;border-radius:8px;background:#160a27;color:#d7a9ff;font-size:12px;font-weight:800;display:none}
+body.creator-test-active .creator-test-banner{display:block}
+body.creator-test-active #creatorModal .creator-note:after{content:' • MODE TEST : rien ne sera enregistré';color:#d7a9ff}
+
 </style>
 </head>
 
 <body>
+<div class="creator-test-banner">MODE TEST — aperçu uniquement</div>
 
 <div class="wrapper">
 
@@ -1692,6 +1701,10 @@ RISE <span>LOOTER</span>
 
 <button class="btn" id="withdrawHeader">
 Retirer mes gains
+</button>
+
+<button class="btn dark" id="creatorTestButton">
+Tester la création
 </button>
 
 <button class="btn dark" id="authButton">
@@ -4349,6 +4362,47 @@ renderTrack(1);
 renderStreakDays(0);
 
 refreshUser(true);
+
+
+/* ==========================================================
+MODE TEST CRÉATEUR
+========================================================== */
+let creatorTestMode = false;
+
+function openCreatorTest(){
+  creatorTestMode = true;
+  document.body.classList.add('creator-test-active');
+  avatarDraft = {gender:'male',skin:'medium',hairColor:'brown',hairStyle:'male_textured'};
+  document.querySelectorAll('#genderChoices .choice,#skinChoices .choice,#hairColorChoices .choice').forEach(b=>b.classList.remove('selected'));
+  document.querySelector('#genderChoices [data-value="male"]')?.classList.add('selected');
+  document.querySelector('#skinChoices [data-value="medium"]')?.classList.add('selected');
+  document.querySelector('#hairColorChoices [data-value="brown"]')?.classList.add('selected');
+  renderHairChoices();
+  updateCreatorPreview();
+  $('creatorModal').classList.add('show');
+}
+
+function closeCreatorTest(){
+  creatorTestMode = false;
+  document.body.classList.remove('creator-test-active');
+  $('creatorModal').classList.remove('show');
+}
+
+const creatorTestButton = $('creatorTestButton');
+if(creatorTestButton){ creatorTestButton.onclick = openCreatorTest; }
+
+const originalSaveAvatar = saveAvatar;
+$('saveAvatar').onclick = async () => {
+  if(creatorTestMode){
+    alert(`TEST OK\nSexe : ${avatarDraft.gender}\nTeint : ${avatarDraft.skin}\nCheveux : ${avatarDraft.hairColor}\nCoiffure : ${avatarDraft.hairStyle}\n\nRien n'a été enregistré.`);
+    return;
+  }
+  await originalSaveAvatar();
+};
+
+if(new URLSearchParams(location.search).get('creatorTest') === '1'){
+  setTimeout(openCreatorTest,150);
+}
 
 </script>
 
