@@ -1710,7 +1710,8 @@ body.creator-test-active #creatorModal .creator-note:after{content:' • MODE TE
 /* Hairstyle cards use the actual generated portrait as their thumbnail. */
 #hairStyleChoices .hair-choice{min-height:108px!important;padding:6px!important;display:grid!important;grid-template-rows:72px auto!important;gap:5px!important;align-items:center!important;background:#08131c!important;overflow:hidden!important}
 #hairStyleChoices .hair-choice:before{display:none!important;content:none!important}
-.hair-thumb{display:block;width:100%;height:72px;border-radius:6px;background-color:#101b23;background-size:260% auto;background-position:58% 7%;background-repeat:no-repeat;border:1px solid rgba(255,255,255,.08)}
+.hair-thumb{display:block;width:100%;height:72px;overflow:hidden;border-radius:6px;background-color:#101b23;background-size:260% auto;background-position:58% 7%;background-repeat:no-repeat;border:1px solid rgba(255,255,255,.08)}
+.hair-thumb img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 7%;transform:scale(2.6);transform-origin:58% 7%;animation:none!important}
 .hair-thumb-missing{display:grid;place-items:center;font-size:27px;color:#9ba9b5;background:#0d1821}
 #hairStyleChoices .hair-choice>span:last-child{font-size:11px;font-weight:800;line-height:1.1}
 #hairStyleChoices .hair-choice.selected{border-color:#a146ff!important;box-shadow:0 0 0 1px #a146ff,0 0 16px rgba(143,63,255,.28)!important}
@@ -2177,9 +2178,9 @@ Fermer
     <section class="creator-panel">
       <h2 class="creator-heading">CRÉATION DE TON <em>LOOTER</em></h2>
       <p class="creator-lead">Personnalise ton personnage. Tu pourras le voir évoluer à chaque nouveau niveau !</p>
-      <div class="creator-step"><div class="creator-step-title"><b>1.</b> CHOISIS TON SEXE</div><div class="choices" id="genderChoices"><button class="choice selected" data-value="male">♂ &nbsp; HOMME</button><button class="choice" data-value="female">♀ &nbsp; FEMME</button></div></div>
-      <div class="creator-step"><div class="creator-step-title"><b>2.</b> CHOISIS TA COULEUR DE PEAU</div><div class="choices" id="skinChoices"><button class="choice" data-value="light">Clair</button><button class="choice" data-value="warm">Doré</button><button class="choice selected" data-value="medium">Mat</button><button class="choice" data-value="deep">Foncé</button><button class="choice" data-value="dark">Très foncé</button></div></div>
-      <div class="creator-step"><div class="creator-step-title"><b>3.</b> CHOISIS TA COULEUR DE CHEVEUX</div><div class="choices" id="hairColorChoices"><button class="choice" data-value="black">Noir</button><button class="choice selected" data-value="brown">Brun</button><button class="choice" data-value="blond">Blond</button><button class="choice" data-value="red">Roux</button><button class="choice" data-value="purple">Violet</button></div></div>
+      <div class="creator-step"><div class="creator-step-title"><b>1.</b> CHOISIS TON SEXE</div><div class="choices" id="genderChoices"><button type="button" class="choice selected" data-value="male">♂ &nbsp; HOMME</button><button type="button" class="choice" data-value="female">♀ &nbsp; FEMME</button></div></div>
+      <div class="creator-step"><div class="creator-step-title"><b>2.</b> CHOISIS TA COULEUR DE PEAU</div><div class="choices" id="skinChoices"><button type="button" class="choice" data-value="light">Clair</button><button type="button" class="choice" data-value="warm">Doré</button><button type="button" class="choice selected" data-value="medium">Mat</button><button type="button" class="choice" data-value="deep">Foncé</button><button type="button" class="choice" data-value="dark">Très foncé</button></div></div>
+      <div class="creator-step"><div class="creator-step-title"><b>3.</b> CHOISIS TA COULEUR DE CHEVEUX</div><div class="choices" id="hairColorChoices"><button type="button" class="choice" data-value="black">Noir</button><button type="button" class="choice selected" data-value="brown">Brun</button><button type="button" class="choice" data-value="blond">Blond</button><button type="button" class="choice" data-value="red">Roux</button><button type="button" class="choice" data-value="purple">Violet</button></div></div>
       <div class="creator-step"><div class="creator-step-title"><b>4.</b> CHOISIS TA COUPE DE CHEVEUX</div><div class="choices" id="hairStyleChoices"></div></div>
       <button class="btn creator-save" id="saveAvatar">CRÉER MON LOOTER &nbsp; →</button>
       <div class="creator-note">🔒 Tu pourras modifier ton apparence plus tard dans ton profil.</div>
@@ -2407,7 +2408,7 @@ function assetPath(profile,stage){
   const hairColor = profile?.avatar_hair_color || "brown";
   const hairStyle = profile?.avatar_hair_style || (gender === "female" ? "female_long" : "male_textured");
   if(stage === 0){
-    return `assets/creator/${gender}/${skin}/${hairColor}/${hairStyle}.webp?v=presets31`;
+    return `assets/creator/${gender}/${skin}/${hairColor}/${hairStyle}.webp`;
   }
   return `assets/characters/${gender}/${skin}/${hairColor}/${hairStyle}/${stages[stage].slug}.webp`;
 }
@@ -2416,13 +2417,13 @@ function assetPath(profile,stage){
 
 
 
-function creatorAssetPath(){
-  return `assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp?v=presets31`;
+function creatorAssetPath(state=avatarDraft,style=state.hairStyle){
+  return `assets/creator/${state.gender}/${state.skin}/${state.hairColor}/${style}.webp`;
 }
 
 function creatorFallbackPath(gender=avatarDraft.gender){
   const style = gender === "female" ? "female_long" : "male_textured";
-  return `assets/creator/${gender}/medium/brown/${style}.webp?v=presets31`;
+  return creatorAssetPath({gender,skin:"medium",hairColor:"brown",hairStyle:style});
 }
 
 function fallbackAssetPath(stage){
@@ -2457,7 +2458,7 @@ function characterHTML(profile,stage){
 const preferred=assetPath(profile,stage);
 const gender=profile?.avatar_gender || "male";
 const fallback=stage===0
-  ? `assets/creator/${gender}/medium/brown/${gender === "female" ? "female_long" : "male_textured"}.webp?v=presets31`
+  ? creatorFallbackPath(gender)
   : fallbackAssetPath(stage);
 return `<div class="character-scene-clean"><img class="scene-clean-image" src="${preferred}" alt="Looter" data-fallback="${fallback}" data-tried-fallback="0" onerror="if(this.dataset.triedFallback!=='1'){this.dataset.triedFallback='1';this.src=this.dataset.fallback}else{this.style.display='none';this.nextElementSibling.style.display='block'}"><div class="character-missing" style="display:none">Asset réaliste manquant.</div></div>`;
 }
@@ -2491,9 +2492,9 @@ const list = avatarDraft.gender === "female" ? femaleHair : maleHair;
 if(!list.some(x => x[0] === avatarDraft.hairStyle)) avatarDraft.hairStyle=list[0][0];
 
 $("hairStyleChoices").innerHTML = list.map(([value,label]) => {
-  const thumb = `assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp?v=presets31`;
-  return `<button class="choice hair-choice ${avatarDraft.hairStyle===value?"selected":""}" data-value="${value}">
-    <span class="hair-thumb" style="background-image:url('${thumb}')"></span>
+  const thumb = creatorAssetPath(avatarDraft,value);
+  return `<button type="button" class="choice hair-choice ${avatarDraft.hairStyle===value?"selected":""}" data-value="${value}">
+    <span class="hair-thumb"><img src="${thumb}" alt="${label}" onerror="this.style.display='none';this.parentElement.classList.add('hair-thumb-missing');this.parentElement.textContent='×'"></span>
     <span>${label}</span>
   </button>`;
 }).join("");
@@ -2532,9 +2533,11 @@ b.classList.remove("selected")
 
 btn.classList.add("selected");
 
-if(["gender","skin","hairColor"].includes(field)){
-renderHairChoices();
+if(field === "gender"){
+avatarDraft.hairStyle = avatarDraft.gender === "female" ? femaleHair[0][0] : maleHair[0][0];
 }
+
+renderHairChoices();
 
 updateCreatorPreview();
 
@@ -4457,13 +4460,6 @@ $('saveAvatar').onclick = async () => {
 if(new URLSearchParams(location.search).get('creatorTest') === '1'){
   setTimeout(openCreatorTest,150);
 }
-
-/* RISELOOTER_REFRESH_HAIR_THUMBS_V23 */
-["skinChoices","hairColorChoices"].forEach(id=>{
-  const root=document.getElementById(id);
-  if(!root) return;
-  root.addEventListener("click",()=>setTimeout(()=>{renderHairChoices();updateCreatorPreview();},0));
-});
 
 </script>
 

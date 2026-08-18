@@ -75,9 +75,10 @@ for gender, styles in EXPECTED.items():
 
 html = Path('index.html').read_text(encoding='utf-8')
 required = [
-    'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${avatarDraft.hairStyle}.webp',
-    'assets/creator/${avatarDraft.gender}/${avatarDraft.skin}/${avatarDraft.hairColor}/${value}.webp',
-    '["gender","skin","hairColor"].includes(field)',
+    'function creatorAssetPath(state=avatarDraft,style=state.hairStyle)',
+    'assets/creator/${state.gender}/${state.skin}/${state.hairColor}/${style}.webp',
+    'const thumb = creatorAssetPath(avatarDraft,value)',
+    'if(field === "gender")',
 ]
 for token in required:
     if token not in html:
