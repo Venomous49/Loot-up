@@ -30,7 +30,16 @@ jobs:
           cp assets/characters/male/medium/brown/male_textured/50-rise-looter.webp ./50-rise-looter.webp
 
       - name: Build real silhouette previews
-        run: python3 .github/scripts/build_silhouettes.py
+        run: |
+          python3 .github/scripts/build_silhouettes.py
+          cp silhouettes/01-debutant.png ./sil-01-debutant.png
+          cp silhouettes/05-debrouillard.png ./sil-05-debrouillard.png
+          cp silhouettes/10-chasseur.png ./sil-10-chasseur.png
+          cp silhouettes/15-hustler.png ./sil-15-hustler.png
+          cp silhouettes/20-pro.png ./sil-20-pro.png
+          cp silhouettes/30-elite.png ./sil-30-elite.png
+          cp silhouettes/40-cyber-looter.png ./sil-40-cyber-looter.png
+          cp silhouettes/50-rise-looter.png ./sil-50-rise-looter.png
 
       - name: Patch index
         run: python3 .github/scripts/patch_riselooter.py
@@ -43,6 +52,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html *.webp silhouettes/*.png
-          git commit -m "Render real evolution silhouettes"
+          git add index.html *.webp sil-*.png silhouettes/*.png
+          git commit -m "Publish evolution silhouettes at root"
           git push
