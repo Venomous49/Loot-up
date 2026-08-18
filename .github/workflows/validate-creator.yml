@@ -7,6 +7,7 @@ on:
       - 'assets/creator/**'
       - 'assets/creator_sources/**'
       - 'scripts/validate_creator_library.py'
+      - 'scripts/creator_runtime_smoke.mjs'
       - '.github/workflows/**'
       - 'wrangler.jsonc'
       - '.assetsignore'
@@ -40,6 +41,11 @@ jobs:
           # The legacy evolution workflow explicitly proves index.html stayed untouched.
           grep -q 'git diff --exit-code -- index.html' .github/workflows/fix-riselooter-assets.yml
           grep -q 'test "$(git status --short index.html | wc -l)" -eq 0' .github/workflows/fix-riselooter-assets.yml
+
+          # The manual creator generator must pass the browser smoke test before publishing.
+          grep -q 'node scripts/creator_runtime_smoke.mjs' .github/workflows/build-real-creator.yml
+          grep -q 'git diff --exit-code -- index.html' .github/workflows/build-real-creator.yml
+          grep -q 'Publish only after successful static and browser validation' .github/workflows/build-real-creator.yml
 
       - name: Validate Cloudflare static-asset configuration
         shell: bash
