@@ -6,7 +6,7 @@ on:
       - 'index.html'
       - 'assets/creator/**'
       - 'scripts/validate_creator_library.py'
-      - '.github/workflows/validate-creator.yml'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 permissions:
@@ -23,3 +23,11 @@ jobs:
       - run: python -m pip install --quiet 'numpy<3' opencv-python-headless
       - name: Validate all 250 pre-rendered creator assets
         run: python scripts/validate_creator_library.py
+      - name: Reject legacy workflows that can rewrite creator routing
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -R --line-number --fixed-strings 'patch_riselooter.py' .github/workflows
+          ! grep -R --line-number -E 'git add .*index\.html|git add index\.html' .github/workflows/fix-riselooter-assets.yml
+          ! grep -R --line-number -E 'python(3)? scripts/final_site_cleanup\.py' .github/workflows/fix-riselooter-assets.yml
+          grep -q 'git diff --exit-code -- index.html' .github/workflows/fix-riselooter-assets.yml
