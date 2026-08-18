@@ -1,12 +1,9 @@
 name: Creator preset build
 
+# Visual asset generation is intentionally manual-only.
+# The creator library must never rewrite production assets just because a
+# generator script changed: generated hair/skin variants require QA first.
 on:
-  push:
-    paths:
-      - 'scripts/build_real_creator_variants.py'
-      - 'scripts/build_female_creator_variants.py'
-      - 'scripts/final_site_cleanup.py'
-      - '.github/workflows/build-real-creator.yml'
   workflow_dispatch:
 
 permissions:
@@ -33,48 +30,19 @@ jobs:
       - name: Install deterministic image dependencies
         run: python -m pip install --quiet 'numpy<3' opencv-python-headless
 
-      - name: Generate 125 male full-image presets
+      - name: Generate male full-image presets
         run: python scripts/build_real_creator_variants.py
 
-      - name: Generate 125 female full-image presets
+      - name: Generate female full-image presets
         run: python scripts/build_female_creator_variants.py
 
-      - name: Enable direct full-image preset routing
+      - name: Apply direct full-image routing
         run: python scripts/final_site_cleanup.py
 
-      - name: Validate creator library
-        shell: bash
-        run: |
-          set -euo pipefail
-          test "$(find assets/creator/male -type f -name '*.webp' | wc -l)" -eq 125
-          test "$(find assets/creator/female -type f -name '*.webp' | wc -l)" -eq 125
-          python - <<'PY'
-          from pathlib import Path
-          import cv2
-          for gender in ('male','female'):
-              root=Path('assets/creator')/gender
-              files=list(root.rglob('*.webp'))
-              assert len(files)==125,(gender,len(files))
-              for f in files:
-                  im=cv2.imread(str(f))
-                  assert im is not None and im.size>0,f
-                  assert im.std()>10,f'near blank: {f}'
-          checks=[
-            ('assets/creator/male/medium/brown/male_textured.webp','assets/creator/male/medium/brown/male_short.webp'),
-            ('assets/creator/male/medium/brown/male_short.webp','assets/creator/male/medium/brown/male_medium.webp'),
-            ('assets/creator/male/light/blond/male_textured.webp','assets/creator/male/dark/black/male_textured.webp'),
-            ('assets/creator/female/medium/brown/female_long.webp','assets/creator/female/medium/brown/female_short.webp'),
-            ('assets/creator/female/light/blond/female_long.webp','assets/creator/female/dark/black/female_long.webp'),
-          ]
-          for a,b in checks:
-              ia,ib=cv2.imread(a),cv2.imread(b)
-              assert ia.shape==ib.shape,(a,b)
-              delta=cv2.absdiff(ia,ib).mean()
-              assert delta>0.28,(a,b,delta)
-          print('250 complete-image creator presets validated')
-          PY
+      - name: Validate generated creator library
+        run: python scripts/validate_creator_library.py
 
-      - name: Publish generated presets
+      - name: Publish only after successful validation
         shell: bash
         run: |
           set -euo pipefail
@@ -85,5 +53,5 @@ jobs:
             echo 'No creator changes to publish'
             exit 0
           fi
-          git commit -m 'Publish complete male and female avatar presets'
+          git commit -m 'Publish visually-reviewed creator presets'
           git push
