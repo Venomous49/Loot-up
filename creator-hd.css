@@ -39,7 +39,6 @@
   opacity:0!important;
 }
 
-/* Keep the live badge independent of the rendered scene. */
 #creatorModal .creator-live-badge{
   position:absolute!important;
   right:16px!important;
@@ -47,33 +46,37 @@
   z-index:10!important;
 }
 
-/* Hairstyle cards keep the original five presets, but show a clean head-and-hair crop.
-   This crop is thumbnail-only and never alters the live full-body preview. */
+/* The five original hairstyles are preserved. Cards use a dedicated head crop;
+   the live preview remains the untouched centered full-body 1728x910 scene. */
 #hairStyleChoices .hair-choice{
-  min-height:96px!important;
+  min-height:104px!important;
   padding:6px!important;
   display:grid!important;
-  grid-template-rows:62px auto!important;
+  grid-template-rows:70px auto!important;
   gap:5px!important;
   align-items:stretch!important;
 }
 #hairStyleChoices .hair-thumb{
   width:100%!important;
-  height:62px!important;
+  height:70px!important;
   display:block!important;
   overflow:hidden!important;
   border-radius:6px!important;
   background:#09131b!important;
+  position:relative!important;
 }
 #hairStyleChoices .hair-thumb img{
+  position:absolute!important;
+  left:50%!important;
+  top:15%!important;
   width:100%!important;
   height:100%!important;
   max-width:none!important;
   display:block!important;
   object-fit:cover!important;
-  object-position:50% 13%!important;
-  transform:scale(1.34)!important;
-  transform-origin:50% 13%!important;
+  object-position:50% 15%!important;
+  transform:translate(-50%,-15%) scale(2.25)!important;
+  transform-origin:50% 15%!important;
   animation:none!important;
   filter:none!important;
   image-rendering:auto!important;
