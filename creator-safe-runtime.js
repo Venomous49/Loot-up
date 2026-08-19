@@ -19,16 +19,30 @@
     const gender=FEMALE.has(s)?'female':'male';
     return `${ROOT}${gender}/${skin(avatarDraft.skin)}/${color(avatarDraft.hairColor)}/${s}.webp`;
   }
+  function fallbackStyle(){
+    return avatarDraft.gender==='female'?'female_long':'male_textured';
+  }
   function saveEnabled(ok){const b=document.getElementById('saveAvatar');if(b)b.disabled=!ok;}
   function update(){
     const p=document.getElementById('creatorPreview');
     if(!p||typeof avatarDraft==='undefined')return;
-    const s=style(),src=srcFor(s);
+    const s=style(),src=srcFor(s),fallback=fallbackStyle();
     p.innerHTML=`<img class="creator-real-preview" src="${src}" alt="Aperçu Looter"><div class="creator-asset-missing" hidden><strong>APERÇU INDISPONIBLE</strong></div><div class="creator-live-badge"><b>NIVEAU 1</b><strong>DÉBUTANT</strong></div>`;
     const img=p.querySelector('img'); const miss=p.querySelector('.creator-asset-missing');
     saveEnabled(false);
-    img.onload=()=>saveEnabled(true);
-    img.onerror=()=>{img.hidden=true;miss.hidden=false;saveEnabled(false);console.error('[creator v6]',src);};
+    img.onload=()=>saveEnabled(img.dataset.triedFallback!=='1');
+    img.onerror=()=>{
+      if(img.dataset.triedFallback==='1'||s===fallback){
+        img.hidden=true;
+        miss.hidden=false;
+        saveEnabled(false);
+        console.error('[creator v6]',src);
+        return;
+      }
+      img.dataset.triedFallback='1';
+      img.src=srcFor(fallback);
+      saveEnabled(false);
+    };
   }
   function renderHair(){
     if(typeof avatarDraft==='undefined')return;
