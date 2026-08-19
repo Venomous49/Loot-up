@@ -28,6 +28,7 @@ jobs:
       - run: python -m pip install --quiet 'numpy<3' opencv-python-headless
       - name: Validate all 250 pre-rendered creator assets and UI routing
         run: python scripts/validate_creator_library.py
+
       - name: Reject workflows that can rewrite production creator routing
         shell: bash
         run: |
@@ -39,11 +40,13 @@ jobs:
           grep -q 'git diff --exit-code -- index.html' .github/workflows/fix-riselooter-assets.yml
           grep -q 'test "$(git status --short index.html | wc -l)" -eq 0' .github/workflows/fix-riselooter-assets.yml
           grep -q 'node scripts/creator_runtime_smoke.mjs' .github/workflows/build-real-creator.yml
-          grep -q 'git diff --exit-code -- index.html' .github/workflows/build-real-creator.yml
-          grep -q 'Publish only after successful static and browser validation' .github/workflows/build-real-creator.yml
+          grep -q 'git diff --exit-code -- index.html worker.js creator-hd.css wrangler.jsonc .assetsignore' .github/workflows/build-real-creator.yml
+          grep -q 'Publish only fully validated creator assets' .github/workflows/build-real-creator.yml
           test ! -e .github/workflows/one-shot-harden-creator-fallback.yml
           test ! -e .github/workflows/one-shot-source-fallback-fix.yml
           test ! -e .github/workflows/apply-creator-routing.yml
+          test ! -e .github/workflows/normalize-creator-render.yml
+          test ! -e .github/workflows/creator-hd-rebuild.yml
 
       - name: Reject shared-face compositing regressions
         shell: bash
@@ -53,6 +56,16 @@ jobs:
           ! grep -q 'def apply_canonical_face' scripts/build_creator_from_hairstyle_masters.py
           ! grep -q 'output = apply_canonical_face' scripts/build_creator_from_hairstyle_masters.py
 
+      - name: Require explicit production smoke dispatch after generated asset publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          build=.github/workflows/build-real-creator.yml
+          grep -q 'actions: write' "$build"
+          grep -q 'Trigger public Cloudflare creator validation' "$build"
+          grep -q 'GH_TOKEN:.*github.token' "$build"
+          grep -q 'gh workflow run creator-runtime-smoke.yml --ref main' "$build"
+
       - name: Require production smoke to prove deployed creator matches main
         shell: bash
         run: |
@@ -61,15 +74,18 @@ jobs:
           grep -q -- "- 'worker.js'" "$smoke"
           grep -q -- "- 'wrangler.jsonc'" "$smoke"
           grep -q -- "- '.assetsignore'" "$smoke"
-          grep -q 'Verify public creator HTML matches this commit' "$smoke"
-          grep -q 'sha256sum index.html' "$smoke"
-          grep -q 'sha256sum /tmp/loot-up-public-current.html' "$smoke"
+          grep -q 'CREATOR_PUBLIC_ORIGIN: https://loot-up.marin-iglesias.workers.dev' "$smoke"
+          grep -q 'Wait for validated HD creator deployment' "$smoke"
+          grep -q 'x-riselooter-creator-source: validated' "$smoke"
+          grep -q 'Verify canonical creator stylesheet is public' "$smoke"
+          grep -q 'sha256sum creator-hd.css' "$smoke"
           grep -q 'Verify all 250 public creator assets match this commit' "$smoke"
           grep -q 'sha256sum "$path"' "$smoke"
           grep -q 'sha256sum "$remote"' "$smoke"
           grep -q 'test "$checked" -eq 250' "$smoke"
           grep -q 'test "$mismatches" -eq 0' "$smoke"
           grep -q 'Exercise all 250 creator combinations on Cloudflare' "$smoke"
+          grep -q 'Record validated production creator status' "$smoke"
 
       - name: Validate Cloudflare transparent static-asset routing
         shell: bash
