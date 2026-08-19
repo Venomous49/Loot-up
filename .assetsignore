@@ -6,3 +6,4 @@ assets/source
 assets/creator_sources
 README.md
 wrangler.jsonc
+worker.js
