@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: creator-runtime-smoke-${{ github.ref }}
@@ -125,3 +125,25 @@ jobs:
           echo "Verified $checked public creator assets byte-for-byte against ${GITHUB_SHA}."
       - name: Exercise all 250 creator combinations on Cloudflare
         run: node scripts/creator_runtime_smoke.mjs
+      - name: Record validated production creator status
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf 'status=success\nsource_commit=%s\nformat=1728x910\nassets=250\ncloudflare=validated\nruntime_combinations=250\n' "$GITHUB_SHA" > creator-production-status.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add creator-production-status.txt
+          git commit -m 'Record validated creator production deployment' || true
+          git push || true
+      - name: Record production creator failure
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf 'status=failed\nsource_commit=%s\ncloudflare=not-validated\n' "$GITHUB_SHA" > creator-production-status.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add creator-production-status.txt
+          git commit -m 'Record failed creator production deployment' || true
+          git push || true
