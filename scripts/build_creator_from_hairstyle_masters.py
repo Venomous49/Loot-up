@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 import numpy as np
 import cv2
@@ -17,11 +18,13 @@ BACKGROUND_CACHE = None
 
 MASTERS = {
     "female": {
+        # The short style is the clean torso master: it contains no long lock
+        # that can be copied into another hairstyle by the body invariant.
+        "female_short": STANDARDIZED / "female_short.webp",
         "female_long": STANDARDIZED / "female_long.webp",
         "female_wavy": STANDARDIZED / "female_wavy.webp",
         "female_bob": STANDARDIZED / "female_bob.webp",
         "female_ponytail": STANDARDIZED / "female_ponytail.webp",
-        "female_short": STANDARDIZED / "female_short.webp",
     },
     "male": {
         "male_textured": STANDARDIZED / "male_textured.webp",
@@ -214,7 +217,22 @@ def masks(image, gender, style):
             if candidate.sum() < 300:
                 candidate = connected
         hair = candidate
-        anatomy = face | ((x > .46) & (x < .58) & (y > .39) & (y < .60))
+        # Cover every visible complexion area, including the open neckline and
+        # forearm.  Pixel classification below keeps fabric out; these bounds
+        # only prevent the alley/background from entering the mask.
+        neckline = np.zeros((h, w), np.uint8)
+        cv2.fillPoly(
+            neckline,
+            [np.array([
+                [.475 * w, .39 * h], [.565 * w, .39 * h],
+                [.585 * w, .50 * h], [.555 * w, .585 * h],
+                [.520 * w, .620 * h], [.485 * w, .585 * h],
+                [.455 * w, .50 * h],
+            ], np.int32)],
+            1,
+        )
+        anatomy = face | (neckline > 0)
+        anatomy |= ((x > .690) & (x < .835) & (y > .58) & (y < .995))
     else:
         fx, fy, fw, fh = detect_face(image)
         hx, hy = (fx + fw * .50) / w, (fy - fh * .04) / h
@@ -255,7 +273,13 @@ def masks(image, gender, style):
         lower_fade = np.clip((.82 - y) / .22, 0, 1)
         hair_alpha *= lower_fade
 
-    return hair_alpha, soften(skin, 2.0)
+    skin_alpha = soften(skin, 1.15)
+    # Never let Gaussian feathering paint an oval outside actual skin.  A
+    # small dilation admits antialiased edge pixels but prevents face/neck
+    # halos and mismatched patches over hair or clothing.
+    skin_guard = cv2.dilate(skin.astype(np.uint8), np.ones((5, 5), np.uint8), iterations=1) > 0
+    skin_alpha *= skin_guard
+    return hair_alpha, skin_alpha
 
 
 def tint(rgb, alpha, target, strength, minimum_luminance=.35, preserve_texture=False, maximum_luminance=1.08):
@@ -299,32 +323,6 @@ def tint_skin(rgb, alpha, target, strength=.76):
     return np.clip(src * (1 - a) + coloured * a, 0, 255)
 
 
-def lock_invariant_body(output, body_master, gender):
-    """Keep the outfit/body silhouette fixed while leaving head and hair free."""
-    variant = np.asarray(output.convert("RGB")).astype(np.float32)
-    canonical = np.asarray(body_master.convert("RGB")).astype(np.float32)
-    h, w = variant.shape[:2]
-    yy, xx = np.mgrid[0:h, 0:w]
-    x, y = xx / w, yy / h
-
-    if gender == "male":
-        body = ellipse(x, y, .56, .78, .245, .50)
-        # Medium and slick hair can reach the collar; preserve that transition.
-        protected_hair = ellipse(x, y, .53, .30, .13, .25)
-    else:
-        body = ellipse(x, y, .52, .79, .235, .48)
-        # Long/wavy hair intentionally falls over the fixed hoodie.
-        protected_hair = (
-            ellipse(x, y, .52, .29, .16, .25)
-            | ellipse(x, y, .405, .58, .075, .34)
-            | ellipse(x, y, .635, .58, .075, .34)
-        )
-    alpha = (body & ~protected_hair).astype(np.uint8) * 255
-    alpha = cv2.GaussianBlur(alpha, (0, 0), 5.0).astype(np.float32) / 255.0
-    result = variant * (1 - alpha[..., None]) + canonical * alpha[..., None]
-    return Image.fromarray(np.clip(result, 0, 255).astype(np.uint8), "RGB")
-
-
 def standardized_override_skin_mask(image, gender):
     """Skin mask for colour masters that already use the standardized layout."""
     rgb = np.asarray(image).astype(np.float32)
@@ -336,13 +334,28 @@ def standardized_override_skin_mask(image, gender):
         anatomy = ellipse(x, y, .665, .255, .075, .145)
         anatomy |= ellipse(x, y, .665, .405, .050, .090)
     else:
-        anatomy = ellipse(x, y, .520, .285, .092, .185)
-        anatomy |= ellipse(x, y, .520, .480, .070, .120)
+        anatomy = ellipse(x, y, .520, .285, .105, .195)
+        neckline = np.zeros((h, w), np.uint8)
+        cv2.fillPoly(
+            neckline,
+            [np.array([
+                [.475 * w, .39 * h], [.565 * w, .39 * h],
+                [.585 * w, .50 * h], [.555 * w, .585 * h],
+                [.520 * w, .620 * h], [.485 * w, .585 * h],
+                [.455 * w, .50 * h],
+            ], np.int32)],
+            1,
+        )
+        anatomy |= neckline > 0
+        anatomy |= ((x > .690) & (x < .835) & (y > .58) & (y < .995))
     skin_colour = (r > g * 1.015) & (g > b * .98) & (r > 40) & (b < 205)
-    return np.asarray(
+    raw = skin_colour & anatomy
+    softened = np.asarray(
         Image.fromarray(((skin_colour & anatomy).astype(np.uint8) * 255), "L")
-        .filter(ImageFilter.GaussianBlur(2.0))
+        .filter(ImageFilter.GaussianBlur(1.15))
     ) / 255.0
+    guard = cv2.dilate(raw.astype(np.uint8), np.ones((5, 5), np.uint8), iterations=1) > 0
+    return softened * guard
 
 
 def composite_on_master_background(output, gender, style, mask_path=None):
@@ -415,8 +428,10 @@ def composite_on_master_background(output, gender, style, mask_path=None):
 
 def build():
     written = 0
-    body_masters = {}
     for gender, styles in MASTERS.items():
+        requested_gender = os.environ.get("CREATOR_BUILD_GENDER")
+        if requested_gender and gender != requested_gender:
+            continue
         for style, source in styles.items():
             if not source.exists():
                 raise SystemExit(f"Missing hairstyle master: {source}")
@@ -447,7 +462,9 @@ def build():
                 # Keep pores, eyes and facial contours visible in the enlarged
                 # profile card. Higher replacement strengths flattened these
                 # details even though the creator thumbnail looked acceptable.
-                skin_strength = .66 if gender == "female" else .72
+                # Preserve real source texture and lighting.  Higher strengths
+                # made the light female complexion look printed/airbrushed.
+                skin_strength = .50 if gender == "female" else .60
                 skinned = tint_skin(base, skin_mask, skin_rgb, strength=skin_strength)
                 for hair_name, hair_rgb in HAIRS.items():
                     is_color_master = hair_name in color_bases
@@ -511,16 +528,12 @@ def build():
                     output = output.filter(
                         ImageFilter.UnsharpMask(radius=.55, percent=38, threshold=3)
                     )
-                    body_key = (gender, skin_name, hair_name)
-                    if style == next(iter(MASTERS[gender])):
-                        body_masters[body_key] = output.copy()
-                    else:
-                        output = lock_invariant_body(output, body_masters[body_key], gender)
                     output.save(path, "WEBP", quality=95, method=6)
                     written += 1
 
-    if written != 250:
-        raise SystemExit(f"Expected 250 presets, wrote {written}")
+    expected = 125 if os.environ.get("CREATOR_BUILD_GENDER") else 250
+    if written != expected:
+        raise SystemExit(f"Expected {expected} presets, wrote {written}")
     print(f"Built {written} presets from ten distinct hairstyle masters")
 
 
