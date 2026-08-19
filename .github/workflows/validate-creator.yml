@@ -58,9 +58,9 @@ jobs:
         run: |
           set -euo pipefail
           smoke=.github/workflows/creator-runtime-smoke.yml
-          grep -q "- 'worker.js'" "$smoke"
-          grep -q "- 'wrangler.jsonc'" "$smoke"
-          grep -q "- '.assetsignore'" "$smoke"
+          grep -q -- "- 'worker.js'" "$smoke"
+          grep -q -- "- 'wrangler.jsonc'" "$smoke"
+          grep -q -- "- '.assetsignore'" "$smoke"
           grep -q 'Verify all 250 public creator assets match this commit' "$smoke"
           grep -q 'sha256sum "$path"' "$smoke"
           grep -q 'sha256sum "$remote"' "$smoke"
