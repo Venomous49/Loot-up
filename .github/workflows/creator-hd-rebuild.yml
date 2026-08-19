@@ -3,6 +3,12 @@ name: Rise Looter creator HD rebuild fallback
 on:
   push:
     branches: [main]
+    paths:
+      - 'scripts/build_creator_fullbody_hd.py'
+      - 'scripts/build_creator_from_hairstyle_masters.py'
+      - 'scripts/validate_creator_library_hd.py'
+      - 'assets/creator_sources/**'
+      - '.github/workflows/creator-hd-rebuild.yml'
   workflow_dispatch:
 
 permissions:
