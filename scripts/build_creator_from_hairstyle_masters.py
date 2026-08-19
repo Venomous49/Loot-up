@@ -42,10 +42,10 @@ SKINS = {
 }
 HAIRS = {
     "black": (24, 20, 19),
-    "brown": (70, 43, 29),
-    "blond": (190, 145, 83),
-    "red": (136, 57, 31),
-    "purple": (84, 45, 111),
+    "brown": (64, 45, 35),
+    "blond": (145, 116, 78),
+    "red": (108, 55, 38),
+    "purple": (68, 43, 82),
 }
 
 
@@ -155,7 +155,15 @@ def masks(image, gender, style):
             "male_undercut": ellipse(x, y, .585, .090, .082, .070),
             "male_slick": ellipse(x, y, .585, .090, .075, .062),
         }[style]
-        base_candidate = dark_hair & geometry & ~face
+        # Male foreheads can share the warm/dark range of the hair source.
+        # Require neutral-dark pixels so skin can never become a coloured band.
+        neutral_dark_hair = (
+            (r < 118)
+            & (g < 108)
+            & (b < 104)
+            & (((r - g) < 18) | (r < 72))
+        )
+        base_candidate = neutral_dark_hair & geometry & ~face
         candidate = base_candidate & person
         if candidate.sum() < 180:
             candidate = base_candidate
@@ -181,7 +189,7 @@ def masks(image, gender, style):
     return hair_alpha, soften(skin, 2.0)
 
 
-def tint(rgb, alpha, target, strength, minimum_luminance=.35, preserve_texture=False):
+def tint(rgb, alpha, target, strength, minimum_luminance=.35, preserve_texture=False, maximum_luminance=1.08):
     src = rgb.astype(np.float32)
     luminance = .299 * src[..., 0] + .587 * src[..., 1] + .114 * src[..., 2]
     target = np.asarray(target, dtype=np.float32)
@@ -192,7 +200,7 @@ def tint(rgb, alpha, target, strength, minimum_luminance=.35, preserve_texture=F
     # This retains individual strands instead of painting a flat opaque shape.
     normalized = np.clip(((luminance - low) / span)[..., None], 0, 1)
     if preserve_texture:
-        brightness = minimum_luminance + (1.28 - minimum_luminance) * normalized
+        brightness = minimum_luminance + (maximum_luminance - minimum_luminance) * normalized
     else:
         brightness = np.clip(normalized, minimum_luminance, 1.75)
     coloured = target[None, None, :] * np.clip(brightness, 0, 1.75)
@@ -211,7 +219,9 @@ def tint_skin(rgb, alpha, target):
     # a dark patch after selecting a deeper complexion.
     relative = np.clip((luminance - midpoint) / 255.0, -.16, .16)
     coloured = np.clip(target[None, None, :] + relative[..., None] * 92.0, 0, 255)
-    a = (alpha * .84)[..., None]
+    # Preserve most of the original micro-contrast; a heavy replacement makes
+    # facial detail look airbrushed and exaggerates source-side shadows.
+    a = (alpha * .52)[..., None]
     return np.clip(src * (1 - a) + coloured * a, 0, 255)
 
 
@@ -261,7 +271,24 @@ def build():
                             else:
                                 hair_floor = .40
                         hair_strength = .78 if gender == "female" else 1.0
-                        result = tint(skinned, hair_mask, hair_rgb, hair_strength, hair_floor, True).astype(np.uint8)
+                        hair_ceiling = {
+                            "black": .84,
+                            "brown": .94,
+                            "blond": .94,
+                            "red": .96,
+                            "purple": .92,
+                        }[hair_name]
+                        if gender == "male":
+                            hair_strength = .84
+                        result = tint(
+                            skinned,
+                            hair_mask,
+                            hair_rgb,
+                            hair_strength,
+                            hair_floor,
+                            True,
+                            hair_ceiling,
+                        ).astype(np.uint8)
                     path = OUTPUT / gender / skin_name / hair_name / f"{style}.webp"
                     path.parent.mkdir(parents=True, exist_ok=True)
                     output = Image.fromarray(result, "RGB")
@@ -269,6 +296,8 @@ def build():
                         crop_height = round(output.width * 910 / 1728)
                         output = output.crop((0, 0, output.width, crop_height)).resize((1728, 910), Image.Resampling.LANCZOS)
                         output = output.filter(ImageFilter.UnsharpMask(radius=.8, percent=70, threshold=3))
+                    else:
+                        output = output.filter(ImageFilter.UnsharpMask(radius=.65, percent=55, threshold=3))
                     output.save(path, "WEBP", quality=91, method=6)
                     written += 1
 
