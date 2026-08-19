@@ -1,0 +1,64 @@
+/* Rise Looter creator — canonical HD scene presentation.
+   Every preset is a complete 1728x910 scene. The browser must never recrop,
+   stretch, recolor or reposition it: the generator owns all avatar geometry. */
+#creatorModal .creator-preview{
+  width:100%!important;
+  height:auto!important;
+  aspect-ratio:1728 / 910!important;
+  margin:0!important;
+  display:block!important;
+  position:relative!important;
+  overflow:hidden!important;
+  background:#03080d!important;
+  border:1px solid #294052!important;
+  border-radius:9px!important;
+}
+
+#creatorModal .creator-real-preview,
+#creatorModal .creator-preview > img.creator-real-preview{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  object-fit:contain!important;
+  object-position:center center!important;
+  transform:none!important;
+  animation:none!important;
+  filter:none!important;
+  mix-blend-mode:normal!important;
+  image-rendering:auto!important;
+}
+
+#creatorModal .creator-skin-overlay,
+#creatorModal .creator-hair-overlay,
+#creatorModal .creator-preview-stage .creator-skin-overlay,
+#creatorModal .creator-preview-stage .creator-hair-overlay{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+}
+
+/* Keep the live badge independent of the rendered scene. */
+#creatorModal .creator-live-badge{
+  position:absolute!important;
+  right:16px!important;
+  top:16px!important;
+  z-index:10!important;
+}
+
+/* Hairstyle thumbnails may zoom to the head, but never alter the live preview. */
+#hairStyleChoices .hair-thumb{
+  overflow:hidden!important;
+}
+#hairStyleChoices .hair-thumb img{
+  animation:none!important;
+  filter:none!important;
+}
+
+@media(max-width:900px){
+  #creatorModal .creator-preview{
+    aspect-ratio:1728 / 910!important;
+    height:auto!important;
+  }
+}
