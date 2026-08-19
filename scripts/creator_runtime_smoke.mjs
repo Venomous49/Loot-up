@@ -18,19 +18,19 @@ page.on('pageerror', error => {
   console.error('[pageerror]', error.message);
 });
 
-async function waitForLoadedImage(selector) {
-  await page.waitForFunction(sel => {
+async function waitForLoadedImage(targetPage, selector) {
+  await targetPage.waitForFunction(sel => {
     const img = document.querySelector(sel);
     return !!img && img.complete && img.naturalWidth > 0 && img.naturalHeight > 0;
   }, selector, { timeout: 15000 });
 }
 
-async function previewPath() {
-  return page.locator('#creatorPreview img.creator-real-preview').getAttribute('src');
+async function previewPath(targetPage = page) {
+  return targetPage.locator('#creatorPreview img.creator-real-preview').getAttribute('src');
 }
 
-async function assertSingleSelected(groupSelector, expectedValue, context) {
-  const selected = page.locator(`${groupSelector} .choice.selected`);
+async function assertSingleSelected(targetPage, groupSelector, expectedValue, context) {
+  const selected = targetPage.locator(`${groupSelector} .choice.selected`);
   const count = await selected.count();
   if (count !== 1) {
     failures.push(`${context}: expected exactly one selected control in ${groupSelector}, got ${count}`);
@@ -45,25 +45,25 @@ async function assertSingleSelected(groupSelector, expectedValue, context) {
 try {
   await page.goto(baseURL, { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.waitForSelector('#creatorModal.show', { timeout: 15000 });
-  await waitForLoadedImage('#creatorPreview img.creator-real-preview');
+  await waitForLoadedImage(page, '#creatorPreview img.creator-real-preview');
 
-  await assertSingleSelected('#genderChoices', 'male', 'initial creator state');
-  await assertSingleSelected('#skinChoices', 'medium', 'initial creator state');
-  await assertSingleSelected('#hairColorChoices', 'brown', 'initial creator state');
-  await assertSingleSelected('#hairStyleChoices', 'male_textured', 'initial creator state');
+  await assertSingleSelected(page, '#genderChoices', 'male', 'initial creator state');
+  await assertSingleSelected(page, '#skinChoices', 'medium', 'initial creator state');
+  await assertSingleSelected(page, '#hairColorChoices', 'brown', 'initial creator state');
+  await assertSingleSelected(page, '#hairStyleChoices', 'male_textured', 'initial creator state');
 
   for (const [gender, styles] of Object.entries(genders)) {
     await page.locator(`#genderChoices [data-value="${gender}"]`).click();
-    await assertSingleSelected('#genderChoices', gender, `${gender}: gender click`);
-    await assertSingleSelected('#hairStyleChoices', styles[0], `${gender}: gender resets hairstyle`);
+    await assertSingleSelected(page, '#genderChoices', gender, `${gender}: gender click`);
+    await assertSingleSelected(page, '#hairStyleChoices', styles[0], `${gender}: gender resets hairstyle`);
 
     for (const skin of skins) {
       await page.locator(`#skinChoices [data-value="${skin}"]`).click();
-      await assertSingleSelected('#skinChoices', skin, `${gender}/${skin}: skin click`);
+      await assertSingleSelected(page, '#skinChoices', skin, `${gender}/${skin}: skin click`);
 
       for (const colour of colours) {
         await page.locator(`#hairColorChoices [data-value="${colour}"]`).click();
-        await assertSingleSelected('#hairColorChoices', colour, `${gender}/${skin}/${colour}: hair-colour click`);
+        await assertSingleSelected(page, '#hairColorChoices', colour, `${gender}/${skin}/${colour}: hair-colour click`);
 
         const thumbs = page.locator('#hairStyleChoices .hair-choice');
         const count = await thumbs.count();
@@ -77,10 +77,10 @@ try {
           }
 
           await button.click();
-          await assertSingleSelected('#hairStyleChoices', style, `${gender}/${skin}/${colour}/${style}: hairstyle click`);
-          await waitForLoadedImage('#creatorPreview img.creator-real-preview');
+          await assertSingleSelected(page, '#hairStyleChoices', style, `${gender}/${skin}/${colour}/${style}: hairstyle click`);
+          await waitForLoadedImage(page, '#creatorPreview img.creator-real-preview');
 
-          const src = await previewPath();
+          const src = await previewPath(page);
           const expected = `assets/creator/${gender}/${skin}/${colour}/${style}.webp`;
           if (!src || !src.includes(expected)) failures.push(`${expected}: preview routed to ${src}`);
 
@@ -108,6 +108,46 @@ try {
 
   const saveDisabled = await page.locator('#saveAvatar').isDisabled();
   if (saveDisabled) failures.push('saveAvatar remains disabled after valid preset loads');
+
+  // Explicitly simulate one unavailable preset. The fallback must preserve
+  // gender, skin and hair colour, change only the hairstyle to the canonical
+  // fallback, and keep saving disabled until a genuinely selected preset loads.
+  const fallbackPage = await browser.newPage();
+  fallbackPage.on('pageerror', error => console.error('[fallback pageerror]', error.message));
+  await fallbackPage.route('**/assets/creator/male/light/red/male_short.webp*', route => route.abort());
+  await fallbackPage.goto(baseURL, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await fallbackPage.waitForSelector('#creatorModal.show', { timeout: 15000 });
+  await fallbackPage.locator('#skinChoices [data-value="light"]').click();
+  await fallbackPage.locator('#hairColorChoices [data-value="red"]').click();
+  await fallbackPage.locator('#hairStyleChoices [data-value="male_short"]').click();
+  await waitForLoadedImage(fallbackPage, '#creatorPreview img.creator-real-preview');
+
+  const fallbackSrc = await previewPath(fallbackPage);
+  const expectedFallback = 'assets/creator/male/light/red/male_textured.webp';
+  if (!fallbackSrc || !fallbackSrc.includes(expectedFallback)) {
+    failures.push(`fallback routing changed avatar attributes or used wrong style: ${fallbackSrc}`);
+  }
+  const triedFallback = await fallbackPage.locator('#creatorPreview img.creator-real-preview').getAttribute('data-tried-fallback');
+  if (triedFallback !== '1') failures.push(`fallback asset loaded without recording fallback state: ${triedFallback}`);
+  if (!(await fallbackPage.locator('#saveAvatar').isDisabled())) {
+    failures.push('saveAvatar became enabled after a fallback image loaded');
+  }
+  await assertSingleSelected(fallbackPage, '#genderChoices', 'male', 'fallback preserves gender');
+  await assertSingleSelected(fallbackPage, '#skinChoices', 'light', 'fallback preserves skin');
+  await assertSingleSelected(fallbackPage, '#hairColorChoices', 'red', 'fallback preserves hair colour');
+  await assertSingleSelected(fallbackPage, '#hairStyleChoices', 'male_short', 'fallback preserves requested hairstyle control');
+
+  await fallbackPage.locator('#hairStyleChoices [data-value="male_medium"]').click();
+  await waitForLoadedImage(fallbackPage, '#creatorPreview img.creator-real-preview');
+  const recoveredSrc = await previewPath(fallbackPage);
+  const expectedRecovered = 'assets/creator/male/light/red/male_medium.webp';
+  if (!recoveredSrc || !recoveredSrc.includes(expectedRecovered)) {
+    failures.push(`creator did not recover to selected valid preset after fallback: ${recoveredSrc}`);
+  }
+  if (await fallbackPage.locator('#saveAvatar').isDisabled()) {
+    failures.push('saveAvatar did not re-enable after a valid preset loaded following fallback');
+  }
+  await fallbackPage.close();
 } catch (error) {
   failures.push(error.stack || String(error));
 } finally {
