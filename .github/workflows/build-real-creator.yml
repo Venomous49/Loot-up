@@ -8,6 +8,7 @@ on:
       - 'scripts/build_creator_fullbody_hd_v2.py'
       - 'scripts/build_creator_from_hairstyle_masters.py'
       - 'scripts/validate_creator_library_hd.py'
+      - 'scripts/creator_runtime_smoke.mjs'
       - 'assets/creator_sources/**'
       - 'creator-hd.css'
       - '.github/workflows/build-real-creator.yml'
@@ -72,12 +73,49 @@ jobs:
           git push || true
           exit 1
 
-      - name: Publish validated canonical creator assets immediately
+      - name: Verify generator did not rewrite creator application source
         if: steps.hd_build.outcome == 'success'
         shell: bash
         run: |
           set -euo pipefail
-          printf 'status=success\nsource_commit=%s\nformat=1728x910\nassets=250\ncenter_x=864\nground_y=900\nstanding_height=780\ncanonical_body_per_gender=yes\nrobust_native_segmentation=yes\n' "$GITHUB_SHA" > creator-hd-build-status.txt
+          git diff --exit-code -- index.html worker.js creator-hd.css wrangler.jsonc .assetsignore
+
+      - name: Setup Node for pre-publication browser validation
+        if: steps.hd_build.outcome == 'success'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Chromium smoke-test runtime
+        if: steps.hd_build.outcome == 'success'
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Start generated creator locally
+        if: steps.hd_build.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/rise-looter-http.log 2>&1 &
+          echo $! > /tmp/rise-looter-http.pid
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/index.html >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/rise-looter-http.log
+          exit 1
+
+      - name: Exercise all 250 generated creator combinations before publishing
+        if: steps.hd_build.outcome == 'success'
+        run: node scripts/creator_runtime_smoke.mjs
+
+      - name: Publish only fully validated creator assets
+        if: steps.hd_build.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf 'status=success\nsource_commit=%s\nformat=1728x910\nassets=250\ncenter_x=864\nground_y=900\nstanding_height=780\ncanonical_body_per_gender=yes\nrobust_native_segmentation=yes\nprepublish_runtime_combinations=250\n' "$GITHUB_SHA" > creator-hd-build-status.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add assets/creator/male assets/creator/female creator-hd-build-status.txt
@@ -85,8 +123,10 @@ jobs:
             echo 'No creator changes to publish'
             exit 0
           fi
-          git commit -m 'Publish robust full-body HD creator presets'
+          git commit -m 'Publish verified robust full-body HD creator presets'
           git pull --rebase origin main || true
           git push
 
-      # Production/UI verification is handled by creator-runtime-smoke.yml after publication.
+      # creator-runtime-smoke.yml then independently verifies the exact files
+      # after Cloudflare deploys them, including byte-for-byte asset parity and
+      # the full 250-combination browser exercise on the public workers.dev URL.
