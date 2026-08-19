@@ -75,6 +75,20 @@ jobs:
           done
           echo "Cloudflare creator endpoint did not become ready with the validated source marker."
           exit 1
+      - name: Verify public creator HTML matches this commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS --retry 3 --retry-delay 2 -o /tmp/loot-up-public-current.html "${CREATOR_PUBLIC_ORIGIN}/?creatorTest=1&ci=${GITHUB_SHA}"
+          local_hash="$(sha256sum index.html | awk '{print $1}')"
+          remote_hash="$(sha256sum /tmp/loot-up-public-current.html | awk '{print $1}')"
+          if [ "$local_hash" != "$remote_hash" ]; then
+            echo "Public index.html differs from checked-out commit ${GITHUB_SHA}."
+            echo "local:  $local_hash"
+            echo "public: $remote_hash"
+            exit 1
+          fi
+          echo "Verified public index.html byte-for-byte against ${GITHUB_SHA}."
       - name: Verify all 250 public creator assets match this commit
         shell: bash
         run: |
