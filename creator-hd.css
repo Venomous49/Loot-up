@@ -1,6 +1,6 @@
 /* Rise Looter creator — canonical HD scene presentation.
    Every preset is a complete 1728x910 scene. The browser must never recrop,
-   stretch, recolor or reposition it: the generator owns all avatar geometry. */
+   stretch, recolor or reposition the live preview: the generator owns all avatar geometry. */
 #creatorModal .creator-preview{
   width:100%!important;
   height:auto!important;
@@ -22,7 +22,7 @@
   height:100%!important;
   max-width:none!important;
   object-fit:contain!important;
-  object-position:center center!important;
+  object-position:50% 50%!important;
   transform:none!important;
   animation:none!important;
   filter:none!important;
@@ -47,13 +47,44 @@
   z-index:10!important;
 }
 
-/* Hairstyle thumbnails may zoom to the head, but never alter the live preview. */
+/* Hairstyle cards keep the original five presets, but show a clean head-and-hair crop.
+   This crop is thumbnail-only and never alters the live full-body preview. */
+#hairStyleChoices .hair-choice{
+  min-height:96px!important;
+  padding:6px!important;
+  display:grid!important;
+  grid-template-rows:62px auto!important;
+  gap:5px!important;
+  align-items:stretch!important;
+}
 #hairStyleChoices .hair-thumb{
+  width:100%!important;
+  height:62px!important;
+  display:block!important;
   overflow:hidden!important;
+  border-radius:6px!important;
+  background:#09131b!important;
 }
 #hairStyleChoices .hair-thumb img{
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  display:block!important;
+  object-fit:cover!important;
+  object-position:50% 13%!important;
+  transform:scale(1.34)!important;
+  transform-origin:50% 13%!important;
   animation:none!important;
   filter:none!important;
+  image-rendering:auto!important;
+}
+#hairStyleChoices .hair-choice > span:last-child{
+  min-height:24px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  line-height:1.05!important;
 }
 
 @media(max-width:900px){
