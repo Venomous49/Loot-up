@@ -43,12 +43,10 @@ for gender, styles in EXPECTED.items():
                     errors.append(f'near blank: {p}')
                 group.append((style, p, im))
 
-            # Five hairstyle buttons must resolve to five distinct complete files.
             digests = [hashlib.sha256(p.read_bytes()).hexdigest() for _,p,_ in group]
             if len(digests) == 5 and len(set(digests)) != 5:
                 errors.append(f'{gender}/{skin}/{hair}: duplicate hairstyle files')
 
-            # Require a real visual change when hairstyle changes.
             if len(group) == 5:
                 ref = group[0][2]
                 for style,p,im in group[1:]:
@@ -59,7 +57,6 @@ for gender, styles in EXPECTED.items():
                     if delta < 0.30:
                         errors.append(f'{gender}/{skin}/{hair}/{style}: hairstyle too similar ({delta:.3f})')
 
-# Skin and hair-colour controls must visibly alter complete images as well.
 for gender, styles in EXPECTED.items():
     style = styles[0]
     skin_imgs=[]
@@ -86,7 +83,6 @@ for gender, styles in EXPECTED.items():
 
 html = Path('index.html').read_text(encoding='utf-8')
 
-# The production UI must derive preview + thumbnails from exactly the same preset matrix.
 required = [
     'function creatorAssetPath(state=avatarDraft,style=state.hairStyle)',
     'assets/creator/${state.gender}/${state.skin}/${state.hairColor}/${style}.webp?v=${CREATOR_ASSET_VERSION}',
@@ -100,7 +96,6 @@ for token in required:
     if token not in html:
         errors.append(f'index routing/UI token missing: {token}')
 
-# UI values must map one-to-one to directory names used by the asset library.
 for value in SKINS:
     if f'data-value="{value}"' not in html:
         errors.append(f'missing skin button: {value}')
@@ -112,9 +107,6 @@ for styles in EXPECTED.values():
         if f'["{value}",' not in html:
             errors.append(f'missing hairstyle option: {value}')
 
-# There must be no production overlay/filter implementation left at all.
-# Previous validation was too permissive because an unrelated display:none could
-# accidentally make this test pass while an overlay remained active elsewhere.
 for forbidden in [
     'creator-skin-overlay',
     'creator-hair-overlay',
@@ -125,18 +117,21 @@ for forbidden in [
     if forbidden in html:
         errors.append(f'legacy creator overlay/filter still present: {forbidden}')
 
-# One canonical fallback only; fallback must stay inside the pre-rendered library.
-if html.count('function creatorFallbackPath(gender=avatarDraft.gender){') != 1:
-    errors.append('creatorFallbackPath must exist exactly once')
-if 'return creatorAssetPath({gender,skin:"medium",hairColor:"brown",hairStyle:style});' not in html:
-    errors.append('creator fallback must use a complete pre-rendered creator asset')
+# The only allowed fallback keeps the selected gender, skin and hair colour and
+# changes only to the canonical first hairstyle for that gender.
+if html.count('function creatorFallbackPath(gender=avatarDraft.gender,skin=avatarDraft.skin,hairColor=avatarDraft.hairColor){') != 1:
+    errors.append('creatorFallbackPath must exist exactly once and preserve selected appearance')
+if 'return creatorAssetPath({gender,skin,hairColor,hairStyle:style});' not in html:
+    errors.append('creator fallback must preserve gender, skin and hair colour')
+if '? creatorFallbackPath(gender, profile?.avatar_skin || "medium", profile?.avatar_hair_color || "brown")' not in html:
+    errors.append('stage-1 character fallback must preserve loaded profile skin/hair colour')
+if 'creatorFallbackPath(gender=avatarDraft.gender){' in html or 'skin:"medium",hairColor:"brown"' in html:
+    errors.append('legacy medium/brown creator fallback still present')
 
-# Reject stale hard-coded creator versions/paths that bypass the canonical helper.
 for stale in ['cleanbase28', 'presets31', 'hairstyles2', 'hairstyles3']:
     if stale in html:
         errors.append(f'stale creator asset version/path still present: {stale}')
 
-# Preview error handling must never synthesize a coloured placeholder over a face.
 preview_match = re.search(r'function updateCreatorPreview\(\)\{.*?\n\}', html, re.S)
 if not preview_match:
     errors.append('updateCreatorPreview function missing')
@@ -144,6 +139,10 @@ else:
     preview = preview_match.group(0)
     if 'creatorAssetPath()' not in preview or 'creatorFallbackPath()' not in preview:
         errors.append('creator preview does not use canonical asset/fallback helpers')
+    if "document.getElementById('saveAvatar').disabled=this.dataset.triedFallback==='1'" not in preview:
+        errors.append('creator preview must keep save disabled when fallback was needed')
+    if "document.getElementById('saveAvatar').disabled=false" in preview:
+        errors.append('creator preview must not enable save merely because a fallback loaded')
 
 if errors:
     print('CREATOR VALIDATION FAILED')
