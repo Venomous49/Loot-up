@@ -45,6 +45,14 @@ jobs:
           test ! -e .github/workflows/one-shot-source-fallback-fix.yml
           test ! -e .github/workflows/apply-creator-routing.yml
 
+      - name: Reject shared-face compositing regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -q 'def canonical_face_patch' scripts/build_creator_from_hairstyle_masters.py
+          ! grep -q 'def apply_canonical_face' scripts/build_creator_from_hairstyle_masters.py
+          ! grep -q 'output = apply_canonical_face' scripts/build_creator_from_hairstyle_masters.py
+
       - name: Validate Cloudflare transparent static-asset routing
         shell: bash
         run: |
