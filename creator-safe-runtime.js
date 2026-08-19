@@ -1,0 +1,160 @@
+/* Rise Looter creator safe runtime v1
+   Uses the reviewed creator source scenes directly and recolours only the reviewed
+   skin mask. It deliberately bypasses the broken generated WebP library that
+   produced hollow bodies / clothing fragments over faces. */
+(() => {
+  const ROOT = '/assets/creator_sources/';
+  const MASK_ROOT = ROOT + 'color_master_masks/';
+
+  const SKIN_TARGETS = {
+    light:  [218,176,154],
+    warm:   [190,128,82],
+    medium: [150,97,60],
+    deep:   [105,66,39],
+    dark:   [62,38,25]
+  };
+
+  const FEMALE_STYLES = new Set(['female_long','female_wavy','female_bob','female_ponytail','female_short']);
+  const MALE_NATURAL = new Set(['male_medium','male_short','male_textured']);
+
+  function naturalFile(style, hairColor) {
+    const c = hairColor === 'black' ? 'brown' : hairColor;
+    if (FEMALE_STYLES.has(style)) {
+      // Wavy has no dedicated brown-natural master; its reviewed base is brown/dark.
+      if (style === 'female_wavy' && (c === 'brown' || hairColor === 'black')) return 'female_wavy.png';
+      if (hairColor === 'black') return `${style}_brown_natural.png`;
+      return `${style}_${c}_natural.png`;
+    }
+    if (MALE_NATURAL.has(style)) {
+      if (style === 'male_textured' && hairColor === 'black') return 'male_textured_brown_natural.png';
+      if (hairColor === 'black') return `${style}_brown_natural.png`;
+      return `${style}_${c}_natural.png`;
+    }
+    // Undercut and slick only have reviewed clean masters. Do not synthesize a broken head.
+    return `${style}_clean.png`;
+  }
+
+  function maskFile(style, hairColor, sourceFile) {
+    if (sourceFile.includes('_natural.png')) return sourceFile;
+    // All reviewed poses are aligned. These masks are the safest reference masks
+    // for styles without a dedicated colour-master mask.
+    return style.startsWith('female_') ? 'female_long_brown_natural.png' : 'male_textured_brown_natural.png';
+  }
+
+  function sourcePath(style, hairColor) {
+    return ROOT + naturalFile(style, hairColor);
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.decoding = 'async';
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
+
+  function recolourSkin(ctx, maskCtx, width, height, skin) {
+    const target = SKIN_TARGETS[skin] || SKIN_TARGETS.medium;
+    const pixels = ctx.getImageData(0, 0, width, height);
+    const mask = maskCtx.getImageData(0, 0, width, height).data;
+    const d = pixels.data;
+
+    for (let i = 0; i < d.length; i += 4) {
+      // Accept both alpha masks and grayscale masks.
+      const m = Math.max(mask[i], mask[i+1], mask[i+2], mask[i+3]) / 255;
+      if (m < 0.035) continue;
+      const feather = Math.min(0.86, m * 0.78);
+      const y = (0.2126*d[i] + 0.7152*d[i+1] + 0.0722*d[i+2]) / 255;
+      const shade = Math.max(0.48, Math.min(1.42, 0.60 + y * 0.82));
+      const r = Math.min(255, target[0] * shade);
+      const g = Math.min(255, target[1] * shade);
+      const b = Math.min(255, target[2] * shade);
+      d[i]   = Math.round(d[i]   * (1-feather) + r * feather);
+      d[i+1] = Math.round(d[i+1] * (1-feather) + g * feather);
+      d[i+2] = Math.round(d[i+2] * (1-feather) + b * feather);
+    }
+    ctx.putImageData(pixels, 0, 0);
+  }
+
+  let renderToken = 0;
+  async function safeUpdateCreatorPreview() {
+    const preview = document.getElementById('creatorPreview');
+    if (!preview || typeof avatarDraft === 'undefined') return;
+    const token = ++renderToken;
+    const style = avatarDraft.hairStyle || (avatarDraft.gender === 'female' ? 'female_long' : 'male_textured');
+    const file = naturalFile(style, avatarDraft.hairColor);
+    const src = ROOT + file;
+    const maskSrc = MASK_ROOT + maskFile(style, avatarDraft.hairColor, file);
+
+    preview.innerHTML = '<canvas class="creator-safe-canvas" aria-label="Aperçu Looter"></canvas><div class="creator-asset-missing" style="display:none"><strong>Aperçu indisponible</strong><span>Le preset sélectionné ne peut pas être chargé.</span></div>';
+    const canvas = preview.querySelector('canvas');
+    const missing = preview.querySelector('.creator-asset-missing');
+
+    try {
+      const [img, maskImg] = await Promise.all([loadImage(src), loadImage(maskSrc)]);
+      if (token !== renderToken) return;
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      const mc = document.createElement('canvas');
+      mc.width = canvas.width;
+      mc.height = canvas.height;
+      const mctx = mc.getContext('2d', { willReadFrequently: true });
+      mctx.drawImage(maskImg, 0, 0, canvas.width, canvas.height);
+      recolourSkin(ctx, mctx, canvas.width, canvas.height, avatarDraft.skin);
+      const save = document.getElementById('saveAvatar');
+      if (save) save.disabled = false;
+    } catch (e) {
+      console.error('RiseLooter safe creator preset failed', src, e);
+      canvas.style.display = 'none';
+      missing.style.display = 'grid';
+      const save = document.getElementById('saveAvatar');
+      if (save) save.disabled = true;
+    }
+  }
+
+  function safeRenderHairChoices() {
+    if (typeof avatarDraft === 'undefined') return;
+    const list = avatarDraft.gender === 'female' ? femaleHair : maleHair;
+    if (!list.some(x => x[0] === avatarDraft.hairStyle)) avatarDraft.hairStyle = list[0][0];
+    const root = document.getElementById('hairStyleChoices');
+    if (!root) return;
+    root.innerHTML = list.map(([value,label]) => {
+      const thumb = sourcePath(value, avatarDraft.hairColor);
+      return `<button type="button" class="choice hair-choice ${avatarDraft.hairStyle===value?'selected':''}" data-value="${value}"><span class="hair-thumb"><img src="${thumb}" alt="${label}"></span><span>${label}</span></button>`;
+    }).join('');
+    root.querySelectorAll('.hair-choice').forEach(btn => btn.addEventListener('click', () => {
+      avatarDraft.hairStyle = btn.dataset.value;
+      root.querySelectorAll('.hair-choice').forEach(b => b.classList.toggle('selected', b === btn));
+      safeUpdateCreatorPreview();
+    }));
+  }
+
+  function install() {
+    // Override only creator presentation functions. Account/save/profile logic stays untouched.
+    window.updateCreatorPreview = safeUpdateCreatorPreview;
+    window.renderHairChoices = safeRenderHairChoices;
+
+    const creator = document.getElementById('creatorModal');
+    if (!creator) return;
+
+    ['genderChoices','skinChoices','hairColorChoices'].forEach(id => {
+      const root = document.getElementById(id);
+      if (!root) return;
+      root.addEventListener('click', () => setTimeout(() => {
+        safeRenderHairChoices();
+        safeUpdateCreatorPreview();
+      }, 0), true);
+    });
+
+    safeRenderHairChoices();
+    safeUpdateCreatorPreview();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once:true });
+  else install();
+})();
