@@ -1,8 +1,8 @@
 class RiseLooterHead {
   element(element) {
-    element.append('<link rel="stylesheet" href="/creator-hd.css?v=3">', { html: true });
-    element.append('<script src="/creator-safe-runtime.js?v=6" defer></script>', { html: true });
-    element.append('<script src="/silhouette-fix.js?v=3" defer></script>', { html: true });
+    element.append('<link rel="stylesheet" href="/creator-hd.css?v=4">', { html: true });
+    element.append('<script src="/creator-safe-runtime.js?v=7" defer></script>', { html: true });
+    element.append('<script src="/silhouette-fix.js?v=4" defer></script>', { html: true });
   }
 }
 export default {
@@ -11,9 +11,8 @@ export default {
     const contentType=response.headers.get('content-type')||'';
     if(!contentType.includes('text/html')) return response;
     const headers=new Headers(response.headers);
-    headers.set('x-riselooter-creator-source','validated');
-    headers.set('x-riselooter-creator-runtime','webp-matrix-runtime-v6');
-    headers.set('x-riselooter-silhouettes','exact-master-v3');
+    headers.set('x-riselooter-creator-source','clean-source-masters-v7');
+    headers.set('x-riselooter-silhouettes','generated-png-v4');
     return new HTMLRewriter().on('head',new RiseLooterHead()).transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
   }
 };
