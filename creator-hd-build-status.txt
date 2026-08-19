@@ -1,7 +1,10 @@
 status=failed
-source_commit=2739859c5f6a5591368e4707e022cb995ef86ada
+source_commit=8f1c62d2db14c2cf0dff80a57d6f30e8cc8a3307
 --- tail ---
-[ WARN:0@0.294] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
-[ WARN:0@0.638] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
-[ WARN:0@0.928] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
-No usable hairstyle mask: male/male_short
+[ WARN:0@0.234] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
+[ WARN:0@0.470] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
+[ WARN:0@0.684] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
+[ WARN:0@0.918] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
+[ WARN:0@1.118] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
+[ WARN:0@1.354] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
+No face detected in creator master
