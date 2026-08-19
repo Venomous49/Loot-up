@@ -1,3 +1,9 @@
+class RiseLooterHead {
+  element(element) {
+    element.append('<link rel="stylesheet" href="/creator-hd.css?v=1">', { html: true });
+  }
+}
+
 export default {
   async fetch(request, env) {
     const response = await env.ASSETS.fetch(request);
@@ -5,16 +11,20 @@ export default {
 
     if (!contentType.includes('text/html')) return response;
 
-    // Creator routing and fallbacks are validated directly in index.html.
-    // The Worker must remain a transparent transport layer so production can
-    // never diverge from the reviewed source through hidden HTML rewrites.
+    // The authoritative creator presentation lives in creator-hd.css in the
+    // repository. Inject only that source-owned stylesheet so every deployed
+    // page uses the same canonical 1728x910 preview geometry.
     const headers = new Headers(response.headers);
-    headers.set('x-riselooter-creator-source', 'validated');
+    headers.set('x-riselooter-creator-source', 'validated-hd');
 
-    return new Response(response.body, {
+    const html = new Response(response.body, {
       status: response.status,
       statusText: response.statusText,
       headers,
     });
+
+    return new HTMLRewriter()
+      .on('head', new RiseLooterHead())
+      .transform(html);
   },
 };
