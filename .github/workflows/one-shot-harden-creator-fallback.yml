@@ -35,27 +35,24 @@ jobs:
 
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          old_fallback = '''function creatorFallbackPath(gender=avatarDraft.gender){
-            const style = gender === "female" ? "female_long" : "male_textured";
-            return creatorAssetPath({gender,skin:"medium",hairColor:"brown",hairStyle:style});
-          }'''
-          new_fallback = '''function creatorFallbackPath(gender=avatarDraft.gender,skin=avatarDraft.skin,hairColor=avatarDraft.hairColor){
-            const style = gender === "female" ? "female_long" : "male_textured";
-            return creatorAssetPath({gender,skin,hairColor,hairStyle:style});
-          }'''
-          if old_fallback not in s:
-              raise SystemExit('creatorFallbackPath source block not found exactly')
-          s = s.replace(old_fallback, new_fallback, 1)
 
-          old_character = '''const fallback=stage===0
-            ? creatorFallbackPath(gender)
-            : fallbackAssetPath(stage);'''
-          new_character = '''const fallback=stage===0
-            ? creatorFallbackPath(gender, profile?.avatar_skin || "medium", profile?.avatar_hair_color || "brown")
-            : fallbackAssetPath(stage);'''
-          if old_character not in s:
-              raise SystemExit('characterHTML creator fallback block not found exactly')
-          s = s.replace(old_character, new_character, 1)
+          s, n = re.subn(
+              r'function creatorFallbackPath\(gender=avatarDraft\.gender\)\{\s*const style = gender === "female" \? "female_long" : "male_textured";\s*return creatorAssetPath\(\{gender,skin:"medium",hairColor:"brown",hairStyle:style\}\);\s*\}',
+              'function creatorFallbackPath(gender=avatarDraft.gender,skin=avatarDraft.skin,hairColor=avatarDraft.hairColor){\n  const style = gender === "female" ? "female_long" : "male_textured";\n  return creatorAssetPath({gender,skin,hairColor,hairStyle:style});\n}',
+              s,
+              count=1,
+          )
+          if n != 1:
+              raise SystemExit(f'creatorFallbackPath replacement count={n}')
+
+          s, n = re.subn(
+              r'const fallback=stage===0\s*\? creatorFallbackPath\(gender\)\s*: fallbackAssetPath\(stage\);',
+              'const fallback=stage===0\n  ? creatorFallbackPath(gender, profile?.avatar_skin || "medium", profile?.avatar_hair_color || "brown")\n  : fallbackAssetPath(stage);',
+              s,
+              count=1,
+          )
+          if n != 1:
+              raise SystemExit(f'characterHTML fallback replacement count={n}')
 
           old_onload = "onload=\"document.getElementById('saveAvatar').disabled=false\""
           new_onload = "onload=\"document.getElementById('saveAvatar').disabled=this.dataset.triedFallback==='1'\""
@@ -71,29 +68,29 @@ jobs:
               raise SystemExit('runtime smoke anchor missing')
           extra = r'''
 
-          await page.locator('#genderChoices [data-value="male"]').click();
-          await page.locator('#skinChoices [data-value="light"]').click();
-          await page.locator('#hairColorChoices [data-value="red"]').click();
-          const blockedPattern = '**/assets/creator/male/light/red/male_short.webp*';
-          await page.route(blockedPattern, route => route.abort());
-          await page.locator('#hairStyleChoices [data-value="male_short"]').click();
-          await page.waitForFunction(() => {
-            const img = document.querySelector('#creatorPreview img.creator-real-preview');
-            return !!img && img.dataset.triedFallback === '1' && img.complete && img.naturalWidth > 0;
-          }, { timeout: 15000 });
-          const fallbackSrc = await previewPath();
-          if (!fallbackSrc || !fallbackSrc.includes('assets/creator/male/light/red/male_textured.webp')) {
-            failures.push(`forced missing preset used wrong fallback: ${fallbackSrc}`);
-          }
-          if (!(await page.locator('#saveAvatar').isDisabled())) {
-            failures.push('saveAvatar became enabled even though selected preset required fallback');
-          }
-          await page.unroute(blockedPattern);
-          await page.locator('#hairStyleChoices [data-value="male_textured"]').click();
-          await waitForLoadedImage('#creatorPreview img.creator-real-preview');
-          if (await page.locator('#saveAvatar').isDisabled()) {
-            failures.push('saveAvatar did not recover after returning to valid primary preset');
-          }'''
+  await page.locator('#genderChoices [data-value="male"]').click();
+  await page.locator('#skinChoices [data-value="light"]').click();
+  await page.locator('#hairColorChoices [data-value="red"]').click();
+  const blockedPattern = '**/assets/creator/male/light/red/male_short.webp*';
+  await page.route(blockedPattern, route => route.abort());
+  await page.locator('#hairStyleChoices [data-value="male_short"]').click();
+  await page.waitForFunction(() => {
+    const img = document.querySelector('#creatorPreview img.creator-real-preview');
+    return !!img && img.dataset.triedFallback === '1' && img.complete && img.naturalWidth > 0;
+  }, { timeout: 15000 });
+  const fallbackSrc = await previewPath();
+  if (!fallbackSrc || !fallbackSrc.includes('assets/creator/male/light/red/male_textured.webp')) {
+    failures.push(`forced missing preset used wrong fallback: ${fallbackSrc}`);
+  }
+  if (!(await page.locator('#saveAvatar').isDisabled())) {
+    failures.push('saveAvatar became enabled even though selected preset required fallback');
+  }
+  await page.unroute(blockedPattern);
+  await page.locator('#hairStyleChoices [data-value="male_textured"]').click();
+  await waitForLoadedImage('#creatorPreview img.creator-real-preview');
+  if (await page.locator('#saveAvatar').isDisabled()) {
+    failures.push('saveAvatar did not recover after returning to valid primary preset');
+  }'''
           if 'forced missing preset used wrong fallback' not in m:
               m = m.replace(anchor, anchor + extra, 1)
           mpath.write_text(m, encoding='utf-8')
