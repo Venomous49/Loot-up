@@ -1,0 +1,53 @@
+name: Rise Looter creator HD rebuild fallback
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: riselooter-creator-hd-fallback
+  cancel-in-progress: true
+
+jobs:
+  rebuild:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install image dependencies
+        run: python -m pip install --quiet 'numpy<3' pillow opencv-python-headless
+
+      - name: Rebuild canonical 250 creator presets
+        run: python scripts/build_creator_fullbody_hd.py
+
+      - name: Validate geometry and completeness
+        run: python scripts/validate_creator_library_hd.py
+
+      - name: Publish validated HD creator assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf 'status=success\nsource_commit=%s\nformat=1728x910\nassets=250\ncenter_x=1110\nground_y=900\nstanding_height=820\n' "$GITHUB_SHA" > creator-hd-build-status.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/creator/male assets/creator/female creator-hd-build-status.txt
+          if git diff --cached --quiet; then
+            echo 'Creator library already matches canonical HD output.'
+            exit 0
+          fi
+          git commit -m 'Publish validated canonical HD creator library'
+          git push
