@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'scripts/build_creator_fullbody_hd.py'
+      - 'scripts/build_creator_fullbody_hd_v2.py'
       - 'scripts/build_creator_from_hairstyle_masters.py'
       - 'scripts/validate_creator_library_hd.py'
       - 'assets/creator_sources/**'
@@ -44,7 +45,7 @@ jobs:
         run: |
           set -o pipefail
           : > /tmp/creator-hd-build.log
-          python scripts/build_creator_fullbody_hd.py 2>&1 | tee -a /tmp/creator-hd-build.log
+          python scripts/build_creator_fullbody_hd_v2.py 2>&1 | tee -a /tmp/creator-hd-build.log
           build_status=${PIPESTATUS[0]}
           if [ "$build_status" -ne 0 ]; then
             exit "$build_status"
@@ -76,7 +77,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          printf 'status=success\nsource_commit=%s\nformat=1728x910\nassets=250\ncenter_x=864\nground_y=900\nstanding_height=780\ncanonical_body_per_gender=yes\n' "$GITHUB_SHA" > creator-hd-build-status.txt
+          printf 'status=success\nsource_commit=%s\nformat=1728x910\nassets=250\ncenter_x=864\nground_y=900\nstanding_height=780\ncanonical_body_per_gender=yes\nrobust_native_segmentation=yes\n' "$GITHUB_SHA" > creator-hd-build-status.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add assets/creator/male assets/creator/female creator-hd-build-status.txt
@@ -84,11 +85,8 @@ jobs:
             echo 'No creator changes to publish'
             exit 0
           fi
-          git commit -m 'Publish canonical full-body HD creator presets'
+          git commit -m 'Publish robust full-body HD creator presets'
           git pull --rebase origin main || true
           git push
 
-      # Production/UI verification is intentionally handled by
-      # creator-runtime-smoke.yml after this asset commit.  The visual library
-      # is therefore published as soon as image generation and geometry pass,
-      # rather than being held back by a browser installation step.
+      # Production/UI verification is handled by creator-runtime-smoke.yml after publication.
