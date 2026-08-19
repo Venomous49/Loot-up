@@ -53,6 +53,21 @@ jobs:
           ! grep -q 'def apply_canonical_face' scripts/build_creator_from_hairstyle_masters.py
           ! grep -q 'output = apply_canonical_face' scripts/build_creator_from_hairstyle_masters.py
 
+      - name: Require production smoke to prove deployed creator matches main
+        shell: bash
+        run: |
+          set -euo pipefail
+          smoke=.github/workflows/creator-runtime-smoke.yml
+          grep -q "- 'worker.js'" "$smoke"
+          grep -q "- 'wrangler.jsonc'" "$smoke"
+          grep -q "- '.assetsignore'" "$smoke"
+          grep -q 'Verify all 250 public creator assets match this commit' "$smoke"
+          grep -q 'sha256sum "$path"' "$smoke"
+          grep -q 'sha256sum "$remote"' "$smoke"
+          grep -q 'test "$checked" -eq 250' "$smoke"
+          grep -q 'test "$mismatches" -eq 0' "$smoke"
+          grep -q 'Exercise all 250 creator combinations on Cloudflare' "$smoke"
+
       - name: Validate Cloudflare transparent static-asset routing
         shell: bash
         run: |
