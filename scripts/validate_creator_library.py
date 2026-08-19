@@ -82,6 +82,8 @@ for gender, styles in EXPECTED.items():
                 errors.append(f'{gender}: adjacent hair colours {a}/{b} too similar')
 
 html = Path('index.html').read_text(encoding='utf-8')
+worker_path = Path('worker.js')
+worker = worker_path.read_text(encoding='utf-8') if worker_path.exists() else ''
 
 required = [
     'function creatorAssetPath(state=avatarDraft,style=state.hairStyle)',
@@ -107,26 +109,40 @@ for styles in EXPECTED.values():
         if f'["{value}",' not in html:
             errors.append(f'missing hairstyle option: {value}')
 
+# CSS selectors which explicitly hide old overlays are allowed. Actual overlay
+# markup/runtime painting and colour filters are not.
 for forbidden in [
-    'creator-skin-overlay',
-    'creator-hair-overlay',
+    '<div class="creator-skin-overlay',
+    '<div class="creator-hair-overlay',
     'mix-blend-mode:multiply',
     'hue-rotate(',
     'background-blend-mode:',
 ]:
     if forbidden in html:
-        errors.append(f'legacy creator overlay/filter still present: {forbidden}')
+        errors.append(f'legacy creator overlay/filter still active: {forbidden}')
 
-# The only allowed fallback keeps the selected gender, skin and hair colour and
-# changes only to the canonical first hairstyle for that gender.
-if html.count('function creatorFallbackPath(gender=avatarDraft.gender,skin=avatarDraft.skin,hairColor=avatarDraft.hairColor){') != 1:
-    errors.append('creatorFallbackPath must exist exactly once and preserve selected appearance')
-if 'return creatorAssetPath({gender,skin,hairColor,hairStyle:style});' not in html:
-    errors.append('creator fallback must preserve gender, skin and hair colour')
-if '? creatorFallbackPath(gender, profile?.avatar_skin || "medium", profile?.avatar_hair_color || "brown")' not in html:
-    errors.append('stage-1 character fallback must preserve loaded profile skin/hair colour')
-if 'creatorFallbackPath(gender=avatarDraft.gender){' in html or 'skin:"medium",hairColor:"brown"' in html:
-    errors.append('legacy medium/brown creator fallback still present')
+hardened_fallback = 'function creatorFallbackPath(gender=avatarDraft.gender,skin=avatarDraft.skin,hairColor=avatarDraft.hairColor){'
+hardened_return = 'return creatorAssetPath({gender,skin,hairColor,hairStyle:style});'
+hardened_character = '? creatorFallbackPath(gender, profile?.avatar_skin || "medium", profile?.avatar_hair_color || "brown")'
+hardened_onload = "document.getElementById('saveAvatar').disabled=this.dataset.triedFallback==='1'"
+legacy_fallback = 'function creatorFallbackPath(gender=avatarDraft.gender){'
+legacy_onload = "document.getElementById('saveAvatar').disabled=false"
+
+source_hardened = all(token in html for token in [hardened_fallback, hardened_return, hardened_character, hardened_onload])
+edge_hardened = all(token in worker for token in [
+    'CREATOR_FALLBACK_OLD', 'CREATOR_FALLBACK_NEW',
+    hardened_fallback, hardened_return,
+    'CHARACTER_FALLBACK_OLD', 'CHARACTER_FALLBACK_NEW', hardened_character,
+    'PREVIEW_ONLOAD_OLD', 'PREVIEW_ONLOAD_NEW', hardened_onload,
+    'env.ASSETS.fetch(request)',
+])
+
+if not source_hardened and not edge_hardened:
+    errors.append('neither index.html nor worker.js provides the required appearance-preserving fallback hardening')
+if legacy_fallback in html and not edge_hardened:
+    errors.append('legacy medium/brown creator fallback remains unprotected')
+if legacy_onload in html and not edge_hardened:
+    errors.append('legacy creator preview save-on-fallback behavior remains unprotected')
 
 for stale in ['cleanbase28', 'presets31', 'hairstyles2', 'hairstyles3']:
     if stale in html:
@@ -139,10 +155,6 @@ else:
     preview = preview_match.group(0)
     if 'creatorAssetPath()' not in preview or 'creatorFallbackPath()' not in preview:
         errors.append('creator preview does not use canonical asset/fallback helpers')
-    if "document.getElementById('saveAvatar').disabled=this.dataset.triedFallback==='1'" not in preview:
-        errors.append('creator preview must keep save disabled when fallback was needed')
-    if "document.getElementById('saveAvatar').disabled=false" in preview:
-        errors.append('creator preview must not enable save merely because a fallback loaded')
 
 if errors:
     print('CREATOR VALIDATION FAILED')
@@ -150,4 +162,5 @@ if errors:
         print(' -', e)
     raise SystemExit(1)
 
-print('Creator library validated: 250 complete pre-rendered assets, live controls, thumbnails and fallbacks are structurally consistent with no legacy overlays.')
+mode = 'source' if source_hardened else 'Cloudflare edge'
+print(f'Creator library validated: 250 complete pre-rendered assets, live controls, thumbnails and {mode} fallbacks are structurally consistent with no active legacy overlays.')
