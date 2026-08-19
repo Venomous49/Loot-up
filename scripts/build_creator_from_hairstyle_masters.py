@@ -286,8 +286,10 @@ def tint_skin(rgb, alpha, target, strength=.76):
     midpoint = float(np.median(skin_pixels)) if skin_pixels.size else 105.0
     # Compress source contrast so a naturally shadowed source cannot turn into
     # a dark patch after selecting a deeper complexion.
-    relative = np.clip((luminance - midpoint) / 255.0, -.16, .16)
-    coloured = np.clip(target[None, None, :] + relative[..., None] * 118.0, 0, 255)
+    # Only retain fine local modelling.  The older wide +/- .16 range carried
+    # the source key-light shadow into deep/dark variants as charcoal patches.
+    relative = np.clip((luminance - midpoint) / 255.0, -.075, .075)
+    coloured = np.clip(target[None, None, :] + relative[..., None] * 92.0, 0, 255)
     # Preserve most of the original micro-contrast; a heavy replacement makes
     # facial detail look airbrushed and exaggerates source-side shadows.
     # Make the five requested complexions visibly distinct on every master.
@@ -295,6 +297,32 @@ def tint_skin(rgb, alpha, target, strength=.76):
     # the forehead/cheek shadow patches present in the previous assets.
     a = (alpha * strength)[..., None]
     return np.clip(src * (1 - a) + coloured * a, 0, 255)
+
+
+def lock_invariant_body(output, body_master, gender):
+    """Keep the outfit/body silhouette fixed while leaving head and hair free."""
+    variant = np.asarray(output.convert("RGB")).astype(np.float32)
+    canonical = np.asarray(body_master.convert("RGB")).astype(np.float32)
+    h, w = variant.shape[:2]
+    yy, xx = np.mgrid[0:h, 0:w]
+    x, y = xx / w, yy / h
+
+    if gender == "male":
+        body = ellipse(x, y, .56, .78, .245, .50)
+        # Medium and slick hair can reach the collar; preserve that transition.
+        protected_hair = ellipse(x, y, .53, .30, .13, .25)
+    else:
+        body = ellipse(x, y, .52, .79, .235, .48)
+        # Long/wavy hair intentionally falls over the fixed hoodie.
+        protected_hair = (
+            ellipse(x, y, .52, .29, .16, .25)
+            | ellipse(x, y, .405, .58, .075, .34)
+            | ellipse(x, y, .635, .58, .075, .34)
+        )
+    alpha = (body & ~protected_hair).astype(np.uint8) * 255
+    alpha = cv2.GaussianBlur(alpha, (0, 0), 5.0).astype(np.float32) / 255.0
+    result = variant * (1 - alpha[..., None]) + canonical * alpha[..., None]
+    return Image.fromarray(np.clip(result, 0, 255).astype(np.uint8), "RGB")
 
 
 def standardized_override_skin_mask(image, gender):
@@ -387,6 +415,7 @@ def composite_on_master_background(output, gender, style, mask_path=None):
 
 def build():
     written = 0
+    body_masters = {}
     for gender, styles in MASTERS.items():
         for style, source in styles.items():
             if not source.exists():
@@ -418,7 +447,7 @@ def build():
                 # Keep pores, eyes and facial contours visible in the enlarged
                 # profile card. Higher replacement strengths flattened these
                 # details even though the creator thumbnail looked acceptable.
-                skin_strength = .48 if gender == "female" else .56
+                skin_strength = .66 if gender == "female" else .72
                 skinned = tint_skin(base, skin_mask, skin_rgb, strength=skin_strength)
                 for hair_name, hair_rgb in HAIRS.items():
                     is_color_master = hair_name in color_bases
@@ -441,24 +470,22 @@ def build():
                                 "purple": .20,
                             }[hair_name]
                         elif hair_name == "purple":
-                            dark_styles = {"male_textured", "male_short", "male_undercut"}
-                            if style in dark_styles:
-                                hair_floor = .62
-                            else:
-                                hair_floor = .40
+                            # Fade/undercut and slick/back styles used to read as
+                            # black. Keep a restrained violet in their highlights.
+                            hair_floor = .58 if style in {"male_short", "male_undercut", "male_slick"} else .52
                         hair_strength = {
                             "black": 0.0,
                             "brown": .46,
                             "blond": .64,
                             "red": .58,
-                            "purple": .56,
+                            "purple": .72,
                         }[hair_name]
                         hair_ceiling = {
                             "black": .84,
                             "brown": .94,
                             "blond": .94,
                             "red": .96,
-                            "purple": .92,
+                            "purple": 1.02,
                         }[hair_name]
                         result = tint(
                             skinned,
@@ -484,6 +511,11 @@ def build():
                     output = output.filter(
                         ImageFilter.UnsharpMask(radius=.55, percent=38, threshold=3)
                     )
+                    body_key = (gender, skin_name, hair_name)
+                    if style == next(iter(MASTERS[gender])):
+                        body_masters[body_key] = output.copy()
+                    else:
+                        output = lock_invariant_body(output, body_masters[body_key], gender)
                     output.save(path, "WEBP", quality=95, method=6)
                     written += 1
 
