@@ -1,8 +1,10 @@
 status=success
-source_commit=262a598fad756ce01dda715d977fd39e54f0bef0
+source_commit=9d600f473617084c2ea424af40d666bb295c333e
 format=1728x910
 assets=250
 center_x=864
 ground_y=900
 standing_height=780
 canonical_body_per_gender=yes
+robust_native_segmentation=yes
+prepublish_runtime_combinations=250
