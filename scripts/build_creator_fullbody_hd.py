@@ -10,9 +10,9 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import build_creator_from_hairstyle_masters as base
 
 CANVAS_SIZE = (1728, 910)
-TARGET_PERSON_HEIGHT = 810
-MAX_PERSON_WIDTH = 610
-GROUND_Y = 898
+TARGET_PERSON_HEIGHT = 820
+MAX_PERSON_WIDTH = 900
+GROUND_Y = 900
 CENTER_X = 1110
 WEBP_QUALITY = 98
 
@@ -41,8 +41,13 @@ def composite_full_body(scene, style, override_mask=None):
     """Place every avatar on the exact same 1728x910 set and ground line.
 
     The person is scaled uniformly from the reviewed silhouette, never stretched,
-    so body/face proportions remain photographic.  Male and female assets share
-    the same canvas, center axis, ground line and maximum footprint.
+    so body/face proportions remain photographic. Male and female assets share
+    the same canvas, center axis, ground line and target standing height.
+
+    Hair can legitimately make the silhouette wider (especially female long and
+    wavy styles), so height is the primary normalization constraint. A generous
+    width guard only prevents accidental clipping; it must never shrink a normal
+    full-body avatar into a torso-sized render.
     """
     portrait = scene.convert("RGB")
     if portrait.size != CANVAS_SIZE:
@@ -59,18 +64,19 @@ def composite_full_body(scene, style, override_mask=None):
     if source_h <= 0 or source_w <= 0:
         raise SystemExit(f"Invalid creator silhouette bounds: {style}")
 
-    scale = min(TARGET_PERSON_HEIGHT / source_h, MAX_PERSON_WIDTH / source_w)
+    height_scale = TARGET_PERSON_HEIGHT / source_h
+    width_guard_scale = MAX_PERSON_WIDTH / source_w
+    scale = min(height_scale, width_guard_scale)
+
     target_w = max(1, round(source_w * scale))
     target_h = max(1, round(source_h * scale))
 
     person = person.resize((target_w, target_h), Image.Resampling.LANCZOS)
-    # LANCZOS preserves fine hair strands; a tiny blur on alpha only removes
-    # hard cut-out halos without softening the actual face or hairstyle.
     person_alpha = person_alpha.resize((target_w, target_h), Image.Resampling.LANCZOS)
 
     x = round(CENTER_X - target_w / 2)
     y = GROUND_Y - target_h
-    if x < 0 or x + target_w > CANVAS_SIZE[0] or y < 0:
+    if x < 0 or x + target_w > CANVAS_SIZE[0] or y < 0 or y + target_h > CANVAS_SIZE[1]:
         raise SystemExit(f"Creator placement clips canvas for {style}: {(x, y, target_w, target_h)}")
 
     canvas = BACKGROUND.copy()
@@ -169,9 +175,8 @@ def build():
                     output = composite_full_body(scene, style, override_mask)
                     path = base.OUTPUT / gender / skin_name / hair_name / f"{style}.webp"
                     path.parent.mkdir(parents=True, exist_ok=True)
-                    # No global sharpening/filter is applied: the approved street
-                    # background stays pixel-identical before WebP encoding, while
-                    # the avatar itself keeps the highest practical photographic detail.
+                    # Near-lossless WebP keeps skin texture and hair detail while
+                    # retaining the exact approved street background composition.
                     output.save(path, "WEBP", quality=WEBP_QUALITY, method=6)
                     written += 1
 
@@ -180,7 +185,7 @@ def build():
         raise SystemExit(f"Expected {expected} presets, wrote {written}")
     print(
         f"Built {written} Rise Looter presets at {CANVAS_SIZE[0]}x{CANVAS_SIZE[1]} "
-        f"with shared center x={CENTER_X}, ground y={GROUND_Y}, full-body target={TARGET_PERSON_HEIGHT}px"
+        f"with shared center x={CENTER_X}, ground y={GROUND_Y}, standing height={TARGET_PERSON_HEIGHT}px"
     )
 
 
