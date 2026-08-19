@@ -38,9 +38,6 @@ STYLE_SOURCES = {
     },
 }
 
-# Target hairstyle envelopes around the single canonical head position.  These
-# preserve each haircut's own aspect ratio, while keeping the same face/body,
-# posture, clothes, scale and centre for every preset.
 HAIR_ENVELOPES = {
     "male_textured": (190, 155, 126),
     "male_short": (165, 125, 132),
@@ -102,13 +99,74 @@ def canonical_body(gender):
     return body, np.asarray(skin_layer, dtype=np.float32) / 255.0
 
 
+def fallback_hair_mask(source, gender, style):
+    rgb = np.asarray(source, dtype=np.float32)
+    h, w = rgb.shape[:2]
+    yy, xx = np.mgrid[0:h, 0:w]
+    x, y = xx / w, yy / h
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    lum = .299 * r + .587 * g + .114 * b
+
+    # Source masters are normalized around these head zones.  Restricting the
+    # fallback to the head/locks prevents walls, hoodies and shadows entering
+    # the hairstyle mask.
+    if gender == "male":
+        cx = .58
+        bounds = {
+            "male_textured": (.47, .70, .03, .32),
+            "male_short": (.49, .68, .05, .29),
+            "male_medium": (.45, .72, .02, .36),
+            "male_undercut": (.47, .70, .03, .32),
+            "male_slick": (.48, .69, .04, .31),
+        }[style]
+    else:
+        cx = .52
+        bounds = {
+            "female_long": (.36, .68, .02, .72),
+            "female_wavy": (.34, .70, .02, .74),
+            "female_bob": (.38, .66, .02, .48),
+            "female_ponytail": (.36, .70, .01, .64),
+            "female_short": (.41, .63, .03, .36),
+        }[style]
+
+    x0, x1, y0, y1 = bounds
+    region = (x >= x0) & (x <= x1) & (y >= y0) & (y <= y1)
+    dark_or_hairlike = (lum < 138) & (r < 150) & (g < 135) & (b < 135)
+    warm_dark = (r >= b * .80) | (lum < 58)
+    raw = region & dark_or_hairlike & warm_dark
+
+    layer = (raw.astype(np.uint8) * 255)
+    layer = cv2.morphologyEx(layer, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
+    layer = cv2.morphologyEx(layer, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+    n, labels, stats, _ = cv2.connectedComponentsWithStats((layer > 0).astype(np.uint8), 8)
+    if n > 1:
+        # Prefer a sizeable component closest to the expected head centre.
+        best = None
+        best_score = None
+        for idx in range(1, n):
+            sx, sy, sw, sh, area = stats[idx]
+            if area < 80:
+                continue
+            component_cx = (sx + sw / 2) / w
+            component_cy = (sy + sh / 2) / h
+            score = area - 18000 * abs(component_cx - cx) - 7000 * abs(component_cy - .18)
+            if best_score is None or score > best_score:
+                best_score, best = score, idx
+        if best is not None:
+            layer = ((labels == best).astype(np.uint8) * 255)
+    return cv2.GaussianBlur(layer, (0, 0), 1.0).astype(np.float32) / 255.0
+
+
 def align_style_hair(gender, style):
     source = fit_scene(STYLE_SOURCES[gender][style])
     hair_alpha, _ = base.masks(source, gender, style)
+    if np.count_nonzero(hair_alpha > .07) < 80:
+        hair_alpha = fallback_hair_mask(source, gender, style)
+
     mask = np.clip(hair_alpha * 255, 0, 255).astype(np.uint8)
-    ys, xs = np.where(mask > 18)
+    ys, xs = np.where(mask > 12)
     if not len(xs):
-        raise SystemExit(f"No usable hairstyle mask: {gender}/{style}")
+        raise SystemExit(f"No usable hairstyle mask after fallback: {gender}/{style}")
 
     x0, x1 = int(xs.min()), int(xs.max()) + 1
     y0, y1 = int(ys.min()), int(ys.max()) + 1
