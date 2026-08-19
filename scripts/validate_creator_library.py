@@ -11,6 +11,7 @@ EXPECTED = {
 }
 SKINS = ['light','warm','medium','deep','dark']
 HAIRS = ['black','brown','blond','red','purple']
+EXPECTED_SIZE = (910, 1728)
 
 errors = []
 
@@ -36,6 +37,9 @@ for gender, styles in EXPECTED.items():
                 im = cv2.imread(str(p), cv2.IMREAD_COLOR)
                 if im is None or im.size == 0:
                     errors.append(f'undecodable: {p}')
+                    continue
+                if im.shape[:2] != EXPECTED_SIZE:
+                    errors.append(f'unexpected creator framing: {p} is {im.shape[1]}x{im.shape[0]}, expected 1728x910')
                     continue
                 if im.std() < 10:
                     errors.append(f'near blank: {p}')
@@ -160,4 +164,4 @@ if errors:
         print(' -', e)
     raise SystemExit(1)
 
-print('Creator library validated: 250 complete pre-rendered assets, live controls, thumbnails and source-owned fallbacks are structurally consistent with no active legacy overlays or edge rewrites.')
+print('Creator library validated: 250 complete pre-rendered assets at canonical 1728x910 framing, live controls, thumbnails and source-owned fallbacks are structurally consistent with no active legacy overlays or edge rewrites.')
