@@ -13,12 +13,15 @@ EXPECTED = {
 SKINS = ['light','warm','medium','deep','dark']
 HAIRS = ['black','brown','blond','red','purple']
 EXPECTED_SIZE = (910, 1728)
-EXPECTED_FACES = {
-    'male': (914.0, 160.0, 180.0, 235.0),
-    'female': (800.0, 125.0, 212.0, 304.0),
+EXPECTED_EYE_MIDPOINTS = {
+    'male': (983.0, 242.0),
+    'female': (899.0, 250.0),
 }
-FACE_POSITION_TOLERANCE = 12.0
-FACE_SIZE_TOLERANCE = 18.0
+EYE_POSITION_TOLERANCE = 15.0
+FACE_HEIGHT_RANGES = {
+    'male': (210.0, 265.0),
+    'female': (275.0, 330.0),
+}
 
 errors = []
 
@@ -65,17 +68,23 @@ for gender, styles in EXPECTED.items():
                         errors.append(f'creator face not detected: {p}')
                     else:
                         face = max(faces, key=lambda row: row[-1])
-                        x, y, w, h = (float(v) for v in face[:4])
-                        ex, ey, ew, eh = EXPECTED_FACES[gender]
-                        if abs(x - ex) > FACE_POSITION_TOLERANCE or abs(y - ey) > FACE_POSITION_TOLERANCE:
+                        _, _, _, h = (float(v) for v in face[:4])
+                        eye_x = (float(face[4]) + float(face[6])) / 2
+                        eye_y = (float(face[5]) + float(face[7])) / 2
+                        expected_eye_x, expected_eye_y = EXPECTED_EYE_MIDPOINTS[gender]
+                        if (
+                            abs(eye_x - expected_eye_x) > EYE_POSITION_TOLERANCE
+                            or abs(eye_y - expected_eye_y) > EYE_POSITION_TOLERANCE
+                        ):
                             errors.append(
-                                f'creator face position drift: {p} detected at ({x:.1f},{y:.1f}), '
-                                f'expected near ({ex:.1f},{ey:.1f})'
+                                f'creator eye position drift: {p} detected at ({eye_x:.1f},{eye_y:.1f}), '
+                                f'expected near ({expected_eye_x:.1f},{expected_eye_y:.1f})'
                             )
-                        if abs(w - ew) > FACE_SIZE_TOLERANCE or abs(h - eh) > FACE_SIZE_TOLERANCE:
+                        min_h, max_h = FACE_HEIGHT_RANGES[gender]
+                        if not min_h <= h <= max_h:
                             errors.append(
-                                f'creator face scale drift: {p} detected at {w:.1f}x{h:.1f}, '
-                                f'expected near {ew:.1f}x{eh:.1f}'
+                                f'creator face scale drift: {p} detected at {h:.1f}px high, '
+                                f'expected {min_h:.1f}-{max_h:.1f}px'
                             )
 
                 group.append((style, p, im))

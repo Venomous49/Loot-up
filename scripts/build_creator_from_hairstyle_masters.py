@@ -2,7 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import cv2
-from PIL import Image, ImageFilter, ImageOps
+from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -277,7 +277,7 @@ def tint(rgb, alpha, target, strength, minimum_luminance=.35, preserve_texture=F
     return np.clip(src * (1 - a) + coloured * a, 0, 255)
 
 
-def tint_skin(rgb, alpha, target):
+def tint_skin(rgb, alpha, target, strength=.76):
     """Apply an even complexion while retaining restrained photographic shading."""
     src = rgb.astype(np.float32)
     target = np.asarray(target, dtype=np.float32)
@@ -293,7 +293,7 @@ def tint_skin(rgb, alpha, target):
     # Make the five requested complexions visibly distinct on every master.
     # The compressed luminance above keeps this stronger blend from creating
     # the forehead/cheek shadow patches present in the previous assets.
-    a = (alpha * .76)[..., None]
+    a = (alpha * strength)[..., None]
     return np.clip(src * (1 - a) + coloured * a, 0, 255)
 
 
@@ -318,7 +318,7 @@ def standardized_override_skin_mask(image, gender):
 
 
 def composite_on_master_background(output, gender, style, mask_path=None):
-    """Place each person so every detected face has the same exact box."""
+    """Place each person on the shared set without ever stretching a face."""
     global BACKGROUND_CACHE
     canvas_size = (1728, 910)
     portrait = ImageOps.fit(output.convert("RGB"), canvas_size, Image.Resampling.LANCZOS)
@@ -336,8 +336,12 @@ def composite_on_master_background(output, gender, style, mask_path=None):
     original_alpha = alpha.crop(bbox)
     face_x, face_y, face_w, face_h = detect_face(portrait)
     target_x, target_y, target_w, target_h = TARGET_FACES[gender]
-    desired_x, desired_y = target_x, target_y
-    scale_x, scale_y = target_w / face_w, target_h / face_h
+    fixed_center_x = target_x + target_w / 2
+    anchor_center_x = fixed_center_x
+    desired_y = target_y
+    # A single scale is essential: independent X/Y correction was changing
+    # jaw width and face length when the user switched hairstyles.
+    scale = target_h / face_h
     if BACKGROUND_CACHE is None:
         BACKGROUND_CACHE = ImageOps.fit(
             Image.open(BACKGROUND).convert("RGB"),
@@ -347,28 +351,30 @@ def composite_on_master_background(output, gender, style, mask_path=None):
     canvas = None
     for attempt in range(3):
         target_size = (
-            max(1, round((bbox[2] - bbox[0]) * scale_x)),
-            max(1, round((bbox[3] - bbox[1]) * scale_y)),
+            max(1, round((bbox[2] - bbox[0]) * scale)),
+            max(1, round((bbox[3] - bbox[1]) * scale)),
         )
         cutout = original_cutout.resize(target_size, Image.Resampling.LANCZOS)
         cutout_alpha = original_alpha.resize(target_size, Image.Resampling.LANCZOS)
         paste_at = (
-            round(target_x - (face_x - bbox[0]) * scale_x),
-            round(target_y - (face_y - bbox[1]) * scale_y),
+            round(anchor_center_x - (face_x + face_w / 2 - bbox[0]) * scale),
+            round(target_y - (face_y - bbox[1]) * scale),
         )
         canvas = BACKGROUND_CACHE.copy()
         canvas.paste(cutout, paste_at, cutout_alpha)
         if attempt < 2:
             final_x, final_y, final_w, final_h = detect_face(canvas)
-            scale_x *= target_w / final_w
-            scale_y *= target_h / final_h
-            # Compensate detector shifts while retaining the analytical anchor.
-            target_x += target_x - final_x
+            scale *= target_h / final_h
+            # Compensate detector shifts while retaining one uniform scale.
+            anchor_center_x += fixed_center_x - (final_x + final_w / 2)
             target_y += target_y - final_y
     # Final translation does not alter face proportions; it only locks the
     # detected top-left corner to the shared reference position.
-    final_x, final_y, _, _ = detect_face(canvas)
-    shift = (round(desired_x - final_x), round(desired_y - final_y))
+    final_x, final_y, final_w, _ = detect_face(canvas)
+    shift = (
+        round(fixed_center_x - (final_x + final_w / 2)),
+        round(desired_y - final_y),
+    )
     if shift != (0, 0):
         canvas = BACKGROUND_CACHE.copy()
         canvas.paste(
@@ -379,8 +385,39 @@ def composite_on_master_background(output, gender, style, mask_path=None):
     return canvas
 
 
+def canonical_face_patch(image):
+    """Capture the identity-bearing inner face without hairline or ears."""
+    face_x, face_y, face_w, face_h = detect_face(image)
+    box = (
+        round(face_x + face_w * .10),
+        round(face_y + face_h * .15),
+        round(face_x + face_w * .90),
+        round(face_y + face_h * .97),
+    )
+    patch = image.crop(box)
+    alpha = Image.new("L", patch.size, 0)
+    draw = ImageDraw.Draw(alpha)
+    inset_x = max(2, round(patch.width * .04))
+    inset_y = max(2, round(patch.height * .02))
+    draw.ellipse(
+        (inset_x, inset_y, patch.width - inset_x, patch.height - inset_y),
+        fill=255,
+    )
+    alpha = alpha.filter(ImageFilter.GaussianBlur(5.0))
+    return patch, alpha, box[:2]
+
+
+def apply_canonical_face(image, face_patch):
+    patch, alpha, position = face_patch
+    result = image.copy()
+    result.paste(patch, position, alpha)
+    return result
+
+
 def build():
     written = 0
+    canonical_faces = {}
+    canonical_styles = {"female": "female_long", "male": "male_textured"}
     for gender, styles in MASTERS.items():
         for style, source in styles.items():
             if not source.exists():
@@ -409,12 +446,18 @@ def build():
                 color_bases[hair_name] = (override_base, override_skin_mask, override_mask)
 
             for skin_name, skin_rgb in SKINS.items():
-                skinned = tint_skin(base, skin_mask, skin_rgb)
+                skin_strength = .58 if gender == "female" else .72
+                skinned = tint_skin(base, skin_mask, skin_rgb, strength=skin_strength)
                 for hair_name, hair_rgb in HAIRS.items():
                     is_color_master = hair_name in color_bases
                     if is_color_master:
                         override_base, override_skin_mask, override_mask = color_bases[hair_name]
-                        result = tint_skin(override_base, override_skin_mask, skin_rgb).astype(np.uint8)
+                        result = tint_skin(
+                            override_base,
+                            override_skin_mask,
+                            skin_rgb,
+                            strength=skin_strength,
+                        ).astype(np.uint8)
                     else:
                         hair_floor = .35
                         if gender == "female":
@@ -457,15 +500,22 @@ def build():
                     path = OUTPUT / gender / skin_name / hair_name / f"{style}.webp"
                     path.parent.mkdir(parents=True, exist_ok=True)
                     output = Image.fromarray(result, "RGB")
-                    if gender == "male":
-                        output = output.filter(ImageFilter.UnsharpMask(radius=.8, percent=70, threshold=3))
-                    else:
-                        output = output.filter(ImageFilter.UnsharpMask(radius=.65, percent=55, threshold=3))
                     output = composite_on_master_background(
                         output,
                         gender,
                         style,
                         override_mask if is_color_master else None,
+                    )
+                    face_key = (gender, skin_name)
+                    if style == canonical_styles[gender] and hair_name == "black":
+                        canonical_faces[face_key] = canonical_face_patch(output)
+                    if face_key not in canonical_faces:
+                        raise SystemExit(f"Canonical face not ready: {gender}/{skin_name}")
+                    output = apply_canonical_face(output, canonical_faces[face_key])
+                    # A light final pass restores detail lost by resizing and
+                    # WebP encoding without creating the previous hard halos.
+                    output = output.filter(
+                        ImageFilter.UnsharpMask(radius=.55, percent=35, threshold=4)
                     )
                     output.save(path, "WEBP", quality=91, method=6)
                     written += 1
