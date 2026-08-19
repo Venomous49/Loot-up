@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: riselooter-real-creator-hd
@@ -121,12 +122,18 @@ jobs:
           git add assets/creator/male assets/creator/female creator-hd-build-status.txt
           if git diff --cached --quiet; then
             echo 'No creator changes to publish'
-            exit 0
+          else
+            git commit -m 'Publish verified robust full-body HD creator presets'
+            git pull --rebase origin main || true
+            git push
           fi
-          git commit -m 'Publish verified robust full-body HD creator presets'
-          git pull --rebase origin main || true
-          git push
 
-      # creator-runtime-smoke.yml then independently verifies the exact files
-      # after Cloudflare deploys them, including byte-for-byte asset parity and
-      # the full 250-combination browser exercise on the public workers.dev URL.
+      - name: Trigger public Cloudflare creator validation
+        if: steps.hd_build.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run creator-runtime-smoke.yml --ref main
+
+      # GitHub does not start a second workflow from a push made with GITHUB_TOKEN.
+      # Explicit workflow_dispatch above guarantees that the exact files published
+      # to main are independently checked after Cloudflare deploys them.
