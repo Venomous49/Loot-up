@@ -73,9 +73,6 @@ def photographic_skin_mask(scene, person_alpha):
     rgb = np.asarray(scene, dtype=np.uint8)
     ycrcb = cv2.cvtColor(rgb, cv2.COLOR_RGB2YCrCb)
     y, cr, cb = cv2.split(ycrcb)
-    # Broad photographic skin locus, constrained strictly to the reviewed body
-    # silhouette.  The morphology closes tiny gaps so face/neck/arms tint as one
-    # continuous surface instead of separate patches.
     raw = (cr >= 126) & (cr <= 184) & (cb >= 72) & (cb <= 142) & (y >= 28)
     raw &= person_alpha > 28
     layer = (raw.astype(np.uint8) * 255)
@@ -164,8 +161,6 @@ def fallback_hair_mask(source, gender, style):
             ccy = (sy + sh / 2) / h
             score = area - 17000 * abs(ccx - cx) - 6500 * abs(ccy - .18)
             candidates.append((score, idx))
-        # Long female hair can be split into left/right locks; retain up to 3
-        # strongest nearby components instead of forcing one circular blob.
         for _, idx in sorted(candidates, reverse=True)[:3]:
             keep[labels == idx] = 255
         if keep.any():
@@ -268,7 +263,8 @@ def build():
                     out = Image.fromarray(result, "RGB")
                     path = base.OUTPUT / gender / skin_name / hair_name / f"{style}.webp"
                     path.parent.mkdir(parents=True, exist_ok=True)
-                    out.save(path, "WEBP", quality=WEBP_QUALITY, method=6)
+                    # method affects encoding effort only, not the 98/100 visual quality.
+                    out.save(path, "WEBP", quality=WEBP_QUALITY, method=4)
                     written += 1
 
     expected = 125 if requested_gender else 250
