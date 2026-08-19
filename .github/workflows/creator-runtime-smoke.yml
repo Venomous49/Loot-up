@@ -15,6 +15,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: creator-runtime-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   local-smoke:
     runs-on: ubuntu-latest
@@ -58,22 +62,26 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Wait for Cloudflare creator endpoint
+      - name: Wait for this commit to reach Cloudflare creator endpoint
         shell: bash
         run: |
+          set -euo pipefail
+          local_hash="$(sha256sum index.html | awk '{print $1}')"
           for i in {1..30}; do
             headers="$(mktemp)"
             if curl -fsS -D "$headers" -o /tmp/loot-up-public.html "${CREATOR_PUBLIC_ORIGIN}/?creatorTest=1&ci=${GITHUB_SHA}"; then
-              if grep -qi '^x-riselooter-creator-source: validated' "$headers" && grep -q 'id="creatorPreview"' /tmp/loot-up-public.html; then
-                echo "Cloudflare creator endpoint is serving the validated Worker/source path."
+              remote_hash="$(sha256sum /tmp/loot-up-public.html | awk '{print $1}')"
+              if grep -qi '^x-riselooter-creator-source: validated' "$headers" && grep -q 'id="creatorPreview"' /tmp/loot-up-public.html && [ "$remote_hash" = "$local_hash" ]; then
+                echo "Cloudflare is serving this commit's validated creator source."
                 rm -f "$headers"
                 exit 0
               fi
+              echo "Cloudflare reachable but creator source has not reached ${GITHUB_SHA} yet (attempt $i/30)."
             fi
             rm -f "$headers"
             sleep 10
           done
-          echo "Cloudflare creator endpoint did not become ready with the validated source marker."
+          echo "Cloudflare creator endpoint did not deploy this commit within the validation window."
           exit 1
       - name: Verify public creator HTML matches this commit
         shell: bash
