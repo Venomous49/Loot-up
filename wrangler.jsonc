@@ -1,12 +1,15 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "loot-up",
+  "main": "worker.js",
   "compatibility_date": "2026-08-18",
   "assets": {
     "directory": "./",
+    "binding": "ASSETS",
+    "run_worker_first": true,
     "not_found_handling": "single-page-application",
     "html_handling": "auto-trailing-slash"
   }
 }
 
-// Cloudflare Git deployment trigger: hairstyles2-assetsignore
+// Cloudflare Git deployment trigger: creator-edge-hardening
