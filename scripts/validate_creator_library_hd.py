@@ -1,0 +1,130 @@
+from pathlib import Path
+import hashlib
+
+import cv2
+import numpy as np
+from PIL import Image, ImageOps
+
+ROOT = Path('assets/creator')
+MASTER_ROOT = Path('assets/creator_sources')
+BACKGROUND = MASTER_ROOT / 'creator_background_master.png'
+FACE_MODEL = MASTER_ROOT / 'face_detection_yunet_2023mar.onnx'
+EXPECTED = {
+    'male': ['male_textured','male_short','male_medium','male_undercut','male_slick'],
+    'female': ['female_long','female_wavy','female_bob','female_ponytail','female_short'],
+}
+SKINS = ['light','warm','medium','deep','dark']
+HAIRS = ['black','brown','blond','red','purple']
+EXPECTED_WH = (1728, 910)
+EXPECTED_HW = (910, 1728)
+TARGET_CENTER_X = 1110
+TARGET_GROUND_Y = 898
+CENTER_TOLERANCE = 34
+GROUND_TOLERANCE = 18
+HEIGHT_RANGE = (720, 825)
+
+errors = []
+
+if not BACKGROUND.exists():
+    raise SystemExit(f'Missing creator background: {BACKGROUND}')
+bg_pil = Image.open(BACKGROUND).convert('RGB')
+if bg_pil.size != EXPECTED_WH:
+    bg_pil = ImageOps.fit(bg_pil, EXPECTED_WH, Image.Resampling.LANCZOS)
+bg = cv2.cvtColor(np.asarray(bg_pil), cv2.COLOR_RGB2BGR)
+
+if not FACE_MODEL.exists():
+    errors.append(f'missing creator face detector: {FACE_MODEL}')
+    face_detector = None
+else:
+    face_detector = cv2.FaceDetectorYN.create(str(FACE_MODEL), '', EXPECTED_WH, .60, .3, 5000)
+
+
+def foreground_bbox(im):
+    # Background is intentionally shared across every preset.  Threshold the
+    # decoded difference, then keep the largest connected region so WebP noise
+    # in the alley cannot be mistaken for avatar pixels.
+    delta = cv2.absdiff(im, bg).mean(axis=2)
+    mask = (delta > 10.0).astype(np.uint8) * 255
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((9, 9), np.uint8))
+    n, labels, stats, _ = cv2.connectedComponentsWithStats(mask, 8)
+    if n <= 1:
+        return None
+    idx = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
+    x, y, w, h, area = (int(v) for v in stats[idx])
+    if area < 18000:
+        return None
+    return x, y, w, h
+
+
+for gender, styles in EXPECTED.items():
+    files = list((ROOT / gender).rglob('*.webp'))
+    if len(files) != 125:
+        errors.append(f'{gender}: expected 125 assets, got {len(files)}')
+
+    reference_boxes = []
+    for skin in SKINS:
+        for hair in HAIRS:
+            group = []
+            for style in styles:
+                p = ROOT / gender / skin / hair / f'{style}.webp'
+                if not p.exists() or p.stat().st_size < 1000:
+                    errors.append(f'missing/empty: {p}')
+                    continue
+                im = cv2.imread(str(p), cv2.IMREAD_COLOR)
+                if im is None or im.size == 0:
+                    errors.append(f'undecodable: {p}')
+                    continue
+                if im.shape[:2] != EXPECTED_HW:
+                    errors.append(f'unexpected format: {p} is {im.shape[1]}x{im.shape[0]}, expected 1728x910')
+                    continue
+                if im.std() < 10:
+                    errors.append(f'near blank: {p}')
+                    continue
+
+                box = foreground_bbox(im)
+                if box is None:
+                    errors.append(f'avatar foreground not isolated: {p}')
+                else:
+                    x, y, w, h = box
+                    center = x + w / 2
+                    ground = y + h
+                    if not HEIGHT_RANGE[0] <= h <= HEIGHT_RANGE[1]:
+                        errors.append(f'full-body height drift: {p} detected {h}px, expected {HEIGHT_RANGE[0]}-{HEIGHT_RANGE[1]}')
+                    if abs(center - TARGET_CENTER_X) > CENTER_TOLERANCE:
+                        errors.append(f'horizontal placement drift: {p} center={center:.1f}, target={TARGET_CENTER_X}')
+                    if abs(ground - TARGET_GROUND_Y) > GROUND_TOLERANCE:
+                        errors.append(f'ground placement drift: {p} bottom={ground}, target={TARGET_GROUND_Y}')
+                    if h / max(1, w) < 1.20:
+                        errors.append(f'avatar silhouette too wide/cropped for full-body framing: {p} bbox={w}x{h}')
+                    reference_boxes.append((center, ground, h))
+
+                if face_detector is not None:
+                    _, faces = face_detector.detect(im)
+                    if faces is None or len(faces) == 0:
+                        errors.append(f'creator face not detected: {p}')
+
+                group.append((style, p, im))
+
+            digests = [hashlib.sha256(p.read_bytes()).hexdigest() for _, p, _ in group]
+            if len(digests) == 5 and len(set(digests)) != 5:
+                errors.append(f'{gender}/{skin}/{hair}: duplicate hairstyle files')
+
+    if reference_boxes:
+        centers = np.array([v[0] for v in reference_boxes])
+        grounds = np.array([v[1] for v in reference_boxes])
+        heights = np.array([v[2] for v in reference_boxes])
+        if centers.ptp() > CENTER_TOLERANCE * 2:
+            errors.append(f'{gender}: creator center spread too large ({centers.min():.1f}-{centers.max():.1f})')
+        if grounds.ptp() > GROUND_TOLERANCE * 2:
+            errors.append(f'{gender}: creator ground spread too large ({grounds.min():.1f}-{grounds.max():.1f})')
+        if heights.ptp() > 105:
+            errors.append(f'{gender}: creator body-height spread too large ({heights.min():.0f}-{heights.max():.0f})')
+
+if errors:
+    print('CREATOR HD VALIDATION FAILED')
+    for error in errors:
+        print(' -', error)
+    raise SystemExit(1)
+
+print('Creator HD library validated: 250 assets, shared 1728x910 format, common street background, locked center/ground framing and full-body footprint.')
