@@ -1,8 +1,8 @@
 status=failed
-source_commit=5eb7c88d1e8151e20cebec8c51d34ba6dc581b0b
+source_commit=c52d862b6784272941f830a7efe18c4888a1a929
 --- tail ---
-[ WARN:0@0.301] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
-[ WARN:0@0.594] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
-[ WARN:0@0.733] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
-[ WARN:0@0.789] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
+[ WARN:0@0.317] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
+[ WARN:0@0.605] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
+[ WARN:0@0.746] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
+[ WARN:0@0.801] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
 No face detected in creator master
