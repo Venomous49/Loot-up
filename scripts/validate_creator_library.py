@@ -5,6 +5,7 @@ import cv2
 
 ROOT = Path('assets/creator')
 MASTER_ROOT = Path('assets/creator_sources')
+FACE_MODEL = MASTER_ROOT / 'face_detection_yunet_2023mar.onnx'
 EXPECTED = {
     'male': ['male_textured','male_short','male_medium','male_undercut','male_slick'],
     'female': ['female_long','female_wavy','female_bob','female_ponytail','female_short'],
@@ -12,8 +13,22 @@ EXPECTED = {
 SKINS = ['light','warm','medium','deep','dark']
 HAIRS = ['black','brown','blond','red','purple']
 EXPECTED_SIZE = (910, 1728)
+EXPECTED_FACES = {
+    'male': (914.0, 160.0, 180.0, 235.0),
+    'female': (800.0, 125.0, 212.0, 304.0),
+}
+FACE_POSITION_TOLERANCE = 12.0
+FACE_SIZE_TOLERANCE = 18.0
 
 errors = []
+
+if not FACE_MODEL.exists():
+    errors.append(f'missing creator face detector: {FACE_MODEL}')
+    face_detector = None
+else:
+    face_detector = cv2.FaceDetectorYN.create(
+        str(FACE_MODEL), '', (EXPECTED_SIZE[1], EXPECTED_SIZE[0]), .64, .3, 5000
+    )
 
 for gender, styles in EXPECTED.items():
     for style in styles:
@@ -43,6 +58,26 @@ for gender, styles in EXPECTED.items():
                     continue
                 if im.std() < 10:
                     errors.append(f'near blank: {p}')
+
+                if face_detector is not None:
+                    _, faces = face_detector.detect(im)
+                    if faces is None or len(faces) == 0:
+                        errors.append(f'creator face not detected: {p}')
+                    else:
+                        face = max(faces, key=lambda row: row[-1])
+                        x, y, w, h = (float(v) for v in face[:4])
+                        ex, ey, ew, eh = EXPECTED_FACES[gender]
+                        if abs(x - ex) > FACE_POSITION_TOLERANCE or abs(y - ey) > FACE_POSITION_TOLERANCE:
+                            errors.append(
+                                f'creator face position drift: {p} detected at ({x:.1f},{y:.1f}), '
+                                f'expected near ({ex:.1f},{ey:.1f})'
+                            )
+                        if abs(w - ew) > FACE_SIZE_TOLERANCE or abs(h - eh) > FACE_SIZE_TOLERANCE:
+                            errors.append(
+                                f'creator face scale drift: {p} detected at {w:.1f}x{h:.1f}, '
+                                f'expected near {ew:.1f}x{eh:.1f}'
+                            )
+
                 group.append((style, p, im))
 
             digests = [hashlib.sha256(p.read_bytes()).hexdigest() for _,p,_ in group]
@@ -164,4 +199,4 @@ if errors:
         print(' -', e)
     raise SystemExit(1)
 
-print('Creator library validated: 250 complete pre-rendered assets at canonical 1728x910 framing, live controls, thumbnails and source-owned fallbacks are structurally consistent with no active legacy overlays or edge rewrites.')
+print('Creator library validated: 250 complete pre-rendered assets at canonical 1728x910 framing with locked face placement, live controls, thumbnails and source-owned fallbacks are structurally consistent with no active legacy overlays or edge rewrites.')
