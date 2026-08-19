@@ -1740,6 +1740,22 @@ nav [data-nav="shop"],nav [data-nav="inventory"]{display:none!important}
 .character-holder:before,.character-holder>div:after{display:none!important;content:none!important}
 /* /RISELOOTER_FINAL_CLEAN_V25 */
 
+/* The creator portraits are complete 1728x910 scenes.  Let the home hero use
+   the whole scene instead of cropping it inside the old narrow character box. */
+#home .hero .character-holder{
+  left:0!important;right:0!important;top:0!important;bottom:0!important;
+  width:100%!important;height:100%!important;
+}
+#home .hero .character-holder .scene-clean-image{
+  width:100%!important;height:100%!important;
+  object-fit:cover!important;object-position:center center!important;
+}
+#home .hero:after{
+  background:
+    linear-gradient(90deg,#03090d 0%,rgba(3,9,13,.99) 28%,rgba(3,9,13,.82) 39%,rgba(3,9,13,.18) 62%,rgba(3,9,13,0) 100%),
+    linear-gradient(180deg,rgba(3,9,13,0) 68%,#03090d 100%)!important;
+}
+
 </style>
 </head>
 
