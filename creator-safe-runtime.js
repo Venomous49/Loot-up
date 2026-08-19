@@ -1,30 +1,26 @@
-/* Rise Looter creator stable runtime v2
-   Branch-only validation runtime. Uses existing full-frame source images directly.
-   No canvas segmentation/recolouring: prevents eaten bodies, face artifacts and clothing overlays. */
+/* Rise Looter creator stable runtime v5
+   Uses the full WebP matrix directly: gender / skin / hair color / hairstyle.
+   No canvas, no overlays, no destructive recolouring. */
 (() => {
-  const ROOT='/assets/creator_sources/';
+  const ROOT='/assets/creator/';
   const FEMALE=new Set(['female_long','female_wavy','female_bob','female_ponytail','female_short']);
-  const MALE_NATURAL=new Set(['male_medium','male_short','male_textured']);
+  const SKINS=['light','warm','medium','deep','dark'];
+  const COLORS=['black','brown','blond','red','purple'];
 
-  function fileFor(style,color){
-    const c=color==='black'?'brown':color;
-    if(FEMALE.has(style)){
-      if(style==='female_wavy' && (color==='black'||c==='brown')) return 'female_wavy.png';
-      if(color==='black') return `${style}_brown_natural.png`;
-      return `${style}_${c}_natural.png`;
-    }
-    if(MALE_NATURAL.has(style)){
-      if(style==='male_textured' && color==='black') return 'male_textured_brown_natural.png';
-      if(color==='black') return `${style}_brown_natural.png`;
-      return `${style}_${c}_natural.png`;
-    }
-    return `${style}_clean.png`;
+  function normalizeSkin(v){
+    if(SKINS.includes(v)) return v;
+    const aliases={fair:'light',tan:'warm',olive:'medium',brown:'deep,',deep:'dark'};
+    return aliases[v]||'medium';
   }
-  function pathFor(style,color){return ROOT+fileFor(style,color);}
+  function normalizeColor(v){return COLORS.includes(v)?v:'brown';}
   function normalizeStyle(){
     const list=avatarDraft.gender==='female'?femaleHair:maleHair;
     if(!list.some(([v])=>v===avatarDraft.hairStyle)) avatarDraft.hairStyle=list[0][0];
     return avatarDraft.hairStyle;
+  }
+  function pathFor(style,skin,color){
+    const gender=FEMALE.has(style)?'female':'male';
+    return `${ROOT}${gender}/${normalizeSkin(skin)}/${normalizeColor(color)}/${style}.webp`;
   }
   function setSave(ok){const b=document.getElementById('saveAvatar');if(b)b.disabled=!ok;}
 
@@ -32,13 +28,13 @@
     const preview=document.getElementById('creatorPreview');
     if(!preview||typeof avatarDraft==='undefined')return;
     const style=normalizeStyle();
-    const src=pathFor(style,avatarDraft.hairColor);
-    preview.innerHTML=`<img class="creator-real-preview" src="${src}" alt="Aperçu Looter"><div class="creator-asset-missing" style="display:none"><strong>APERÇU INDISPONIBLE</strong><span>Cette source doit être corrigée avant publication.</span></div><div class="creator-live-badge"><b>NIVEAU 1</b><strong>DÉBUTANT</strong></div>`;
+    const src=pathFor(style,avatarDraft.skin,avatarDraft.hairColor);
+    preview.innerHTML=`<img class="creator-real-preview" src="${src}" alt="Aperçu Looter"><div class="creator-asset-missing" style="display:none"><strong>APERÇU INDISPONIBLE</strong><span>Asset manquant : ${src}</span></div><div class="creator-live-badge"><b>NIVEAU 1</b><strong>DÉBUTANT</strong></div>`;
     const img=preview.querySelector('.creator-real-preview');
     const miss=preview.querySelector('.creator-asset-missing');
     setSave(false);
     img.onload=()=>setSave(true);
-    img.onerror=()=>{img.style.display='none';miss.style.display='grid';setSave(false);console.error('[creator stable] missing',src);};
+    img.onerror=()=>{img.style.display='none';miss.style.display='grid';setSave(false);console.error('[creator v5] missing',src);};
   }
 
   function renderHair(){
@@ -47,10 +43,13 @@
     normalizeStyle();
     const root=document.getElementById('hairStyleChoices');
     if(!root)return;
-    root.innerHTML=list.map(([value,label])=>`<button type="button" class="choice hair-choice ${avatarDraft.hairStyle===value?'selected':''}" data-value="${value}"><span class="hair-thumb"><img src="${pathFor(value,avatarDraft.hairColor)}" alt="${label}"></span><span>${label}</span></button>`).join('');
+    root.innerHTML=list.map(([value,label])=>{
+      const src=pathFor(value,avatarDraft.skin,avatarDraft.hairColor);
+      return `<button type="button" class="choice hair-choice ${avatarDraft.hairStyle===value?'selected':''}" data-value="${value}"><span class="hair-thumb"><img src="${src}" alt="${label}"></span><span>${label}</span></button>`;
+    }).join('');
     root.querySelectorAll('.hair-choice').forEach(btn=>{
       const img=btn.querySelector('img');
-      img.onerror=()=>{img.style.visibility='hidden';};
+      img.onerror=()=>{img.style.visibility='hidden';console.error('[creator v5] thumb missing',img.src);};
       btn.onclick=()=>{avatarDraft.hairStyle=btn.dataset.value;renderHair();update();};
     });
   }
