@@ -14,14 +14,12 @@ HAIRS = ['black','brown','blond','red','purple']
 
 errors = []
 
-# Every hairstyle exposed by the UI must have a reviewed source master.
 for gender, styles in EXPECTED.items():
     for style in styles:
         candidates = list(MASTER_ROOT.glob(f'{style}.*'))
         if not candidates:
             errors.append(f'missing hairstyle master: {gender}/{style}')
 
-# Validate the complete 2 x 5 x 5 x 5 preset matrix.
 for gender, styles in EXPECTED.items():
     files = list((ROOT/gender).rglob('*.webp'))
     if len(files) != 125:
@@ -83,8 +81,7 @@ for gender, styles in EXPECTED.items():
                     errors.append(f'{gender}/{style}: adjacent hair colours {a}/{b} too similar')
 
 html = Path('index.html').read_text(encoding='utf-8')
-worker_path = Path('worker.js')
-worker = worker_path.read_text(encoding='utf-8') if worker_path.exists() else ''
+worker = Path('worker.js').read_text(encoding='utf-8') if Path('worker.js').exists() else ''
 
 required = [
     'function creatorAssetPath(state=avatarDraft,style=state.hairStyle)',
@@ -110,8 +107,6 @@ for styles in EXPECTED.values():
         if f'["{value}",' not in html:
             errors.append(f'missing hairstyle option: {value}')
 
-# CSS selectors which explicitly hide old overlays are allowed. Actual overlay
-# markup/runtime painting and colour filters are not.
 for forbidden in [
     '<div class="creator-skin-overlay',
     '<div class="creator-hair-overlay',
@@ -129,21 +124,23 @@ hardened_onload = "document.getElementById('saveAvatar').disabled=this.dataset.t
 legacy_fallback = 'function creatorFallbackPath(gender=avatarDraft.gender){'
 legacy_onload = "document.getElementById('saveAvatar').disabled=false"
 
-source_hardened = all(token in html for token in [hardened_fallback, hardened_return, hardened_character, hardened_onload])
-edge_hardened = all(token in worker for token in [
-    'CREATOR_FALLBACK_OLD', 'CREATOR_FALLBACK_NEW',
-    hardened_fallback, hardened_return,
-    'CHARACTER_FALLBACK_OLD', 'CHARACTER_FALLBACK_NEW', hardened_character,
-    'PREVIEW_ONLOAD_OLD', 'PREVIEW_ONLOAD_NEW', hardened_onload,
-    'env.ASSETS.fetch(request)',
-])
+for token in [hardened_fallback, hardened_return, hardened_character, hardened_onload]:
+    if token not in html:
+        errors.append(f'source creator fallback hardening missing: {token}')
+if legacy_fallback in html:
+    errors.append('legacy medium/brown creator fallback remains in source')
+if legacy_onload in html:
+    errors.append('legacy creator preview save-on-fallback behavior remains in source')
 
-if not source_hardened and not edge_hardened:
-    errors.append('neither index.html nor worker.js provides the required appearance-preserving fallback hardening')
-if legacy_fallback in html and not edge_hardened:
-    errors.append('legacy medium/brown creator fallback remains unprotected')
-if legacy_onload in html and not edge_hardened:
-    errors.append('legacy creator preview save-on-fallback behavior remains unprotected')
+# Production must serve the reviewed source, not maintain a second hidden patch
+# implementation at the Cloudflare edge.
+for forbidden in ['hardenCreatorHtml', 'CREATOR_FALLBACK_NEW', 'CHARACTER_FALLBACK_NEW', 'PREVIEW_ONLOAD_NEW']:
+    if forbidden in worker:
+        errors.append(f'obsolete creator edge rewrite remains active: {forbidden}')
+if 'env.ASSETS.fetch(request)' not in worker:
+    errors.append('Cloudflare Worker no longer serves the static asset binding')
+if "x-riselooter-creator-source', 'validated'" not in worker:
+    errors.append('Cloudflare Worker deployment marker missing')
 
 for stale in ['cleanbase28', 'presets31', 'hairstyles2', 'hairstyles3']:
     if stale in html:
@@ -163,5 +160,4 @@ if errors:
         print(' -', e)
     raise SystemExit(1)
 
-mode = 'source' if source_hardened else 'Cloudflare edge'
-print(f'Creator library validated: 250 complete pre-rendered assets, live controls, thumbnails and {mode} fallbacks are structurally consistent with no active legacy overlays.')
+print('Creator library validated: 250 complete pre-rendered assets, live controls, thumbnails and source-owned fallbacks are structurally consistent with no active legacy overlays or edge rewrites.')
