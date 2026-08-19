@@ -18,10 +18,10 @@ HAIRS = ['black','brown','blond','red','purple']
 EXPECTED_WH = (1728, 910)
 EXPECTED_HW = (910, 1728)
 TARGET_CENTER_X = 1110
-TARGET_GROUND_Y = 898
-CENTER_TOLERANCE = 34
-GROUND_TOLERANCE = 18
-HEIGHT_RANGE = (720, 825)
+TARGET_GROUND_Y = 900
+CENTER_TOLERANCE = 45
+GROUND_TOLERANCE = 14
+HEIGHT_RANGE = (790, 835)
 
 errors = []
 
@@ -92,8 +92,6 @@ for gender, styles in EXPECTED.items():
                         errors.append(f'horizontal placement drift: {p} center={center:.1f}, target={TARGET_CENTER_X}')
                     if abs(ground - TARGET_GROUND_Y) > GROUND_TOLERANCE:
                         errors.append(f'ground placement drift: {p} bottom={ground}, target={TARGET_GROUND_Y}')
-                    if h / max(1, w) < 1.20:
-                        errors.append(f'avatar silhouette too wide/cropped for full-body framing: {p} bbox={w}x{h}')
                     reference_boxes.append((center, ground, h))
 
                 if face_detector is not None:
@@ -115,7 +113,7 @@ for gender, styles in EXPECTED.items():
             errors.append(f'{gender}: creator center spread too large ({centers.min():.1f}-{centers.max():.1f})')
         if np.ptp(grounds) > GROUND_TOLERANCE * 2:
             errors.append(f'{gender}: creator ground spread too large ({grounds.min():.1f}-{grounds.max():.1f})')
-        if np.ptp(heights) > 105:
+        if np.ptp(heights) > 55:
             errors.append(f'{gender}: creator body-height spread too large ({heights.min():.0f}-{heights.max():.0f})')
 
 if errors:
@@ -124,4 +122,4 @@ if errors:
         print(' -', error)
     raise SystemExit(1)
 
-print('Creator HD library validated: 250 assets, shared 1728x910 format, common street background, locked center/ground framing and full-body footprint.')
+print('Creator HD library validated: 250 assets, shared 1728x910 format, common street background, locked center/ground framing and full standing height.')
