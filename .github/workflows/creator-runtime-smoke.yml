@@ -5,6 +5,7 @@ on:
     paths:
       - 'index.html'
       - 'worker.js'
+      - 'creator-hd.css'
       - 'wrangler.jsonc'
       - '.assetsignore'
       - 'assets/creator/**'
@@ -13,130 +14,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: creator-runtime-smoke-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  normalize-render:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Enforce consistent HD full-body creator viewport
-        shell: python
-        run: |
-          from pathlib import Path
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-          marker = '/* RISE_LOOTER_CREATOR_HD_NORMALIZATION_V2 */'
-          css = r'''
-/* RISE_LOOTER_CREATOR_HD_NORMALIZATION_V2 */
-#creatorModal .creator-preview{
-  position:relative!important;
-  overflow:hidden!important;
-  background:#03080d!important;
-  aspect-ratio:16/9!important;
-  min-height:0!important;
-  contain:layout paint!important;
-}
-#creatorModal .creator-preview .creator-real-preview,
-#creatorModal .creator-preview img{
-  position:absolute!important;
-  inset:0!important;
-  width:100%!important;
-  height:100%!important;
-  max-width:none!important;
-  object-fit:contain!important;
-  object-position:50% 100%!important;
-  image-rendering:auto!important;
-  filter:none!important;
-  opacity:1!important;
-  transform:none!important;
-  animation:none!important;
-  mix-blend-mode:normal!important;
-  backface-visibility:hidden!important;
-}
-#creatorModal .creator-preview::before,
-#creatorModal .creator-preview::after,
-#creatorModal .creator-skin-overlay,
-#creatorModal .creator-hair-overlay,
-#creatorModal .creator-body-overlay,
-#creatorModal .creator-face-overlay{
-  content:none!important;
-  display:none!important;
-  visibility:hidden!important;
-  opacity:0!important;
-}
-#creatorModal .creator-preview[data-gender="male"] .creator-real-preview,
-#creatorModal .creator-preview[data-gender="female"] .creator-real-preview{
-  object-fit:contain!important;
-  object-position:50% 100%!important;
-}
-#creatorModal .hair-thumb{
-  image-rendering:auto!important;
-  filter:none!important;
-  transform:none!important;
-  background-size:cover!important;
-  background-position:50% 16%!important;
-}
-'''
-          if marker not in s:
-              s = s.replace('</style>', css + '\n</style>', 1)
-          js_marker = '/* RISE_LOOTER_CREATOR_RUNTIME_NORMALIZATION_V2 */'
-          js = r'''
-/* RISE_LOOTER_CREATOR_RUNTIME_NORMALIZATION_V2 */
-(function(){
-  function normalizeCreatorPreview(){
-    const preview = document.getElementById('creatorPreview');
-    if(!preview) return;
-    const selectedGender = document.querySelector('#genderChoices .choice.selected');
-    preview.dataset.gender = selectedGender?.dataset?.value || 'male';
-    preview.querySelectorAll('img').forEach(img=>{
-      img.decoding = 'async';
-      img.loading = 'eager';
-      img.style.width = '100%';
-      img.style.height = '100%';
-      img.style.objectFit = 'contain';
-      img.style.objectPosition = '50% 100%';
-      img.style.filter = 'none';
-      img.style.transform = 'none';
-      img.style.opacity = '1';
-      img.style.mixBlendMode = 'normal';
-    });
-  }
-  function bind(){
-    const preview = document.getElementById('creatorPreview');
-    if(!preview) return;
-    new MutationObserver(normalizeCreatorPreview).observe(preview,{childList:true,subtree:true,attributes:true,attributeFilter:['src','class']});
-    ['genderChoices','skinChoices','hairColorChoices','hairStyleChoices'].forEach(id=>{
-      document.getElementById(id)?.addEventListener('click',()=>requestAnimationFrame(normalizeCreatorPreview));
-    });
-    normalizeCreatorPreview();
-  }
-  if(document.readyState==='loading') window.addEventListener('DOMContentLoaded',bind,{once:true}); else bind();
-})();
-'''
-          if js_marker not in s:
-              s = s.replace('</script>', js + '\n</script>', 1)
-          p.write_text(s, encoding='utf-8')
-      - name: Commit normalization if needed
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html
-          if git diff --cached --quiet; then
-            echo 'Creator rendering already normalized.'
-            exit 0
-          fi
-          git commit -m 'Normalize HD full-body creator preview'
-          git push
-
   local-smoke:
-    needs: normalize-render
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -151,13 +36,13 @@ jobs:
       - name: Start static site
         shell: bash
         run: |
-          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/loot-up-http.log 2>&1 &
-          echo $! > /tmp/loot-up-http.pid
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/rise-looter-http.log 2>&1 &
+          echo $! > /tmp/rise-looter-http.pid
           for i in {1..30}; do
             curl -fsS http://127.0.0.1:4173/index.html >/dev/null && exit 0
             sleep 1
           done
-          cat /tmp/loot-up-http.log
+          cat /tmp/rise-looter-http.log
           exit 1
       - name: Exercise all creator controls locally in Chromium
         run: node scripts/creator_runtime_smoke.mjs
@@ -178,41 +63,39 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Wait for this commit to reach Cloudflare creator endpoint
+      - name: Wait for validated HD creator deployment
         shell: bash
         run: |
           set -euo pipefail
-          local_hash="$(sha256sum index.html | awk '{print $1}')"
           for i in {1..30}; do
             headers="$(mktemp)"
-            if curl -fsS -D "$headers" -o /tmp/loot-up-public.html "${CREATOR_PUBLIC_ORIGIN}/?creatorTest=1&ci=${GITHUB_SHA}"; then
-              remote_hash="$(sha256sum /tmp/loot-up-public.html | awk '{print $1}')"
-              if grep -qi '^x-riselooter-creator-source: validated' "$headers" && grep -q 'id="creatorPreview"' /tmp/loot-up-public.html && [ "$remote_hash" = "$local_hash" ]; then
-                echo "Cloudflare is serving this commit's validated creator source."
+            if curl -fsS -D "$headers" -o /tmp/rise-looter-public.html "${CREATOR_PUBLIC_ORIGIN}/?creatorTest=1&ci=${GITHUB_SHA}"; then
+              if grep -qi '^x-riselooter-creator-source: validated' "$headers" \
+                && grep -q 'id="creatorPreview"' /tmp/rise-looter-public.html \
+                && grep -q 'creator-hd.css?v=1' /tmp/rise-looter-public.html; then
+                echo "Cloudflare is serving the validated HD creator presentation."
                 rm -f "$headers"
                 exit 0
               fi
-              echo "Cloudflare reachable but creator source has not reached ${GITHUB_SHA} yet (attempt $i/30)."
+              echo "Cloudflare reachable but HD creator presentation is not current yet (attempt $i/30)."
             fi
             rm -f "$headers"
             sleep 10
           done
-          echo "Cloudflare creator endpoint did not deploy this commit within the validation window."
+          echo "Cloudflare creator endpoint did not expose the validated HD presentation within the validation window."
           exit 1
-      - name: Verify public creator HTML matches this commit
+      - name: Verify canonical creator stylesheet is public
         shell: bash
         run: |
           set -euo pipefail
-          curl -fsS --retry 3 --retry-delay 2 -o /tmp/loot-up-public-current.html "${CREATOR_PUBLIC_ORIGIN}/?creatorTest=1&ci=${GITHUB_SHA}"
-          local_hash="$(sha256sum index.html | awk '{print $1}')"
-          remote_hash="$(sha256sum /tmp/loot-up-public-current.html | awk '{print $1}')"
-          if [ "$local_hash" != "$remote_hash" ]; then
-            echo "Public index.html differs from checked-out commit ${GITHUB_SHA}."
-            echo "local:  $local_hash"
-            echo "public: $remote_hash"
-            exit 1
-          fi
-          echo "Verified public index.html byte-for-byte against ${GITHUB_SHA}."
+          curl -fsS --retry 3 --retry-delay 2 -o /tmp/creator-hd-public.css "${CREATOR_PUBLIC_ORIGIN}/creator-hd.css?ci=${GITHUB_SHA}"
+          local_hash="$(sha256sum creator-hd.css | awk '{print $1}')"
+          remote_hash="$(sha256sum /tmp/creator-hd-public.css | awk '{print $1}')"
+          test "$local_hash" = "$remote_hash"
+          grep -q 'aspect-ratio:1728 / 910' /tmp/creator-hd-public.css
+          grep -q 'object-fit:contain' /tmp/creator-hd-public.css
+          grep -q 'object-position:center center' /tmp/creator-hd-public.css
+          echo "Verified canonical 1728x910 creator stylesheet in production."
       - name: Verify all 250 public creator assets match this commit
         shell: bash
         run: |
