@@ -10,46 +10,52 @@
     '/50-rise-looter.webp'
   ];
 
+  function silhouette(img, src) {
+    if (!img) return;
+    img.src = src + '?silhouette=master-v2';
+    img.alt = '';
+    img.style.setProperty('width','100%','important');
+    img.style.setProperty('height','100%','important');
+    img.style.setProperty('object-fit','contain','important');
+    img.style.setProperty('object-position','50% 100%','important');
+    img.style.setProperty('transform','none','important');
+    img.style.setProperty('filter','brightness(0) grayscale(1) contrast(2)','important');
+    img.style.setProperty('opacity','1','important');
+  }
+
   function applyExactStageSilhouettes() {
     const cards = Array.from(document.querySelectorAll('.evolution-card'));
     if (!cards.length) return;
 
     cards.forEach((card, index) => {
       if (index >= stageMasters.length) return;
-      if (!card.classList.contains('locked')) return;
+      const locked = card.classList.contains('locked');
       const img = card.querySelector('.evolution-character img, .scene-clean-image, img');
       if (!img) return;
-      img.src = stageMasters[index] + '?silhouette=master-v1';
-      img.alt = '';
-      img.style.objectFit = 'contain';
-      img.style.objectPosition = '50% 100%';
-      img.style.transform = 'none';
-      img.style.filter = 'brightness(0) grayscale(1)';
-      img.style.opacity = '1';
+      if (locked) {
+        silhouette(img, stageMasters[index]);
+        card.classList.add('master-silhouette');
+      } else {
+        card.classList.remove('master-silhouette');
+      }
     });
 
     const firstLockedIndex = cards.findIndex(card => card.classList.contains('locked'));
-    const nextIndex = firstLockedIndex > 0 ? firstLockedIndex : 1;
-    const nextImg = document.querySelector('.shadow-character img');
-    if (nextImg && stageMasters[nextIndex]) {
-      nextImg.src = stageMasters[nextIndex] + '?silhouette=master-v1';
-      nextImg.style.objectFit = 'contain';
-      nextImg.style.objectPosition = '50% 100%';
-      nextImg.style.transform = 'none';
-      nextImg.style.filter = 'brightness(0) grayscale(1)';
-      nextImg.style.opacity = '1';
-    }
+    const nextIndex = firstLockedIndex >= 0 ? firstLockedIndex : 1;
+    silhouette(document.querySelector('.shadow-character img'), stageMasters[nextIndex]);
   }
 
   function boot() {
     applyExactStageSilhouettes();
-    const observer = new MutationObserver(() => applyExactStageSilhouettes());
-    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+    let scheduled = false;
+    const observer = new MutationObserver(() => {
+      if (scheduled) return;
+      scheduled = true;
+      requestAnimationFrame(() => { scheduled = false; applyExactStageSilhouettes(); });
+    });
+    observer.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['class','src'] });
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot, { once: true });
-  } else {
-    boot();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once:true });
+  else boot();
 })();
