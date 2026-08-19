@@ -18,17 +18,18 @@ MASTERS = {
         "female_short": SOURCE / "female_short.png",
     },
     "male": {
-        "male_textured": SOURCE / "male_textured.webp",
-        "male_short": SOURCE / "male_short.png",
-        "male_medium": SOURCE / "male_medium.png",
-        "male_undercut": SOURCE / "male_undercut.png",
-        "male_slick": SOURCE / "male_slick.png",
+        "male_textured": SOURCE / "male_textured_clean.png",
+        "male_short": SOURCE / "male_short_clean.png",
+        "male_medium": SOURCE / "male_medium_clean.png",
+        "male_undercut": SOURCE / "male_undercut_clean.png",
+        "male_slick": SOURCE / "male_slick_clean.png",
     },
 }
 
 COLOR_MASTERS = {
     ("female_wavy", "blond"): SOURCE / "female_wavy_blond_natural.png",
     ("female_wavy", "red"): SOURCE / "female_wavy_red_natural.png",
+    ("female_wavy", "purple"): SOURCE / "female_wavy_purple_natural.png",
 }
 
 SIZES = {"female": (1728, 910), "male": (1086, 1448)}
@@ -184,13 +185,33 @@ def tint(rgb, alpha, target, strength, minimum_luminance=.35, preserve_texture=F
     src = rgb.astype(np.float32)
     luminance = .299 * src[..., 0] + .587 * src[..., 1] + .114 * src[..., 2]
     target = np.asarray(target, dtype=np.float32)
-    normalized = np.clip(luminance[..., None] / 105.0, 0, 1.75)
+    selected = luminance[alpha > .35]
+    low, high = (np.percentile(selected, (8, 94)) if selected.size else (20.0, 130.0))
+    span = max(28.0, float(high - low))
+    # Map the full tonal range of the actual hairstyle to the target colour.
+    # This retains individual strands instead of painting a flat opaque shape.
+    normalized = np.clip(((luminance - low) / span)[..., None], 0, 1)
     if preserve_texture:
-        brightness = minimum_luminance + (1 - minimum_luminance) * normalized
+        brightness = minimum_luminance + (1.28 - minimum_luminance) * normalized
     else:
         brightness = np.clip(normalized, minimum_luminance, 1.75)
     coloured = target[None, None, :] * np.clip(brightness, 0, 1.75)
     a = (alpha * strength)[..., None]
+    return np.clip(src * (1 - a) + coloured * a, 0, 255)
+
+
+def tint_skin(rgb, alpha, target):
+    """Apply an even complexion while retaining restrained photographic shading."""
+    src = rgb.astype(np.float32)
+    target = np.asarray(target, dtype=np.float32)
+    luminance = .299 * src[..., 0] + .587 * src[..., 1] + .114 * src[..., 2]
+    skin_pixels = luminance[alpha > .45]
+    midpoint = float(np.median(skin_pixels)) if skin_pixels.size else 105.0
+    # Compress source contrast so a naturally shadowed source cannot turn into
+    # a dark patch after selecting a deeper complexion.
+    relative = np.clip((luminance - midpoint) / 255.0, -.16, .16)
+    coloured = np.clip(target[None, None, :] + relative[..., None] * 92.0, 0, 255)
+    a = (alpha * .84)[..., None]
     return np.clip(src * (1 - a) + coloured * a, 0, 255)
 
 
@@ -218,11 +239,11 @@ def build():
                 color_bases[hair_name] = (override_base, override_skin_mask)
 
             for skin_name, skin_rgb in SKINS.items():
-                skinned = tint(base, skin_mask, skin_rgb, .78)
+                skinned = tint_skin(base, skin_mask, skin_rgb)
                 for hair_name, hair_rgb in HAIRS.items():
                     if hair_name in color_bases:
                         override_base, override_skin_mask = color_bases[hair_name]
-                        result = tint(override_base, override_skin_mask, skin_rgb, .78).astype(np.uint8)
+                        result = tint_skin(override_base, override_skin_mask, skin_rgb).astype(np.uint8)
                     else:
                         hair_floor = .35
                         if gender == "female":
