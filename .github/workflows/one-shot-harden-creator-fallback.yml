@@ -27,7 +27,7 @@ jobs:
           python -m pip install --quiet 'numpy<3' opencv-python-headless
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Harden creator fallback
+      - name: Harden creator fallback and runtime regression
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -59,23 +59,6 @@ jobs:
               raise SystemExit(f'creator preview onload count={s.count(old)}')
           s = s.replace(old, new, 1)
           p.write_text(s, encoding='utf-8')
-
-          vpath = Path('scripts/validate_creator_library.py')
-          v = vpath.read_text(encoding='utf-8')
-          v = re.sub(
-              r"if html\.count\('function creatorFallbackPath\(gender=avatarDraft\.gender\)\{'\) != 1:\n    errors\.append\('creatorFallbackPath must exist exactly once'\)\nif 'return creatorAssetPath\(\{gender,skin:\\\"medium\\\",hairColor:\\\"brown\\\",hairStyle:style\}\);' not in html:\n    errors\.append\('creator fallback must use a complete pre-rendered creator asset'\)",
-              "if html.count('function creatorFallbackPath(gender=avatarDraft.gender,skin=avatarDraft.skin,hairColor=avatarDraft.hairColor){') != 1:\n    errors.append('creatorFallbackPath must exist exactly once')\nif 'return creatorAssetPath({gender,skin,hairColor,hairStyle:style});' not in html:\n    errors.append('creator fallback must preserve gender, skin and hair colour inside the pre-rendered library')\nif '? creatorFallbackPath(gender, profile?.avatar_skin || \"medium\", profile?.avatar_hair_color || \"brown\")' not in html:\n    errors.append('stage-1 character fallback must preserve loaded profile skin/hair colour')",
-              v,
-              count=1,
-          )
-          if "function creatorFallbackPath(gender=avatarDraft.gender,skin=avatarDraft.skin,hairColor=avatarDraft.hairColor){" not in v:
-              raise SystemExit('validator fallback assertion update failed')
-          marker = "    if 'creatorAssetPath()' not in preview or 'creatorFallbackPath()' not in preview:\n        errors.append('creator preview does not use canonical asset/fallback helpers')"
-          extra = marker + "\n    if \"document.getElementById('saveAvatar').disabled=this.dataset.triedFallback==='1'\" not in preview:\n        errors.append('creator preview must keep save disabled when a fallback asset was needed')"
-          if marker not in v:
-              raise SystemExit('validator preview marker missing')
-          v = v.replace(marker, extra, 1)
-          vpath.write_text(v, encoding='utf-8')
 
           mpath = Path('scripts/creator_runtime_smoke.mjs')
           m = mpath.read_text(encoding='utf-8')
