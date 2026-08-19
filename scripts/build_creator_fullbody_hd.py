@@ -69,6 +69,22 @@ def reviewed_mask(style):
     return ImageOps.fit(Image.open(path).convert("L"), CANVAS_SIZE, Image.Resampling.LANCZOS)
 
 
+def photographic_skin_mask(scene, person_alpha):
+    rgb = np.asarray(scene, dtype=np.uint8)
+    ycrcb = cv2.cvtColor(rgb, cv2.COLOR_RGB2YCrCb)
+    y, cr, cb = cv2.split(ycrcb)
+    # Broad photographic skin locus, constrained strictly to the reviewed body
+    # silhouette.  The morphology closes tiny gaps so face/neck/arms tint as one
+    # continuous surface instead of separate patches.
+    raw = (cr >= 126) & (cr <= 184) & (cb >= 72) & (cb <= 142) & (y >= 28)
+    raw &= person_alpha > 28
+    layer = (raw.astype(np.uint8) * 255)
+    layer = cv2.morphologyEx(layer, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
+    layer = cv2.morphologyEx(layer, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+    layer = cv2.GaussianBlur(layer, (0, 0), 1.15)
+    return layer.astype(np.float32) / 255.0
+
+
 def canonical_body(gender):
     path, style = CANONICAL[gender]
     scene = fit_scene(path)
@@ -77,25 +93,27 @@ def canonical_body(gender):
     if not bbox:
         raise SystemExit(f"Empty canonical mask: {gender}")
 
+    source_person_alpha = np.asarray(alpha, dtype=np.uint8)
+    source_skin = photographic_skin_mask(scene, source_person_alpha)
+
     cutout = scene.crop(bbox)
     cutout_alpha = alpha.crop(bbox)
+    skin_crop = Image.fromarray(np.clip(source_skin * 255, 0, 255).astype(np.uint8), "L").crop(bbox)
+
     scale = TARGET_PERSON_HEIGHT / max(1, cutout.height)
     size = (max(1, round(cutout.width * scale)), TARGET_PERSON_HEIGHT)
     cutout = cutout.resize(size, Image.Resampling.LANCZOS)
     cutout_alpha = cutout_alpha.resize(size, Image.Resampling.LANCZOS)
+    skin_crop = skin_crop.resize(size, Image.Resampling.LANCZOS)
 
     x = round(CENTER_X - size[0] / 2)
     y = GROUND_Y - size[1]
     body = BACKGROUND.copy()
     body.paste(cutout, (x, y), cutout_alpha)
 
-    _, source_skin = base.masks(scene, gender, style)
-    source_skin = Image.fromarray(np.clip(source_skin * 255, 0, 255).astype(np.uint8), "L")
-    source_skin = source_skin.crop(bbox).resize(size, Image.Resampling.LANCZOS)
     skin_layer = Image.new("L", CANVAS_SIZE, 0)
-    skin_layer.paste(source_skin, (x, y))
-    skin_layer = skin_layer.filter(ImageFilter.GaussianBlur(1.2))
-
+    skin_layer.paste(skin_crop, (x, y))
+    skin_layer = skin_layer.filter(ImageFilter.GaussianBlur(1.0))
     return body, np.asarray(skin_layer, dtype=np.float32) / 255.0
 
 
@@ -107,9 +125,6 @@ def fallback_hair_mask(source, gender, style):
     r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
     lum = .299 * r + .587 * g + .114 * b
 
-    # Source masters are normalized around these head zones.  Restricting the
-    # fallback to the head/locks prevents walls, hoodies and shadows entering
-    # the hairstyle mask.
     if gender == "male":
         cx = .58
         bounds = {
@@ -131,35 +146,39 @@ def fallback_hair_mask(source, gender, style):
 
     x0, x1, y0, y1 = bounds
     region = (x >= x0) & (x <= x1) & (y >= y0) & (y <= y1)
-    dark_or_hairlike = (lum < 138) & (r < 150) & (g < 135) & (b < 135)
-    warm_dark = (r >= b * .80) | (lum < 58)
-    raw = region & dark_or_hairlike & warm_dark
-
-    layer = (raw.astype(np.uint8) * 255)
+    dark_or_hairlike = (lum < 145) & (r < 158) & (g < 145) & (b < 145)
+    warm_dark = (r >= b * .78) | (lum < 62)
+    layer = ((region & dark_or_hairlike & warm_dark).astype(np.uint8) * 255)
     layer = cv2.morphologyEx(layer, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8))
     layer = cv2.morphologyEx(layer, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+
     n, labels, stats, _ = cv2.connectedComponentsWithStats((layer > 0).astype(np.uint8), 8)
     if n > 1:
-        # Prefer a sizeable component closest to the expected head centre.
-        best = None
-        best_score = None
+        keep = np.zeros_like(layer)
+        candidates = []
         for idx in range(1, n):
             sx, sy, sw, sh, area = stats[idx]
-            if area < 80:
+            if area < 60:
                 continue
-            component_cx = (sx + sw / 2) / w
-            component_cy = (sy + sh / 2) / h
-            score = area - 18000 * abs(component_cx - cx) - 7000 * abs(component_cy - .18)
-            if best_score is None or score > best_score:
-                best_score, best = score, idx
-        if best is not None:
-            layer = ((labels == best).astype(np.uint8) * 255)
+            ccx = (sx + sw / 2) / w
+            ccy = (sy + sh / 2) / h
+            score = area - 17000 * abs(ccx - cx) - 6500 * abs(ccy - .18)
+            candidates.append((score, idx))
+        # Long female hair can be split into left/right locks; retain up to 3
+        # strongest nearby components instead of forcing one circular blob.
+        for _, idx in sorted(candidates, reverse=True)[:3]:
+            keep[labels == idx] = 255
+        if keep.any():
+            layer = keep
     return cv2.GaussianBlur(layer, (0, 0), 1.0).astype(np.float32) / 255.0
 
 
 def align_style_hair(gender, style):
     source = fit_scene(STYLE_SOURCES[gender][style])
-    hair_alpha, _ = base.masks(source, gender, style)
+    try:
+        hair_alpha, _ = base.masks(source, gender, style)
+    except SystemExit:
+        hair_alpha = fallback_hair_mask(source, gender, style)
     if np.count_nonzero(hair_alpha > .07) < 80:
         hair_alpha = fallback_hair_mask(source, gender, style)
 
