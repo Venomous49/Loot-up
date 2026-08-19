@@ -30,9 +30,37 @@ MASTERS = {
 }
 
 COLOR_MASTERS = {
+    ("female_long", "brown"): SOURCE / "female_long_brown_natural.png",
+    ("female_long", "blond"): SOURCE / "female_long_blond_natural.png",
+    ("female_long", "red"): SOURCE / "female_long_red_natural.png",
+    ("female_long", "purple"): SOURCE / "female_long_purple_natural.png",
     ("female_wavy", "blond"): SOURCE / "female_wavy_blond_natural.png",
     ("female_wavy", "red"): SOURCE / "female_wavy_red_natural.png",
     ("female_wavy", "purple"): SOURCE / "female_wavy_purple_natural.png",
+    ("female_bob", "brown"): SOURCE / "female_bob_brown_natural.png",
+    ("female_bob", "blond"): SOURCE / "female_bob_blond_natural.png",
+    ("female_bob", "red"): SOURCE / "female_bob_red_natural.png",
+    ("female_bob", "purple"): SOURCE / "female_bob_purple_natural.png",
+    ("female_ponytail", "brown"): SOURCE / "female_ponytail_brown_natural.png",
+    ("female_ponytail", "blond"): SOURCE / "female_ponytail_blond_natural.png",
+    ("female_ponytail", "red"): SOURCE / "female_ponytail_red_natural.png",
+    ("female_ponytail", "purple"): SOURCE / "female_ponytail_purple_natural.png",
+    ("female_short", "brown"): SOURCE / "female_short_brown_natural.png",
+    ("female_short", "blond"): SOURCE / "female_short_blond_natural.png",
+    ("female_short", "red"): SOURCE / "female_short_red_natural.png",
+    ("female_short", "purple"): SOURCE / "female_short_purple_natural.png",
+    ("male_textured", "brown"): SOURCE / "male_textured_brown_natural.png",
+    ("male_textured", "blond"): SOURCE / "male_textured_blond_natural.png",
+    ("male_textured", "red"): SOURCE / "male_textured_red_natural.png",
+    ("male_textured", "purple"): SOURCE / "male_textured_purple_natural.png",
+    ("male_short", "brown"): SOURCE / "male_short_brown_natural.png",
+    ("male_short", "blond"): SOURCE / "male_short_blond_natural.png",
+    ("male_short", "red"): SOURCE / "male_short_red_natural.png",
+    ("male_short", "purple"): SOURCE / "male_short_purple_natural.png",
+    ("male_medium", "brown"): SOURCE / "male_medium_brown_natural.png",
+    ("male_medium", "blond"): SOURCE / "male_medium_blond_natural.png",
+    ("male_medium", "red"): SOURCE / "male_medium_red_natural.png",
+    ("male_medium", "purple"): SOURCE / "male_medium_purple_natural.png",
 }
 
 SIZES = {"female": (1728, 910), "male": (1086, 1448)}
@@ -244,8 +272,31 @@ def tint_skin(rgb, alpha, target):
     coloured = np.clip(target[None, None, :] + relative[..., None] * 92.0, 0, 255)
     # Preserve most of the original micro-contrast; a heavy replacement makes
     # facial detail look airbrushed and exaggerates source-side shadows.
-    a = (alpha * .52)[..., None]
+    # Make the five requested complexions visibly distinct on every master.
+    # The compressed luminance above keeps this stronger blend from creating
+    # the forehead/cheek shadow patches present in the previous assets.
+    a = (alpha * .76)[..., None]
     return np.clip(src * (1 - a) + coloured * a, 0, 255)
+
+
+def standardized_override_skin_mask(image, gender):
+    """Skin mask for colour masters that already use the standardized layout."""
+    rgb = np.asarray(image).astype(np.float32)
+    h, w = rgb.shape[:2]
+    yy, xx = np.mgrid[0:h, 0:w]
+    x, y = xx / w, yy / h
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    if gender == "male":
+        anatomy = ellipse(x, y, .665, .255, .075, .145)
+        anatomy |= ellipse(x, y, .665, .405, .050, .090)
+    else:
+        anatomy = ellipse(x, y, .520, .285, .092, .185)
+        anatomy |= ellipse(x, y, .520, .480, .070, .120)
+    skin_colour = (r > g * 1.015) & (g > b * .98) & (r > 40) & (b < 205)
+    return np.asarray(
+        Image.fromarray(((skin_colour & anatomy).astype(np.uint8) * 255), "L")
+        .filter(ImageFilter.GaussianBlur(2.0))
+    ) / 255.0
 
 
 def composite_on_master_background(output, gender, style):
@@ -304,7 +355,7 @@ def build():
                 override = Image.open(override_source).convert("RGB")
                 override = ImageOps.fit(override, SIZES[gender], Image.Resampling.LANCZOS)
                 override_base = np.asarray(override).astype(np.float32)
-                _, override_skin_mask = masks(override, gender, style)
+                override_skin_mask = standardized_override_skin_mask(override, gender)
                 color_bases[hair_name] = (override_base, override_skin_mask)
 
             for skin_name, skin_rgb in SKINS.items():
