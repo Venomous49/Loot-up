@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  smoke:
+  local-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -36,5 +36,41 @@ jobs:
           done
           cat /tmp/loot-up-http.log
           exit 1
-      - name: Exercise all creator controls in Chromium
+      - name: Exercise all creator controls locally in Chromium
+        run: node scripts/creator_runtime_smoke.mjs
+
+  production-smoke:
+    needs: local-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CREATOR_PUBLIC_ORIGIN: https://loot-up.marin-iglesias.workers.dev
+      CREATOR_SMOKE_URL: https://loot-up.marin-iglesias.workers.dev/?creatorTest=1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Wait for Cloudflare creator endpoint
+        shell: bash
+        run: |
+          for i in {1..30}; do
+            headers="$(mktemp)"
+            if curl -fsS -D "$headers" -o /tmp/loot-up-public.html "${CREATOR_PUBLIC_ORIGIN}/?creatorTest=1&ci=${GITHUB_SHA}"; then
+              if grep -qi '^x-riselooter-creator-source: validated' "$headers" && grep -q 'id="creatorPreview"' /tmp/loot-up-public.html; then
+                echo "Cloudflare creator endpoint is serving the validated Worker/source path."
+                rm -f "$headers"
+                exit 0
+              fi
+            fi
+            rm -f "$headers"
+            sleep 10
+          done
+          echo "Cloudflare creator endpoint did not become ready with the validated source marker."
+          exit 1
+      - name: Exercise all 250 creator combinations on Cloudflare
         run: node scripts/creator_runtime_smoke.mjs
