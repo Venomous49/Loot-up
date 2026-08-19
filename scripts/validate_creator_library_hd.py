@@ -40,9 +40,6 @@ else:
 
 
 def foreground_bbox(im):
-    # Background is intentionally shared across every preset.  Threshold the
-    # decoded difference, then keep the largest connected region so WebP noise
-    # in the alley cannot be mistaken for avatar pixels.
     delta = cv2.absdiff(im, bg).mean(axis=2)
     mask = (delta > 10.0).astype(np.uint8) * 255
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
@@ -114,11 +111,11 @@ for gender, styles in EXPECTED.items():
         centers = np.array([v[0] for v in reference_boxes])
         grounds = np.array([v[1] for v in reference_boxes])
         heights = np.array([v[2] for v in reference_boxes])
-        if centers.ptp() > CENTER_TOLERANCE * 2:
+        if np.ptp(centers) > CENTER_TOLERANCE * 2:
             errors.append(f'{gender}: creator center spread too large ({centers.min():.1f}-{centers.max():.1f})')
-        if grounds.ptp() > GROUND_TOLERANCE * 2:
+        if np.ptp(grounds) > GROUND_TOLERANCE * 2:
             errors.append(f'{gender}: creator ground spread too large ({grounds.min():.1f}-{grounds.max():.1f})')
-        if heights.ptp() > 105:
+        if np.ptp(heights) > 105:
             errors.append(f'{gender}: creator body-height spread too large ({heights.min():.0f}-{heights.max():.0f})')
 
 if errors:
