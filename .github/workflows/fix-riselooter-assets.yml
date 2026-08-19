@@ -1,7 +1,7 @@
 name: Apply RiseLooter static asset patch
 
-# Rebuild silhouettes automatically only when the silhouette builder itself changes.
-# It never rewrites index.html or creator routing.
+# Rebuild exact character-only silhouettes from the validated master evolution art.
+# Never rewrites index.html or creator routing.
 on:
   workflow_dispatch:
   push:
@@ -16,53 +16,41 @@ permissions:
 jobs:
   patch:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install image tools
-        run: python3 -m pip install --quiet opencv-python-headless numpy pillow rembg onnxruntime
-
-      - name: Copy character assets to repository root
         run: |
-          cp assets/characters/male/medium/brown/male_textured/01-debutant.webp ./01-debutant.webp
-          cp assets/characters/male/medium/brown/male_textured/05-debrouillard.webp ./05-debrouillard.webp
-          cp assets/characters/male/medium/brown/male_textured/10-chasseur.webp ./10-chasseur.webp
-          cp assets/characters/male/medium/brown/male_textured/15-hustler.webp ./15-hustler.webp
-          cp assets/characters/male/medium/brown/male_textured/20-pro.webp ./20-pro.webp
-          cp assets/characters/male/medium/brown/male_textured/30-elite.webp ./30-elite.webp
-          cp assets/characters/male/medium/brown/male_textured/40-cyber-looter.webp ./40-cyber-looter.webp
-          cp assets/characters/male/medium/brown/male_textured/50-rise-looter.webp ./50-rise-looter.webp
+          python3 -m pip install --upgrade --quiet pip
+          python3 -m pip install --quiet opencv-python-headless numpy pillow rembg onnxruntime
 
       - name: Build character-only silhouette previews
         run: |
+          set -euo pipefail
           python3 .github/scripts/build_silhouettes.py
-          cp silhouettes/01-debutant.png ./sil-01-debutant.png
-          cp silhouettes/05-debrouillard.png ./sil-05-debrouillard.png
-          cp silhouettes/10-chasseur.png ./sil-10-chasseur.png
-          cp silhouettes/15-hustler.png ./sil-15-hustler.png
-          cp silhouettes/20-pro.png ./sil-20-pro.png
-          cp silhouettes/30-elite.png ./sil-30-elite.png
-          cp silhouettes/40-cyber-looter.png ./sil-40-cyber-looter.png
-          cp silhouettes/50-rise-looter.png ./sil-50-rise-looter.png
+          for f in 01-debutant 05-debrouillard 10-chasseur 15-hustler 20-pro 30-elite 40-cyber-looter 50-rise-looter; do
+            test -s "silhouettes/${f}.png"
+            cp "silhouettes/${f}.png" "sil-${f}.png"
+          done
 
       - name: Verify creator routing is untouched
-        shell: bash
         run: |
           set -euo pipefail
-          git diff --exit-code -- index.html
-          test "$(git status --short index.html | wc -l)" -eq 0
+          git diff --exit-code -- index.html creator-safe-runtime.js
 
-      - name: Commit silhouette assets only
-        shell: bash
+      - name: Commit exact silhouette assets
         run: |
           set -euo pipefail
-          if git diff --quiet -- '*.webp' 'sil-*.png' 'silhouettes/*.png'; then
-            echo "No changes needed"
-            exit 0
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- '*.webp' 'sil-*.png' 'silhouettes/*.png'
+          git add silhouettes/*.png sil-*.png
+          if git diff --cached --quiet; then
+            echo "No silhouette changes to commit"
+            exit 0
+          fi
           git commit -m "Refresh exact character-only evolution silhouettes"
-          git push
+          git push origin HEAD:main
