@@ -42,6 +42,7 @@ jobs:
           grep -q 'git diff --exit-code -- index.html' .github/workflows/build-real-creator.yml
           grep -q 'Publish only after successful static and browser validation' .github/workflows/build-real-creator.yml
           test ! -e .github/workflows/one-shot-harden-creator-fallback.yml
+          test ! -e .github/workflows/one-shot-source-fallback-fix.yml
           test ! -e .github/workflows/apply-creator-routing.yml
 
       - name: Validate Cloudflare transparent static-asset routing
