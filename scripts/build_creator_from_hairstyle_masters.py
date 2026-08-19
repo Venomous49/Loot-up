@@ -26,6 +26,11 @@ MASTERS = {
     },
 }
 
+COLOR_MASTERS = {
+    ("female_wavy", "blond"): SOURCE / "female_wavy_blond_natural.png",
+    ("female_wavy", "red"): SOURCE / "female_wavy_red_natural.png",
+}
+
 SIZES = {"female": (1728, 910), "male": (1086, 1448)}
 SKINS = {
     "light": (222, 174, 145),
@@ -202,29 +207,48 @@ def build():
             if hair_mask.sum() < 250:
                 raise SystemExit(f"Unsafe hair mask for {gender}/{style}")
 
+            color_bases = {}
+            for (override_style, hair_name), override_source in COLOR_MASTERS.items():
+                if override_style != style:
+                    continue
+                override = Image.open(override_source).convert("RGB")
+                override = ImageOps.fit(override, SIZES[gender], Image.Resampling.LANCZOS)
+                override_base = np.asarray(override).astype(np.float32)
+                _, override_skin_mask = masks(override, gender, style)
+                color_bases[hair_name] = (override_base, override_skin_mask)
+
             for skin_name, skin_rgb in SKINS.items():
                 skinned = tint(base, skin_mask, skin_rgb, .78)
                 for hair_name, hair_rgb in HAIRS.items():
-                    hair_floor = .35
-                    if gender == "female":
-                        hair_floor = {
-                            "black": .24,
-                            "brown": .34,
-                            "blond": .68,
-                            "red": .48,
-                            "purple": .20,
-                        }[hair_name]
-                    elif hair_name == "purple":
-                        dark_styles = {"male_textured", "male_short", "male_undercut"}
-                        if style in dark_styles:
-                            hair_floor = .62
-                        else:
-                            hair_floor = .40
-                    hair_strength = .78 if gender == "female" else 1.0
-                    result = tint(skinned, hair_mask, hair_rgb, hair_strength, hair_floor, True).astype(np.uint8)
+                    if hair_name in color_bases:
+                        override_base, override_skin_mask = color_bases[hair_name]
+                        result = tint(override_base, override_skin_mask, skin_rgb, .78).astype(np.uint8)
+                    else:
+                        hair_floor = .35
+                        if gender == "female":
+                            hair_floor = {
+                                "black": .24,
+                                "brown": .34,
+                                "blond": .68,
+                                "red": .48,
+                                "purple": .20,
+                            }[hair_name]
+                        elif hair_name == "purple":
+                            dark_styles = {"male_textured", "male_short", "male_undercut"}
+                            if style in dark_styles:
+                                hair_floor = .62
+                            else:
+                                hair_floor = .40
+                        hair_strength = .78 if gender == "female" else 1.0
+                        result = tint(skinned, hair_mask, hair_rgb, hair_strength, hair_floor, True).astype(np.uint8)
                     path = OUTPUT / gender / skin_name / hair_name / f"{style}.webp"
                     path.parent.mkdir(parents=True, exist_ok=True)
-                    Image.fromarray(result, "RGB").save(path, "WEBP", quality=91, method=6)
+                    output = Image.fromarray(result, "RGB")
+                    if gender == "male":
+                        crop_height = round(output.width * 910 / 1728)
+                        output = output.crop((0, 0, output.width, crop_height)).resize((1728, 910), Image.Resampling.LANCZOS)
+                        output = output.filter(ImageFilter.UnsharpMask(radius=.8, percent=70, threshold=3))
+                    output.save(path, "WEBP", quality=91, method=6)
                     written += 1
 
     if written != 250:
