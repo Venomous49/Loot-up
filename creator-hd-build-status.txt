@@ -1,10 +1,55 @@
 status=failed
-source_commit=8f1c62d2db14c2cf0dff80a57d6f30e8cc8a3307
+source_commit=32ef8a9e73e3e005175987419c7f81c1cc1856ec
 --- tail ---
-[ WARN:0@0.234] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
-[ WARN:0@0.470] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
-[ WARN:0@0.684] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
-[ WARN:0@0.918] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
-[ WARN:0@1.118] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
-[ WARN:0@1.354] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
-No face detected in creator master
+[ WARN:0@0.423] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
+[ WARN:0@0.679] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
+[ WARN:0@0.970] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
+[ WARN:0@1.216] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
+[ WARN:0@1.501] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
+Built 250 canonical Rise Looter presets at 1728x910 center=864, ground=900, body_height=780
+[ WARN:0@0.129] global net_impl_backend.cpp:345 setPreferableTarget Targets are not supported by the new graph engine for now
+CREATOR HD VALIDATION FAILED
+ - creator face not detected: assets/creator/male/light/brown/male_slick.webp
+ - creator face not detected: assets/creator/male/light/red/male_undercut.webp
+ - creator face not detected: assets/creator/male/light/red/male_slick.webp
+ - creator face not detected: assets/creator/male/light/purple/male_undercut.webp
+ - creator face not detected: assets/creator/male/light/purple/male_slick.webp
+ - creator face not detected: assets/creator/male/warm/black/male_undercut.webp
+ - creator face not detected: assets/creator/male/warm/black/male_slick.webp
+ - creator face not detected: assets/creator/male/warm/brown/male_undercut.webp
+ - creator face not detected: assets/creator/male/warm/brown/male_slick.webp
+ - creator face not detected: assets/creator/male/warm/blond/male_undercut.webp
+ - creator face not detected: assets/creator/male/warm/blond/male_slick.webp
+ - creator face not detected: assets/creator/male/warm/red/male_undercut.webp
+ - creator face not detected: assets/creator/male/warm/red/male_slick.webp
+ - creator face not detected: assets/creator/male/warm/purple/male_undercut.webp
+ - creator face not detected: assets/creator/male/warm/purple/male_slick.webp
+ - creator face not detected: assets/creator/male/medium/black/male_undercut.webp
+ - creator face not detected: assets/creator/male/medium/black/male_slick.webp
+ - creator face not detected: assets/creator/male/medium/brown/male_undercut.webp
+ - creator face not detected: assets/creator/male/medium/brown/male_slick.webp
+ - creator face not detected: assets/creator/male/medium/blond/male_undercut.webp
+ - creator face not detected: assets/creator/male/medium/blond/male_slick.webp
+ - creator face not detected: assets/creator/male/medium/red/male_undercut.webp
+ - creator face not detected: assets/creator/male/medium/red/male_slick.webp
+ - creator face not detected: assets/creator/male/medium/purple/male_undercut.webp
+ - creator face not detected: assets/creator/male/medium/purple/male_slick.webp
+ - creator face not detected: assets/creator/male/deep/blond/male_short.webp
+ - creator face not detected: assets/creator/male/deep/red/male_undercut.webp
+ - creator face not detected: assets/creator/male/deep/red/male_slick.webp
+ - creator face not detected: assets/creator/male/deep/purple/male_undercut.webp
+ - creator face not detected: assets/creator/male/dark/black/male_short.webp
+ - creator face not detected: assets/creator/male/dark/black/male_undercut.webp
+ - creator face not detected: assets/creator/male/dark/black/male_slick.webp
+ - creator face not detected: assets/creator/male/dark/brown/male_short.webp
+ - creator face not detected: assets/creator/male/dark/brown/male_undercut.webp
+ - creator face not detected: assets/creator/male/dark/brown/male_slick.webp
+ - creator face not detected: assets/creator/male/dark/blond/male_short.webp
+ - creator face not detected: assets/creator/male/dark/blond/male_undercut.webp
+ - creator face not detected: assets/creator/male/dark/blond/male_slick.webp
+ - creator face not detected: assets/creator/male/dark/red/male_short.webp
+ - creator face not detected: assets/creator/male/dark/red/male_undercut.webp
+ - creator face not detected: assets/creator/male/dark/red/male_slick.webp
+ - creator face not detected: assets/creator/male/dark/purple/male_short.webp
+ - creator face not detected: assets/creator/male/dark/purple/male_undercut.webp
+ - creator face not detected: assets/creator/male/dark/purple/male_slick.webp
