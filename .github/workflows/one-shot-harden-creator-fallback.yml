@@ -27,56 +27,63 @@ jobs:
           python -m pip install --quiet 'numpy<3' opencv-python-headless
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Harden creator fallback and regression tests
-        shell: bash
+      - name: Harden creator fallback
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
-          index = Path('index.html')
-          s = index.read_text(encoding='utf-8')
-          old = '''function creatorFallbackPath(gender=avatarDraft.gender){
-            const style = gender === "female" ? "female_long" : "male_textured";
-            return creatorAssetPath({gender,skin:"medium",hairColor:"brown",hairStyle:style});
-          }'''
-          new = '''function creatorFallbackPath(gender=avatarDraft.gender,skin=avatarDraft.skin,hairColor=avatarDraft.hairColor){
-            const style = gender === "female" ? "female_long" : "male_textured";
-            return creatorAssetPath({gender,skin,hairColor,hairStyle:style});
-          }'''
-          if old not in s:
-              raise SystemExit('canonical creatorFallbackPath block not found')
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s, n = re.subn(
+              r'function creatorFallbackPath\(gender=avatarDraft\.gender\)\{\s*const style = gender === "female" \? "female_long" : "male_textured";\s*return creatorAssetPath\(\{gender,skin:"medium",hairColor:"brown",hairStyle:style\}\);\s*\}',
+              'function creatorFallbackPath(gender=avatarDraft.gender,skin=avatarDraft.skin,hairColor=avatarDraft.hairColor){\n  const style = gender === "female" ? "female_long" : "male_textured";\n  return creatorAssetPath({gender,skin,hairColor,hairStyle:style});\n}',
+              s,
+              count=1,
+          )
+          if n != 1:
+              raise SystemExit(f'creatorFallbackPath replacement count={n}')
+
+          s, n = re.subn(
+              r'const fallback=stage===0\s*\? creatorFallbackPath\(gender\)',
+              'const fallback=stage===0\n  ? creatorFallbackPath(gender, profile?.avatar_skin || "medium", profile?.avatar_hair_color || "brown")',
+              s,
+              count=1,
+          )
+          if n != 1:
+              raise SystemExit(f'characterHTML fallback replacement count={n}')
+
+          old = "onload=\"document.getElementById('saveAvatar').disabled=false\""
+          new = "onload=\"document.getElementById('saveAvatar').disabled=this.dataset.triedFallback==='1'\""
+          if s.count(old) != 1:
+              raise SystemExit(f'creator preview onload count={s.count(old)}')
           s = s.replace(old, new, 1)
-          old_call = '? creatorFallbackPath(gender)'
-          new_call = '? creatorFallbackPath(gender, profile?.avatar_skin || "medium", profile?.avatar_hair_color || "brown")'
-          if old_call not in s:
-              raise SystemExit('character fallback call not found')
-          s = s.replace(old_call, new_call, 1)
-          old_load = 'onload="document.getElementById(\'saveAvatar\').disabled=false"'
-          new_load = 'onload="document.getElementById(\'saveAvatar\').disabled=this.dataset.triedFallback===\'1\'"'
-          if old_load not in s:
-              raise SystemExit('creator preview onload handler not found')
-          s = s.replace(old_load, new_load, 1)
-          index.write_text(s, encoding='utf-8')
+          p.write_text(s, encoding='utf-8')
 
-          validator = Path('scripts/validate_creator_library.py')
-          v = validator.read_text(encoding='utf-8')
-          v = v.replace("if html.count('function creatorFallbackPath(gender=avatarDraft.gender){') != 1:\n    errors.append('creatorFallbackPath must exist exactly once')\nif 'return creatorAssetPath({gender,skin:\"medium\",hairColor:\"brown\",hairStyle:style});' not in html:\n    errors.append('creator fallback must use a complete pre-rendered creator asset')",
-          "if html.count('function creatorFallbackPath(gender=avatarDraft.gender,skin=avatarDraft.skin,hairColor=avatarDraft.hairColor){') != 1:\n    errors.append('creatorFallbackPath must exist exactly once')\nif 'return creatorAssetPath({gender,skin,hairColor,hairStyle:style});' not in html:\n    errors.append('creator fallback must preserve gender, skin and hair colour inside the pre-rendered library')\nif '? creatorFallbackPath(gender, profile?.avatar_skin || \"medium\", profile?.avatar_hair_color || \"brown\")' not in html:\n    errors.append('stage-1 character fallback must preserve the loaded profile skin/hair colour')")
-          needle = "    if 'creatorAssetPath()' not in preview or 'creatorFallbackPath()' not in preview:\n        errors.append('creator preview does not use canonical asset/fallback helpers')"
-          replacement = needle + "\n    if \"document.getElementById('saveAvatar').disabled=this.dataset.triedFallback==='1'\" not in preview:\n        errors.append('creator preview must keep save disabled when a fallback asset was needed')"
-          if needle not in v:
-              raise SystemExit('validator preview assertion anchor not found')
-          v = v.replace(needle, replacement, 1)
-          validator.write_text(v, encoding='utf-8')
+          vpath = Path('scripts/validate_creator_library.py')
+          v = vpath.read_text(encoding='utf-8')
+          v = re.sub(
+              r"if html\.count\('function creatorFallbackPath\(gender=avatarDraft\.gender\)\{'\) != 1:\n    errors\.append\('creatorFallbackPath must exist exactly once'\)\nif 'return creatorAssetPath\(\{gender,skin:\\\"medium\\\",hairColor:\\\"brown\\\",hairStyle:style\}\);' not in html:\n    errors\.append\('creator fallback must use a complete pre-rendered creator asset'\)",
+              "if html.count('function creatorFallbackPath(gender=avatarDraft.gender,skin=avatarDraft.skin,hairColor=avatarDraft.hairColor){') != 1:\n    errors.append('creatorFallbackPath must exist exactly once')\nif 'return creatorAssetPath({gender,skin,hairColor,hairStyle:style});' not in html:\n    errors.append('creator fallback must preserve gender, skin and hair colour inside the pre-rendered library')\nif '? creatorFallbackPath(gender, profile?.avatar_skin || \"medium\", profile?.avatar_hair_color || \"brown\")' not in html:\n    errors.append('stage-1 character fallback must preserve loaded profile skin/hair colour')",
+              v,
+              count=1,
+          )
+          if "function creatorFallbackPath(gender=avatarDraft.gender,skin=avatarDraft.skin,hairColor=avatarDraft.hairColor){" not in v:
+              raise SystemExit('validator fallback assertion update failed')
+          marker = "    if 'creatorAssetPath()' not in preview or 'creatorFallbackPath()' not in preview:\n        errors.append('creator preview does not use canonical asset/fallback helpers')"
+          extra = marker + "\n    if \"document.getElementById('saveAvatar').disabled=this.dataset.triedFallback==='1'\" not in preview:\n        errors.append('creator preview must keep save disabled when a fallback asset was needed')"
+          if marker not in v:
+              raise SystemExit('validator preview marker missing')
+          v = v.replace(marker, extra, 1)
+          vpath.write_text(v, encoding='utf-8')
 
-          smoke = Path('scripts/creator_runtime_smoke.mjs')
-          m = smoke.read_text(encoding='utf-8')
+          mpath = Path('scripts/creator_runtime_smoke.mjs')
+          m = mpath.read_text(encoding='utf-8')
           anchor = "  const saveDisabled = await page.locator('#saveAvatar').isDisabled();\n  if (saveDisabled) failures.push('saveAvatar remains disabled after valid preset loads');"
+          if anchor not in m:
+              raise SystemExit('runtime smoke anchor missing')
           extra = r'''
 
-  // Force one selected asset to fail. The fallback must stay within the same
-  // gender/skin/hair-colour combination and saving the unavailable selection
-  // must remain disabled instead of silently accepting the fallback.
   await page.locator('#genderChoices [data-value="male"]').click();
   await page.locator('#skinChoices [data-value="light"]').click();
   await page.locator('#hairColorChoices [data-value="red"]').click();
@@ -92,26 +99,22 @@ jobs:
     failures.push(`forced missing preset used wrong fallback: ${fallbackSrc}`);
   }
   if (!(await page.locator('#saveAvatar').isDisabled())) {
-    failures.push('saveAvatar became enabled even though the selected preset required a fallback');
+    failures.push('saveAvatar became enabled even though selected preset required fallback');
   }
   await page.unroute(blockedPattern);
   await page.locator('#hairStyleChoices [data-value="male_textured"]').click();
   await waitForLoadedImage('#creatorPreview img.creator-real-preview');
   if (await page.locator('#saveAvatar').isDisabled()) {
-    failures.push('saveAvatar did not recover after returning to a valid primary preset');
+    failures.push('saveAvatar did not recover after returning to valid primary preset');
   }'''
-          if anchor not in m:
-              raise SystemExit('runtime smoke anchor not found')
-          m = m.replace(anchor, anchor + extra, 1)
-          smoke.write_text(m, encoding='utf-8')
+          if 'forced missing preset used wrong fallback' not in m:
+              m = m.replace(anchor, anchor + extra, 1)
+          mpath.write_text(m, encoding='utf-8')
           PY
-
           rm .github/workflows/one-shot-harden-creator-fallback.yml
-
       - name: Validate creator library
         run: python scripts/validate_creator_library.py
       - name: Start static site
-        shell: bash
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/loot-up-http.log 2>&1 &
           for i in {1..30}; do
@@ -123,7 +126,6 @@ jobs:
       - name: Exercise creator including forced fallback failure
         run: node scripts/creator_runtime_smoke.mjs
       - name: Publish verified fallback hardening
-        shell: bash
         run: |
           set -euo pipefail
           git diff --check
