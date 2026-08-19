@@ -14,7 +14,8 @@ CANVAS_SIZE = (1728, 910)
 CENTER_X = CANVAS_SIZE[0] // 2
 GROUND_Y = 900
 TARGET_PERSON_HEIGHT = 780
-WEBP_QUALITY = 98
+WEBP_QUALITY = 100
+WEBP_METHOD = 6
 
 CANONICAL = {
     "male": (base.SOURCE / "male_undercut_clean.png", "male_undercut"),
@@ -75,10 +76,11 @@ def photographic_skin_mask(scene, person_alpha):
     y, cr, cb = cv2.split(ycrcb)
     raw = (cr >= 126) & (cr <= 184) & (cb >= 72) & (cb <= 142) & (y >= 28)
     raw &= person_alpha > 28
-    layer = (raw.astype(np.uint8) * 255)
+    layer = raw.astype(np.uint8) * 255
     layer = cv2.morphologyEx(layer, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
     layer = cv2.morphologyEx(layer, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
-    layer = cv2.GaussianBlur(layer, (0, 0), 1.15)
+    # A soft edge prevents visible neck/face/arm boundaries while leaving clothes untouched.
+    layer = cv2.GaussianBlur(layer, (0, 0), 1.35)
     return layer.astype(np.float32) / 255.0
 
 
@@ -100,6 +102,8 @@ def canonical_body(gender):
     scale = TARGET_PERSON_HEIGHT / max(1, cutout.height)
     size = (max(1, round(cutout.width * scale)), TARGET_PERSON_HEIGHT)
     cutout = cutout.resize(size, Image.Resampling.LANCZOS)
+    # Recover fine fabric/face detail lost only by resizing; the background is never sharpened.
+    cutout = cutout.filter(ImageFilter.UnsharpMask(radius=0.9, percent=105, threshold=3))
     cutout_alpha = cutout_alpha.resize(size, Image.Resampling.LANCZOS)
     skin_crop = skin_crop.resize(size, Image.Resampling.LANCZOS)
 
@@ -192,6 +196,9 @@ def align_style_hair(gender, style):
     out_w = max(1, round(rgb_crop.shape[1] * scale))
     out_h = max(1, round(rgb_crop.shape[0] * scale))
     rgb_crop = cv2.resize(rgb_crop, (out_w, out_h), interpolation=cv2.INTER_LANCZOS4)
+    # A very mild local unsharp pass preserves individual strands after the geometric resize.
+    blur = cv2.GaussianBlur(rgb_crop, (0, 0), .65)
+    rgb_crop = cv2.addWeighted(rgb_crop, 1.12, blur, -.12, 0)
     a_crop = cv2.resize(a_crop, (out_w, out_h), interpolation=cv2.INTER_LINEAR)
 
     x = round(CENTER_X - out_w / 2)
@@ -206,36 +213,55 @@ def align_style_hair(gender, style):
     cw, ch = x2 - x, y2 - y
     aligned_rgb[y:y2, x:x2] = rgb_crop[:ch, :cw].astype(np.float32)
     aligned_alpha[y:y2, x:x2] = a_crop[:ch, :cw].astype(np.float32) / 255.0
-    aligned_alpha = cv2.GaussianBlur(aligned_alpha, (0, 0), 0.75)
+    aligned_alpha = cv2.GaussianBlur(aligned_alpha, (0, 0), 0.72)
     return aligned_rgb, np.clip(aligned_alpha, 0, 1)
 
 
+def _rgb_target_to_lab(target):
+    pixel = np.asarray(target, dtype=np.uint8).reshape(1, 1, 3)
+    return cv2.cvtColor(pixel, cv2.COLOR_RGB2LAB)[0, 0].astype(np.float32)
+
+
 def recolor_skin(rgb, alpha, target):
-    src = rgb.astype(np.float32)
-    a = np.clip(alpha, 0, 1)[..., None]
-    target = np.asarray(target, dtype=np.float32)
-    lum = .299 * src[..., 0] + .587 * src[..., 1] + .114 * src[..., 2]
-    selected = lum[alpha > .35]
-    midpoint = float(np.median(selected)) if selected.size else 120.0
-    detail = np.clip((lum - midpoint) / 255.0, -.11, .11)
-    toned = np.clip(target[None, None, :] + detail[..., None] * 115.0, 0, 255)
-    strength = .74
-    return np.clip(src * (1 - a * strength) + toned * (a * strength), 0, 255)
+    """Photographic complexion transfer that preserves pores, shading and face geometry."""
+    src_u8 = np.clip(rgb, 0, 255).astype(np.uint8)
+    src_lab = cv2.cvtColor(src_u8, cv2.COLOR_RGB2LAB).astype(np.float32)
+    target_lab = _rgb_target_to_lab(target)
+
+    toned_lab = src_lab.copy()
+    # Keep most original luminance so facial modelling and fabric-adjacent shadows survive.
+    toned_lab[..., 0] = np.clip(src_lab[..., 0] * .84 + target_lab[0] * .16, 0, 255)
+    toned_lab[..., 1] = np.clip(src_lab[..., 1] * .24 + target_lab[1] * .76, 0, 255)
+    toned_lab[..., 2] = np.clip(src_lab[..., 2] * .24 + target_lab[2] * .76, 0, 255)
+    toned = cv2.cvtColor(toned_lab.astype(np.uint8), cv2.COLOR_LAB2RGB).astype(np.float32)
+
+    # Smooth only the transition mask, not the skin texture itself.
+    a = np.clip(alpha, 0, 1)
+    a = cv2.GaussianBlur(a, (0, 0), .55)[..., None] * .82
+    return np.clip(rgb.astype(np.float32) * (1 - a) + toned * a, 0, 255)
 
 
 def recolor_hair(rgb, alpha, target, name):
-    src = rgb.astype(np.float32)
-    target = np.asarray(target, dtype=np.float32)
-    lum = .299 * src[..., 0] + .587 * src[..., 1] + .114 * src[..., 2]
-    selected = lum[alpha > .25]
-    low, high = (np.percentile(selected, (5, 97)) if selected.size else (18.0, 150.0))
-    norm = np.clip((lum - low) / max(26.0, high - low), 0, 1)
-    floors = {"black": .16, "brown": .27, "blond": .58, "red": .34, "purple": .28}
-    ceilings = {"black": .64, "brown": .88, "blond": 1.18, "red": 1.02, "purple": .96}
-    brightness = floors[name] + (ceilings[name] - floors[name]) * norm
-    coloured = np.clip(target[None, None, :] * brightness[..., None], 0, 255)
-    a = (np.clip(alpha, 0, 1) * .88)[..., None]
-    return np.clip(src * (1 - a) + coloured * a, 0, 255)
+    """Colour hair in LAB space so strand luminance remains photographic instead of flat."""
+    src_u8 = np.clip(rgb, 0, 255).astype(np.uint8)
+    src_lab = cv2.cvtColor(src_u8, cv2.COLOR_RGB2LAB).astype(np.float32)
+    target_lab = _rgb_target_to_lab(target)
+
+    luminance_gain = {
+        "black": .62,
+        "brown": .83,
+        "blond": 1.18,
+        "red": .96,
+        "purple": .91,
+    }[name]
+    toned_lab = src_lab.copy()
+    toned_lab[..., 0] = np.clip(src_lab[..., 0] * luminance_gain, 0, 255)
+    toned_lab[..., 1] = np.clip(src_lab[..., 1] * .16 + target_lab[1] * .84, 0, 255)
+    toned_lab[..., 2] = np.clip(src_lab[..., 2] * .16 + target_lab[2] * .84, 0, 255)
+    toned = cv2.cvtColor(toned_lab.astype(np.uint8), cv2.COLOR_LAB2RGB).astype(np.float32)
+
+    a = cv2.GaussianBlur(np.clip(alpha, 0, 1), (0, 0), .42)[..., None] * .90
+    return np.clip(rgb.astype(np.float32) * (1 - a) + toned * a, 0, 255)
 
 
 def build():
@@ -263,8 +289,8 @@ def build():
                     out = Image.fromarray(result, "RGB")
                     path = base.OUTPUT / gender / skin_name / hair_name / f"{style}.webp"
                     path.parent.mkdir(parents=True, exist_ok=True)
-                    # method affects encoding effort only, not the 98/100 visual quality.
-                    out.save(path, "WEBP", quality=WEBP_QUALITY, method=4)
+                    # Maximum-quality WebP: no chroma-subsampling shortcuts, full encoder effort.
+                    out.save(path, "WEBP", quality=WEBP_QUALITY, method=WEBP_METHOD)
                     written += 1
 
     expected = 125 if requested_gender else 250
@@ -272,7 +298,7 @@ def build():
         raise SystemExit(f"Expected {expected} presets, wrote {written}")
     print(
         f"Built {written} canonical Rise Looter presets at {CANVAS_SIZE[0]}x{CANVAS_SIZE[1]} "
-        f"center={CENTER_X}, ground={GROUND_Y}, body_height={TARGET_PERSON_HEIGHT}"
+        f"center={CENTER_X}, ground={GROUND_Y}, body_height={TARGET_PERSON_HEIGHT}, webp_quality={WEBP_QUALITY}"
     )
 
 
