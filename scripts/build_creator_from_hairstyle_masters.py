@@ -353,7 +353,10 @@ def build():
                 if override_style != style:
                     continue
                 override = Image.open(override_source).convert("RGB")
-                override = ImageOps.fit(override, SIZES[gender], Image.Resampling.LANCZOS)
+                # Reviewed colour masters are already complete standardized
+                # 1728x910 scenes. Never force male masters through the old
+                # portrait canvas (1086x1448), which zoomed and cropped them.
+                override = ImageOps.fit(override, (1728, 910), Image.Resampling.LANCZOS)
                 override_base = np.asarray(override).astype(np.float32)
                 override_skin_mask = standardized_override_skin_mask(override, gender)
                 color_bases[hair_name] = (override_base, override_skin_mask)
@@ -361,7 +364,8 @@ def build():
             for skin_name, skin_rgb in SKINS.items():
                 skinned = tint_skin(base, skin_mask, skin_rgb)
                 for hair_name, hair_rgb in HAIRS.items():
-                    if hair_name in color_bases:
+                    is_color_master = hair_name in color_bases
+                    if is_color_master:
                         override_base, override_skin_mask = color_bases[hair_name]
                         result = tint_skin(override_base, override_skin_mask, skin_rgb).astype(np.uint8)
                     else:
@@ -406,13 +410,17 @@ def build():
                     path = OUTPUT / gender / skin_name / hair_name / f"{style}.webp"
                     path.parent.mkdir(parents=True, exist_ok=True)
                     output = Image.fromarray(result, "RGB")
-                    if gender == "male":
+                    if is_color_master:
+                        # Background and person placement are already final.
+                        output = output.filter(ImageFilter.UnsharpMask(radius=.65, percent=55, threshold=3))
+                    elif gender == "male":
                         crop_height = round(output.width * 910 / 1728)
                         output = output.crop((0, 0, output.width, crop_height)).resize((1728, 910), Image.Resampling.LANCZOS)
                         output = output.filter(ImageFilter.UnsharpMask(radius=.8, percent=70, threshold=3))
                     else:
                         output = output.filter(ImageFilter.UnsharpMask(radius=.65, percent=55, threshold=3))
-                    output = composite_on_master_background(output, gender, style)
+                    if not is_color_master:
+                        output = composite_on_master_background(output, gender, style)
                     output.save(path, "WEBP", quality=91, method=6)
                     written += 1
 
