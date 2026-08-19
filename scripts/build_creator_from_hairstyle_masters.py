@@ -10,22 +10,25 @@ SOURCE = ROOT / "assets" / "creator_sources"
 OUTPUT = ROOT / "assets" / "creator"
 BACKGROUND = SOURCE / "creator_background_master.png"
 MASKS = SOURCE / "person_masks"
+COLOR_MASKS = SOURCE / "color_master_masks"
+STANDARDIZED = SOURCE / "standardized_black"
+FACE_MODEL = SOURCE / "face_detection_yunet_2023mar.onnx"
 BACKGROUND_CACHE = None
 
 MASTERS = {
     "female": {
-        "female_long": SOURCE / "female_long.webp",
-        "female_wavy": SOURCE / "female_wavy.png",
-        "female_bob": SOURCE / "female_bob.png",
-        "female_ponytail": SOURCE / "female_ponytail.png",
-        "female_short": SOURCE / "female_short.png",
+        "female_long": STANDARDIZED / "female_long.webp",
+        "female_wavy": STANDARDIZED / "female_wavy.webp",
+        "female_bob": STANDARDIZED / "female_bob.webp",
+        "female_ponytail": STANDARDIZED / "female_ponytail.webp",
+        "female_short": STANDARDIZED / "female_short.webp",
     },
     "male": {
-        "male_textured": SOURCE / "male_textured_clean.png",
-        "male_short": SOURCE / "male_short_clean.png",
-        "male_medium": SOURCE / "male_medium_clean.png",
-        "male_undercut": SOURCE / "male_undercut_clean.png",
-        "male_slick": SOURCE / "male_slick_clean.png",
+        "male_textured": STANDARDIZED / "male_textured.webp",
+        "male_short": STANDARDIZED / "male_short.webp",
+        "male_medium": STANDARDIZED / "male_medium.webp",
+        "male_undercut": STANDARDIZED / "male_undercut.webp",
+        "male_slick": STANDARDIZED / "male_slick.webp",
     },
 }
 
@@ -64,6 +67,10 @@ COLOR_MASTERS = {
 }
 
 SIZES = {"female": (1728, 910), "male": (1086, 1448)}
+TARGET_FACES = {
+    "male": (914.0, 160.0, 180.0, 235.0),
+    "female": (800.0, 125.0, 212.0, 304.0),
+}
 SKINS = {
     "light": (222, 174, 145),
     "warm": (194, 130, 87),
@@ -139,13 +146,35 @@ def foreground_mask(image, gender):
     return np.asarray(person) > 96
 
 
+def detect_face(image):
+    """Return the highest-confidence YuNet face box as x, y, width, height."""
+    if not FACE_MODEL.exists():
+        raise SystemExit(f"Missing face detector: {FACE_MODEL}")
+    bgr = cv2.cvtColor(np.asarray(image.convert("RGB")), cv2.COLOR_RGB2BGR)
+    detector = cv2.FaceDetectorYN.create(
+        str(FACE_MODEL), "", (bgr.shape[1], bgr.shape[0]), .64, .3, 5000
+    )
+    _, faces = detector.detect(bgr)
+    if faces is None or len(faces) == 0:
+        raise SystemExit("No face detected in creator master")
+    face = max(faces, key=lambda row: row[-1])
+    return tuple(float(value) for value in face[:4])
+
+
 def masks(image, gender, style):
     rgb = np.asarray(image).astype(np.float32)
     h, w = rgb.shape[:2]
     yy, xx = np.mgrid[0:h, 0:w]
     x, y = xx / w, yy / h
     r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
-    person = foreground_mask(image, gender)
+    reviewed_mask = MASKS / f"{style}.png"
+    if reviewed_mask.exists():
+        person_layer = ImageOps.fit(
+            Image.open(reviewed_mask).convert("L"), (w, h), Image.Resampling.LANCZOS
+        )
+        person = np.asarray(person_layer) > 24
+    else:
+        person = foreground_mask(image, gender)
 
     # Existing hair is dark and neutral/warm. Curved, style-specific geometry
     # prevents dark alley pixels from being recoloured with the hair.
@@ -187,22 +216,11 @@ def masks(image, gender, style):
         hair = candidate
         anatomy = face | ((x > .46) & (x < .58) & (y > .39) & (y < .60))
     else:
-        head = {
-            "male_textured": (.625, .092, .070, .065),
-            "male_short": (.610, .092, .075, .060),
-            "male_medium": (.625, .105, .092, .082),
-            "male_undercut": (.640, .092, .088, .073),
-            "male_slick": (.650, .092, .082, .067),
-        }[style]
-        hx, hy, hrx, hry = head
-        face = ellipse(x, y, hx, hy + .070, hrx * .90, .075)
-        geometry = {
-            "male_textured": ellipse(x, y, hx, hy, hrx, hry),
-            "male_short": ellipse(x, y, hx, hy, hrx, hry),
-            "male_medium": ellipse(x, y, hx, hy, hrx, hry),
-            "male_undercut": ellipse(x, y, hx, hy, hrx, hry),
-            "male_slick": ellipse(x, y, hx, hy, hrx, hry),
-        }[style]
+        fx, fy, fw, fh = detect_face(image)
+        hx, hy = (fx + fw * .50) / w, (fy - fh * .04) / h
+        hrx, hry = fw * .68 / w, fh * .55 / h
+        face = ellipse(x, y, (fx + fw * .5) / w, (fy + fh * .52) / h, fw * .47 / w, fh * .52 / h)
+        geometry = ellipse(x, y, hx, hy, hrx, hry)
         # Male foreheads can share the warm/dark range of the hair source.
         # Require neutral-dark pixels so skin can never become a coloured band.
         neutral_dark_hair = (
@@ -211,16 +229,16 @@ def masks(image, gender, style):
             & (b < 104)
             & (((r - g) < 18) | (r < 72))
         )
-        if style == "male_short":
-            base_candidate = geometry & ~face & person
+        if style in {"male_short", "male_undercut", "male_slick"}:
+            skin_like = (r > g * 1.03) & (g > b * 1.01) & (r > 70)
+            base_candidate = geometry & ~face & ~skin_like & person
         else:
             base_candidate = neutral_dark_hair & geometry & ~face
         candidate = base_candidate & person
         if candidate.sum() < 180:
             candidate = base_candidate
         hair = candidate
-        anatomy = face | ((x > hx - .07) & (x < hx + .07) & (y > hy + .10) & (y < hy + .27))
-        anatomy |= ((x > hx - .20) & (x < hx + .20) & (y > hy + .18) & (y < hy + .62))
+        anatomy = face | ((x > hx - .07) & (x < hx + .07) & (y > hy + .10) & (y < hy + .30))
 
     skin_colour = (r > g * 1.05) & (g > b * 1.04) & (r > 48) & (b < 185)
     skin = skin_colour & anatomy & person
@@ -299,39 +317,65 @@ def standardized_override_skin_mask(image, gender):
     ) / 255.0
 
 
-def composite_on_master_background(output, gender, style):
-    """Use reviewed masks only; every style gets an identical scene and layout."""
+def composite_on_master_background(output, gender, style, mask_path=None):
+    """Place each person so every detected face has the same exact box."""
     global BACKGROUND_CACHE
     canvas_size = (1728, 910)
     portrait = ImageOps.fit(output.convert("RGB"), canvas_size, Image.Resampling.LANCZOS)
-    mask_path = MASKS / f"{style}.png"
+    mask_path = mask_path or (MASKS / f"{style}.png")
     if not mask_path.exists():
         raise SystemExit(f"Missing reviewed person mask: {mask_path}")
     alpha = Image.open(mask_path).convert("L")
     if alpha.size != canvas_size:
-        raise SystemExit(f"Unexpected mask size for {style}: {alpha.size}")
+        alpha = ImageOps.fit(alpha, canvas_size, Image.Resampling.LANCZOS)
     bbox = alpha.getbbox()
     if not bbox:
         raise SystemExit(f"Empty person mask: {style}")
 
-    cutout = portrait.crop(bbox)
-    cutout_alpha = alpha.crop(bbox)
-    target_box = {
-        "male": (764, 46, 1412, 910),
-        "female": (455, 22, 1345, 910),
-    }[gender]
-    target_size = (target_box[2] - target_box[0], target_box[3] - target_box[1])
-    cutout = cutout.resize(target_size, Image.Resampling.LANCZOS)
-    cutout_alpha = cutout_alpha.resize(target_size, Image.Resampling.LANCZOS)
-
+    original_cutout = portrait.crop(bbox)
+    original_alpha = alpha.crop(bbox)
+    face_x, face_y, face_w, face_h = detect_face(portrait)
+    target_x, target_y, target_w, target_h = TARGET_FACES[gender]
+    desired_x, desired_y = target_x, target_y
+    scale_x, scale_y = target_w / face_w, target_h / face_h
     if BACKGROUND_CACHE is None:
         BACKGROUND_CACHE = ImageOps.fit(
             Image.open(BACKGROUND).convert("RGB"),
             canvas_size,
             Image.Resampling.LANCZOS,
         ).filter(ImageFilter.UnsharpMask(radius=.7, percent=40, threshold=4))
-    canvas = BACKGROUND_CACHE.copy()
-    canvas.paste(cutout, target_box[:2], cutout_alpha)
+    canvas = None
+    for attempt in range(3):
+        target_size = (
+            max(1, round((bbox[2] - bbox[0]) * scale_x)),
+            max(1, round((bbox[3] - bbox[1]) * scale_y)),
+        )
+        cutout = original_cutout.resize(target_size, Image.Resampling.LANCZOS)
+        cutout_alpha = original_alpha.resize(target_size, Image.Resampling.LANCZOS)
+        paste_at = (
+            round(target_x - (face_x - bbox[0]) * scale_x),
+            round(target_y - (face_y - bbox[1]) * scale_y),
+        )
+        canvas = BACKGROUND_CACHE.copy()
+        canvas.paste(cutout, paste_at, cutout_alpha)
+        if attempt < 2:
+            final_x, final_y, final_w, final_h = detect_face(canvas)
+            scale_x *= target_w / final_w
+            scale_y *= target_h / final_h
+            # Compensate detector shifts while retaining the analytical anchor.
+            target_x += target_x - final_x
+            target_y += target_y - final_y
+    # Final translation does not alter face proportions; it only locks the
+    # detected top-left corner to the shared reference position.
+    final_x, final_y, _, _ = detect_face(canvas)
+    shift = (round(desired_x - final_x), round(desired_y - final_y))
+    if shift != (0, 0):
+        canvas = BACKGROUND_CACHE.copy()
+        canvas.paste(
+            cutout,
+            (paste_at[0] + shift[0], paste_at[1] + shift[1]),
+            cutout_alpha,
+        )
     return canvas
 
 
@@ -342,7 +386,7 @@ def build():
             if not source.exists():
                 raise SystemExit(f"Missing hairstyle master: {source}")
             master = Image.open(source).convert("RGB")
-            master = ImageOps.fit(master, SIZES[gender], Image.Resampling.LANCZOS)
+            master = ImageOps.fit(master, (1728, 910), Image.Resampling.LANCZOS)
             base = np.asarray(master).astype(np.float32)
             hair_mask, skin_mask = masks(master, gender, style)
             if hair_mask.sum() < 250:
@@ -359,14 +403,17 @@ def build():
                 override = ImageOps.fit(override, (1728, 910), Image.Resampling.LANCZOS)
                 override_base = np.asarray(override).astype(np.float32)
                 override_skin_mask = standardized_override_skin_mask(override, gender)
-                color_bases[hair_name] = (override_base, override_skin_mask)
+                override_mask = COLOR_MASKS / override_source.with_suffix(".png").name
+                if not override_mask.exists():
+                    raise SystemExit(f"Missing colour-master person mask: {override_mask}")
+                color_bases[hair_name] = (override_base, override_skin_mask, override_mask)
 
             for skin_name, skin_rgb in SKINS.items():
                 skinned = tint_skin(base, skin_mask, skin_rgb)
                 for hair_name, hair_rgb in HAIRS.items():
                     is_color_master = hair_name in color_bases
                     if is_color_master:
-                        override_base, override_skin_mask = color_bases[hair_name]
+                        override_base, override_skin_mask, override_mask = color_bases[hair_name]
                         result = tint_skin(override_base, override_skin_mask, skin_rgb).astype(np.uint8)
                     else:
                         hair_floor = .35
@@ -410,17 +457,16 @@ def build():
                     path = OUTPUT / gender / skin_name / hair_name / f"{style}.webp"
                     path.parent.mkdir(parents=True, exist_ok=True)
                     output = Image.fromarray(result, "RGB")
-                    if is_color_master:
-                        # Background and person placement are already final.
-                        output = output.filter(ImageFilter.UnsharpMask(radius=.65, percent=55, threshold=3))
-                    elif gender == "male":
-                        crop_height = round(output.width * 910 / 1728)
-                        output = output.crop((0, 0, output.width, crop_height)).resize((1728, 910), Image.Resampling.LANCZOS)
+                    if gender == "male":
                         output = output.filter(ImageFilter.UnsharpMask(radius=.8, percent=70, threshold=3))
                     else:
                         output = output.filter(ImageFilter.UnsharpMask(radius=.65, percent=55, threshold=3))
-                    if not is_color_master:
-                        output = composite_on_master_background(output, gender, style)
+                    output = composite_on_master_background(
+                        output,
+                        gender,
+                        style,
+                        override_mask if is_color_master else None,
+                    )
                     output.save(path, "WEBP", quality=91, method=6)
                     written += 1
 
