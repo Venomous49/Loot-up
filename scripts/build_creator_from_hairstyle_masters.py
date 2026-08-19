@@ -2,7 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import cv2
-from PIL import Image, ImageDraw, ImageFilter, ImageOps
+from PIL import Image, ImageFilter, ImageOps
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -287,7 +287,7 @@ def tint_skin(rgb, alpha, target, strength=.76):
     # Compress source contrast so a naturally shadowed source cannot turn into
     # a dark patch after selecting a deeper complexion.
     relative = np.clip((luminance - midpoint) / 255.0, -.16, .16)
-    coloured = np.clip(target[None, None, :] + relative[..., None] * 92.0, 0, 255)
+    coloured = np.clip(target[None, None, :] + relative[..., None] * 118.0, 0, 255)
     # Preserve most of the original micro-contrast; a heavy replacement makes
     # facial detail look airbrushed and exaggerates source-side shadows.
     # Make the five requested complexions visibly distinct on every master.
@@ -385,39 +385,8 @@ def composite_on_master_background(output, gender, style, mask_path=None):
     return canvas
 
 
-def canonical_face_patch(image):
-    """Capture the identity-bearing inner face without hairline or ears."""
-    face_x, face_y, face_w, face_h = detect_face(image)
-    box = (
-        round(face_x + face_w * .10),
-        round(face_y + face_h * .15),
-        round(face_x + face_w * .90),
-        round(face_y + face_h * .97),
-    )
-    patch = image.crop(box)
-    alpha = Image.new("L", patch.size, 0)
-    draw = ImageDraw.Draw(alpha)
-    inset_x = max(2, round(patch.width * .04))
-    inset_y = max(2, round(patch.height * .02))
-    draw.ellipse(
-        (inset_x, inset_y, patch.width - inset_x, patch.height - inset_y),
-        fill=255,
-    )
-    alpha = alpha.filter(ImageFilter.GaussianBlur(5.0))
-    return patch, alpha, box[:2]
-
-
-def apply_canonical_face(image, face_patch):
-    patch, alpha, position = face_patch
-    result = image.copy()
-    result.paste(patch, position, alpha)
-    return result
-
-
 def build():
     written = 0
-    canonical_faces = {}
-    canonical_styles = {"female": "female_long", "male": "male_textured"}
     for gender, styles in MASTERS.items():
         for style, source in styles.items():
             if not source.exists():
@@ -446,7 +415,10 @@ def build():
                 color_bases[hair_name] = (override_base, override_skin_mask, override_mask)
 
             for skin_name, skin_rgb in SKINS.items():
-                skin_strength = .58 if gender == "female" else .72
+                # Keep pores, eyes and facial contours visible in the enlarged
+                # profile card. Higher replacement strengths flattened these
+                # details even though the creator thumbnail looked acceptable.
+                skin_strength = .48 if gender == "female" else .56
                 skinned = tint_skin(base, skin_mask, skin_rgb, strength=skin_strength)
                 for hair_name, hair_rgb in HAIRS.items():
                     is_color_master = hair_name in color_bases
@@ -506,18 +478,13 @@ def build():
                         style,
                         override_mask if is_color_master else None,
                     )
-                    face_key = (gender, skin_name)
-                    if style == canonical_styles[gender] and hair_name == "black":
-                        canonical_faces[face_key] = canonical_face_patch(output)
-                    if face_key not in canonical_faces:
-                        raise SystemExit(f"Canonical face not ready: {gender}/{skin_name}")
-                    output = apply_canonical_face(output, canonical_faces[face_key])
-                    # A light final pass restores detail lost by resizing and
-                    # WebP encoding without creating the previous hard halos.
+                    # Keep every source face intact. Pasting a shared inner
+                    # face caused blurred brows and a shortened jaw in the
+                    # enlarged profile card even when thumbnails looked fine.
                     output = output.filter(
-                        ImageFilter.UnsharpMask(radius=.55, percent=35, threshold=4)
+                        ImageFilter.UnsharpMask(radius=.55, percent=38, threshold=3)
                     )
-                    output.save(path, "WEBP", quality=91, method=6)
+                    output.save(path, "WEBP", quality=95, method=6)
                     written += 1
 
     if written != 250:
