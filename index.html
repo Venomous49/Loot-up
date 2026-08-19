@@ -2355,7 +2355,7 @@ const femaleHair = [
 ["female_short","Court moderne"]
 ];
 
-const CREATOR_ASSET_VERSION = "hairstyles11";
+const CREATOR_ASSET_VERSION = "hairstyles12";
 
 let avatarDraft = {
 
@@ -2423,9 +2423,9 @@ function creatorAssetPath(state=avatarDraft,style=state.hairStyle){
   return `assets/creator/${state.gender}/${state.skin}/${state.hairColor}/${style}.webp?v=${CREATOR_ASSET_VERSION}`;
 }
 
-function creatorFallbackPath(gender=avatarDraft.gender){
+function creatorFallbackPath(gender=avatarDraft.gender,skin=avatarDraft.skin,hairColor=avatarDraft.hairColor){
   const style = gender === "female" ? "female_long" : "male_textured";
-  return creatorAssetPath({gender,skin:"medium",hairColor:"brown",hairStyle:style});
+  return creatorAssetPath({gender,skin,hairColor,hairStyle:style});
 }
 
 function fallbackAssetPath(stage){
@@ -2460,7 +2460,7 @@ function characterHTML(profile,stage){
 const preferred=assetPath(profile,stage);
 const gender=profile?.avatar_gender || "male";
 const fallback=stage===0
-  ? creatorFallbackPath(gender)
+  ? creatorFallbackPath(gender, profile?.avatar_skin || "medium", profile?.avatar_hair_color || "brown")
   : fallbackAssetPath(stage);
 return `<div class="character-scene-clean"><img class="scene-clean-image" src="${preferred}" alt="Looter" data-fallback="${fallback}" data-tried-fallback="0" onerror="if(this.dataset.triedFallback!=='1'){this.dataset.triedFallback='1';this.src=this.dataset.fallback}else{this.style.display='none';this.nextElementSibling.style.display='block'}"><div class="character-missing" style="display:none">Asset réaliste manquant.</div></div>`;
 }
@@ -2476,12 +2476,13 @@ const src=creatorAssetPath();
 const fallback=creatorFallbackPath();
 preview.innerHTML = `
 <img class="creator-real-preview" src="${src}" alt="Aperçu Looter" data-fallback="${fallback}" data-tried-fallback="0"
- onload="document.getElementById('saveAvatar').disabled=false"
+ onload="document.getElementById('saveAvatar').disabled=this.dataset.triedFallback==='1'"
  onerror="if(this.dataset.triedFallback!=='1'){this.dataset.triedFallback='1';this.src=this.dataset.fallback}else{this.style.display='none';this.nextElementSibling.style.display='grid';document.getElementById('saveAvatar').disabled=true}">
 <div class="creator-empty creator-asset-missing" style="display:none">
   <strong>VARIANTE INDISPONIBLE</strong>
   <span>Le preset n'a pas pu être chargé.</span>
-</div>`;
+</div>
+<div class="creator-live-badge"><b>NIVEAU 1</b><strong>DÉBUTANT</strong></div>`;
 }
 
 /* ==========================================================
