@@ -1,22 +1,25 @@
-name: Creator preset build
+name: Creator preset HD build
 
-# Visual asset generation is intentionally manual-only.
-# The creator library must never rewrite production assets just because a
-# generator script changed: generated hair/skin variants require QA first.
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/build_creator_fullbody_hd.py'
+      - 'scripts/validate_creator_library_hd.py'
+      - '.github/workflows/build-real-creator.yml'
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: riselooter-real-creator
+  group: riselooter-real-creator-hd
   cancel-in-progress: true
 
 jobs:
   creator:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
@@ -31,14 +34,14 @@ jobs:
       - name: Install deterministic image dependencies
         run: python -m pip install --quiet 'numpy<3' pillow opencv-python-headless
 
-      - name: Build presets from visually reviewed hairstyle masters
-        run: python scripts/build_creator_from_hairstyle_masters.py
+      - name: Build all 250 presets in common 1728x910 full-body framing
+        run: python scripts/build_creator_fullbody_hd.py
 
-      - name: Validate generated creator library
-        run: python scripts/validate_creator_library.py
+      - name: Validate full-body geometry, format and asset completeness
+        run: python scripts/validate_creator_library_hd.py
 
       - name: Setup Node for runtime verification
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '20'
 
@@ -51,25 +54,25 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/loot-up-http.log 2>&1 &
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/riselooter-http.log 2>&1 &
           for i in {1..30}; do
             curl -fsS http://127.0.0.1:4173/index.html >/dev/null && exit 0
             sleep 1
           done
-          cat /tmp/loot-up-http.log
+          cat /tmp/riselooter-http.log
           exit 1
 
-      - name: Exercise all creator controls against generated assets
+      - name: Exercise every creator control against all generated assets
         run: node scripts/creator_runtime_smoke.mjs
 
-      - name: Prove generator did not touch production routing
+      - name: Keep production routing source-owned
         shell: bash
         run: |
           set -euo pipefail
           git diff --exit-code -- index.html
           test "$(git status --short index.html | wc -l)" -eq 0
 
-      - name: Publish only after successful static and browser validation
+      - name: Publish only validated creator assets
         shell: bash
         run: |
           set -euo pipefail
@@ -80,5 +83,5 @@ jobs:
             echo 'No creator changes to publish'
             exit 0
           fi
-          git commit -m 'Publish visually-reviewed creator presets'
+          git commit -m 'Publish unified HD full-body creator presets'
           git push
