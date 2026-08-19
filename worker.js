@@ -15,7 +15,7 @@ export default {
     // repository. Inject only that source-owned stylesheet so every deployed
     // page uses the same canonical 1728x910 preview geometry.
     const headers = new Headers(response.headers);
-    headers.set('x-riselooter-creator-source', 'validated-hd');
+    headers.set('x-riselooter-creator-source', 'validated');
 
     const html = new Response(response.body, {
       status: response.status,
