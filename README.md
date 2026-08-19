@@ -1,7 +1,5 @@
-# Loot-up
+# Rise Looter
 
-RiseLooter deployment project.
+Rise Looter deployment project.
 
-Visual override trigger.
-
-test
+Official virtual currency: **RL Coins**.
