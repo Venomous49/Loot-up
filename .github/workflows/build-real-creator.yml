@@ -5,7 +5,10 @@ on:
     branches: [main]
     paths:
       - 'scripts/build_creator_fullbody_hd.py'
+      - 'scripts/build_creator_from_hairstyle_masters.py'
       - 'scripts/validate_creator_library_hd.py'
+      - 'assets/creator_sources/**'
+      - 'creator-hd.css'
       - '.github/workflows/build-real-creator.yml'
   workflow_dispatch:
 
@@ -58,7 +61,7 @@ jobs:
             echo "status=failed"
             echo "source_commit=${GITHUB_SHA}"
             echo "--- tail ---"
-            tail -n 120 /tmp/creator-hd-build.log || true
+            tail -n 160 /tmp/creator-hd-build.log || true
           } > creator-hd-build-status.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
