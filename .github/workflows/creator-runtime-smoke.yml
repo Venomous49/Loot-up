@@ -13,14 +13,130 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: creator-runtime-smoke-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  normalize-render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enforce consistent HD full-body creator viewport
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          marker = '/* RISE_LOOTER_CREATOR_HD_NORMALIZATION_V2 */'
+          css = r'''
+/* RISE_LOOTER_CREATOR_HD_NORMALIZATION_V2 */
+#creatorModal .creator-preview{
+  position:relative!important;
+  overflow:hidden!important;
+  background:#03080d!important;
+  aspect-ratio:16/9!important;
+  min-height:0!important;
+  contain:layout paint!important;
+}
+#creatorModal .creator-preview .creator-real-preview,
+#creatorModal .creator-preview img{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  object-fit:contain!important;
+  object-position:50% 100%!important;
+  image-rendering:auto!important;
+  filter:none!important;
+  opacity:1!important;
+  transform:none!important;
+  animation:none!important;
+  mix-blend-mode:normal!important;
+  backface-visibility:hidden!important;
+}
+#creatorModal .creator-preview::before,
+#creatorModal .creator-preview::after,
+#creatorModal .creator-skin-overlay,
+#creatorModal .creator-hair-overlay,
+#creatorModal .creator-body-overlay,
+#creatorModal .creator-face-overlay{
+  content:none!important;
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+}
+#creatorModal .creator-preview[data-gender="male"] .creator-real-preview,
+#creatorModal .creator-preview[data-gender="female"] .creator-real-preview{
+  object-fit:contain!important;
+  object-position:50% 100%!important;
+}
+#creatorModal .hair-thumb{
+  image-rendering:auto!important;
+  filter:none!important;
+  transform:none!important;
+  background-size:cover!important;
+  background-position:50% 16%!important;
+}
+'''
+          if marker not in s:
+              s = s.replace('</style>', css + '\n</style>', 1)
+          js_marker = '/* RISE_LOOTER_CREATOR_RUNTIME_NORMALIZATION_V2 */'
+          js = r'''
+/* RISE_LOOTER_CREATOR_RUNTIME_NORMALIZATION_V2 */
+(function(){
+  function normalizeCreatorPreview(){
+    const preview = document.getElementById('creatorPreview');
+    if(!preview) return;
+    const selectedGender = document.querySelector('#genderChoices .choice.selected');
+    preview.dataset.gender = selectedGender?.dataset?.value || 'male';
+    preview.querySelectorAll('img').forEach(img=>{
+      img.decoding = 'async';
+      img.loading = 'eager';
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'contain';
+      img.style.objectPosition = '50% 100%';
+      img.style.filter = 'none';
+      img.style.transform = 'none';
+      img.style.opacity = '1';
+      img.style.mixBlendMode = 'normal';
+    });
+  }
+  function bind(){
+    const preview = document.getElementById('creatorPreview');
+    if(!preview) return;
+    new MutationObserver(normalizeCreatorPreview).observe(preview,{childList:true,subtree:true,attributes:true,attributeFilter:['src','class']});
+    ['genderChoices','skinChoices','hairColorChoices','hairStyleChoices'].forEach(id=>{
+      document.getElementById(id)?.addEventListener('click',()=>requestAnimationFrame(normalizeCreatorPreview));
+    });
+    normalizeCreatorPreview();
+  }
+  if(document.readyState==='loading') window.addEventListener('DOMContentLoaded',bind,{once:true}); else bind();
+})();
+'''
+          if js_marker not in s:
+              s = s.replace('</script>', js + '\n</script>', 1)
+          p.write_text(s, encoding='utf-8')
+      - name: Commit normalization if needed
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'Creator rendering already normalized.'
+            exit 0
+          fi
+          git commit -m 'Normalize HD full-body creator preview'
+          git push
+
   local-smoke:
+    needs: normalize-render
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
