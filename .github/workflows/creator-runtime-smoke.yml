@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - 'index.html'
+      - 'worker.js'
+      - 'wrangler.jsonc'
+      - '.assetsignore'
       - 'assets/creator/**'
       - 'scripts/creator_runtime_smoke.mjs'
       - '.github/workflows/creator-runtime-smoke.yml'
@@ -42,7 +45,7 @@ jobs:
   production-smoke:
     needs: local-smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     env:
       CREATOR_PUBLIC_ORIGIN: https://loot-up.marin-iglesias.workers.dev
       CREATOR_SMOKE_URL: https://loot-up.marin-iglesias.workers.dev/?creatorTest=1
@@ -72,5 +75,32 @@ jobs:
           done
           echo "Cloudflare creator endpoint did not become ready with the validated source marker."
           exit 1
+      - name: Verify all 250 public creator assets match this commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmpdir="$(mktemp -d)"
+          trap 'rm -rf "$tmpdir"' EXIT
+          mismatches=0
+          checked=0
+          while IFS= read -r path; do
+            checked=$((checked + 1))
+            remote="$tmpdir/asset-$checked.webp"
+            url="${CREATOR_PUBLIC_ORIGIN}/${path}?ci=${GITHUB_SHA}"
+            if ! curl -fsS --retry 3 --retry-delay 2 -o "$remote" "$url"; then
+              echo "Missing public creator asset: $path"
+              mismatches=$((mismatches + 1))
+              continue
+            fi
+            local_hash="$(sha256sum "$path" | awk '{print $1}')"
+            remote_hash="$(sha256sum "$remote" | awk '{print $1}')"
+            if [ "$local_hash" != "$remote_hash" ]; then
+              echo "Public creator asset differs from checked-out commit: $path"
+              mismatches=$((mismatches + 1))
+            fi
+          done < <(find assets/creator/male assets/creator/female -type f -name '*.webp' | sort)
+          test "$checked" -eq 250
+          test "$mismatches" -eq 0
+          echo "Verified $checked public creator assets byte-for-byte against ${GITHUB_SHA}."
       - name: Exercise all 250 creator combinations on Cloudflare
         run: node scripts/creator_runtime_smoke.mjs
