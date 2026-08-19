@@ -16,9 +16,6 @@ GROUND_Y = 900
 TARGET_PERSON_HEIGHT = 780
 WEBP_QUALITY = 98
 
-# One immutable body/pose/outfit/face reference per gender. Every preset is
-# rebuilt from these two bodies; only complexion, hairstyle and hair colour may
-# change. The male reference is the approved full-body undercut artwork.
 CANONICAL = {
     "male": (base.SOURCE / "male_undercut_clean.png", "male_undercut"),
     "female": (base.SOURCE / "female_short.png", "female_short"),
@@ -39,6 +36,22 @@ STYLE_SOURCES = {
         "female_ponytail": base.SOURCE / "female_ponytail.png",
         "female_short": base.SOURCE / "female_short.png",
     },
+}
+
+# Target hairstyle envelopes around the single canonical head position.  These
+# preserve each haircut's own aspect ratio, while keeping the same face/body,
+# posture, clothes, scale and centre for every preset.
+HAIR_ENVELOPES = {
+    "male_textured": (190, 155, 126),
+    "male_short": (165, 125, 132),
+    "male_medium": (215, 185, 120),
+    "male_undercut": (190, 155, 126),
+    "male_slick": (185, 145, 126),
+    "female_long": (300, 355, 122),
+    "female_wavy": (320, 370, 118),
+    "female_bob": (245, 235, 122),
+    "female_ponytail": (275, 320, 112),
+    "female_short": (205, 175, 126),
 }
 
 BACKGROUND = ImageOps.fit(
@@ -79,9 +92,6 @@ def canonical_body(gender):
     body = BACKGROUND.copy()
     body.paste(cutout, (x, y), cutout_alpha)
 
-    # Carry one continuous skin mask through the exact body crop/scale/position.
-    # That removes the neck/face boundary that occurred when each hairstyle was
-    # independently recoloured.
     _, source_skin = base.masks(scene, gender, style)
     source_skin = Image.fromarray(np.clip(source_skin * 255, 0, 255).astype(np.uint8), "L")
     source_skin = source_skin.crop(bbox).resize(size, Image.Resampling.LANCZOS)
@@ -92,33 +102,40 @@ def canonical_body(gender):
     return body, np.asarray(skin_layer, dtype=np.float32) / 255.0
 
 
-def align_style_hair(gender, style, canonical):
+def align_style_hair(gender, style):
     source = fit_scene(STYLE_SOURCES[gender][style])
     hair_alpha, _ = base.masks(source, gender, style)
+    mask = np.clip(hair_alpha * 255, 0, 255).astype(np.uint8)
+    ys, xs = np.where(mask > 18)
+    if not len(xs):
+        raise SystemExit(f"No usable hairstyle mask: {gender}/{style}")
 
-    sx, sy, sw, sh = base.detect_face(source)
-    tx, ty, tw, th = base.detect_face(canonical)
-    scale = th / max(1.0, sh)
-    src_center = np.array([sx + sw / 2.0, sy + sh / 2.0], dtype=np.float32)
-    dst_center = np.array([tx + tw / 2.0, ty + th / 2.0], dtype=np.float32)
-    matrix = np.array([
-        [scale, 0.0, dst_center[0] - src_center[0] * scale],
-        [0.0, scale, dst_center[1] - src_center[1] * scale],
-    ], dtype=np.float32)
+    x0, x1 = int(xs.min()), int(xs.max()) + 1
+    y0, y1 = int(ys.min()), int(ys.max()) + 1
+    rgb_crop = np.asarray(source, dtype=np.uint8)[y0:y1, x0:x1]
+    a_crop = mask[y0:y1, x0:x1]
 
-    rgb = np.asarray(source, dtype=np.uint8)
-    aligned_rgb = cv2.warpAffine(
-        rgb, matrix, CANVAS_SIZE, flags=cv2.INTER_LANCZOS4,
-        borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0)
-    )
-    aligned_alpha = cv2.warpAffine(
-        np.clip(hair_alpha * 255, 0, 255).astype(np.uint8), matrix, CANVAS_SIZE,
-        flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=0
-    ).astype(np.float32) / 255.0
+    max_w, max_h, top_y = HAIR_ENVELOPES[style]
+    scale = min(max_w / max(1, rgb_crop.shape[1]), max_h / max(1, rgb_crop.shape[0]))
+    out_w = max(1, round(rgb_crop.shape[1] * scale))
+    out_h = max(1, round(rgb_crop.shape[0] * scale))
+    rgb_crop = cv2.resize(rgb_crop, (out_w, out_h), interpolation=cv2.INTER_LANCZOS4)
+    a_crop = cv2.resize(a_crop, (out_w, out_h), interpolation=cv2.INTER_LINEAR)
 
-    # Feather only the true hairstyle silhouette; never draw synthetic circles.
-    aligned_alpha = cv2.GaussianBlur(aligned_alpha, (0, 0), 0.8)
-    return aligned_rgb.astype(np.float32), np.clip(aligned_alpha, 0, 1)
+    x = round(CENTER_X - out_w / 2)
+    y = top_y
+    aligned_rgb = np.zeros((CANVAS_SIZE[1], CANVAS_SIZE[0], 3), dtype=np.float32)
+    aligned_alpha = np.zeros((CANVAS_SIZE[1], CANVAS_SIZE[0]), dtype=np.float32)
+    x2 = min(CANVAS_SIZE[0], x + out_w)
+    y2 = min(CANVAS_SIZE[1], y + out_h)
+    if x < 0 or y < 0 or x2 <= x or y2 <= y:
+        raise SystemExit(f"Invalid hairstyle placement: {gender}/{style}")
+
+    cw, ch = x2 - x, y2 - y
+    aligned_rgb[y:y2, x:x2] = rgb_crop[:ch, :cw].astype(np.float32)
+    aligned_alpha[y:y2, x:x2] = a_crop[:ch, :cw].astype(np.float32) / 255.0
+    aligned_alpha = cv2.GaussianBlur(aligned_alpha, (0, 0), 0.75)
+    return aligned_rgb, np.clip(aligned_alpha, 0, 1)
 
 
 def recolor_skin(rgb, alpha, target):
@@ -159,7 +176,7 @@ def build():
 
         body, skin_alpha = canonical_body(gender)
         body_rgb = np.asarray(body, dtype=np.float32)
-        aligned_hair = {style: align_style_hair(gender, style, body) for style in styles}
+        aligned_hair = {style: align_style_hair(gender, style) for style in styles}
 
         for skin_name, skin_rgb in base.SKINS.items():
             skinned = recolor_skin(body_rgb, skin_alpha, skin_rgb)
