@@ -8,6 +8,9 @@ from PIL import Image, ImageFilter, ImageOps
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "assets" / "creator_sources"
 OUTPUT = ROOT / "assets" / "creator"
+BACKGROUND = SOURCE / "creator_background_master.png"
+MASKS = SOURCE / "person_masks"
+BACKGROUND_CACHE = None
 
 MASTERS = {
     "female": {
@@ -127,7 +130,13 @@ def masks(image, gender, style):
             "female_long": cap | ellipse(x, y, .425, .50, .105, .39) | ellipse(x, y, .615, .50, .105, .39),
             "female_wavy": cap | ellipse(x, y, .405, .51, .115, .40) | ellipse(x, y, .635, .51, .115, .40),
             "female_bob": ellipse(x, y, .52, .245, .155, .245),
-            "female_ponytail": cap | ellipse(x, y, .52, .075, .080, .070) | ellipse(x, y, .625, .30, .050, .22),
+            "female_ponytail": (
+                cap
+                | ellipse(x, y, .52, .075, .080, .070)
+                | ellipse(x, y, .625, .30, .050, .22)
+                | ellipse(x, y, .430, .43, .075, .34)
+                | ellipse(x, y, .610, .43, .075, .34)
+            ),
             "female_short": ellipse(x, y, .52, .175, .120, .135),
         }[style]
         seeds = {
@@ -141,19 +150,30 @@ def masks(image, gender, style):
         neck_and_chest = ellipse(x, y, .52, .48, .075, .20)
         base_candidate = dark_hair & geometry & ~hair_face & ~neck_and_chest
         connected = connected_from_seeds(base_candidate, seeds)
-        candidate = connected & person
-        if candidate.sum() < 300:
-            candidate = connected
+        if style == "female_ponytail":
+            candidate = base_candidate & person
+        else:
+            candidate = connected & person
+            if candidate.sum() < 300:
+                candidate = connected
         hair = candidate
         anatomy = face | ((x > .46) & (x < .58) & (y > .39) & (y < .60))
     else:
-        face = ellipse(x, y, .585, .145, .070, .070)
+        head = {
+            "male_textured": (.625, .092, .070, .065),
+            "male_short": (.610, .092, .075, .060),
+            "male_medium": (.625, .105, .092, .082),
+            "male_undercut": (.640, .092, .088, .073),
+            "male_slick": (.650, .092, .082, .067),
+        }[style]
+        hx, hy, hrx, hry = head
+        face = ellipse(x, y, hx, hy + .070, hrx * .90, .075)
         geometry = {
-            "male_textured": ellipse(x, y, .585, .088, .060, .058),
-            "male_short": ellipse(x, y, .585, .095, .062, .050),
-            "male_medium": ellipse(x, y, .585, .103, .085, .078),
-            "male_undercut": ellipse(x, y, .585, .090, .082, .070),
-            "male_slick": ellipse(x, y, .585, .090, .075, .062),
+            "male_textured": ellipse(x, y, hx, hy, hrx, hry),
+            "male_short": ellipse(x, y, hx, hy, hrx, hry),
+            "male_medium": ellipse(x, y, hx, hy, hrx, hry),
+            "male_undercut": ellipse(x, y, hx, hy, hrx, hry),
+            "male_slick": ellipse(x, y, hx, hy, hrx, hry),
         }[style]
         # Male foreheads can share the warm/dark range of the hair source.
         # Require neutral-dark pixels so skin can never become a coloured band.
@@ -163,13 +183,16 @@ def masks(image, gender, style):
             & (b < 104)
             & (((r - g) < 18) | (r < 72))
         )
-        base_candidate = neutral_dark_hair & geometry & ~face
+        if style == "male_short":
+            base_candidate = geometry & ~face & person
+        else:
+            base_candidate = neutral_dark_hair & geometry & ~face
         candidate = base_candidate & person
         if candidate.sum() < 180:
             candidate = base_candidate
         hair = candidate
-        anatomy = face | ((x > .52) & (x < .65) & (y > .17) & (y < .31))
-        anatomy |= ((x > .39) & (x < .76) & (y > .25) & (y < .72))
+        anatomy = face | ((x > hx - .07) & (x < hx + .07) & (y > hy + .10) & (y < hy + .27))
+        anatomy |= ((x > hx - .20) & (x < hx + .20) & (y > hy + .18) & (y < hy + .62))
 
     skin_colour = (r > g * 1.05) & (g > b * 1.04) & (r > 48) & (b < 185)
     skin = skin_colour & anatomy & person
@@ -225,6 +248,42 @@ def tint_skin(rgb, alpha, target):
     return np.clip(src * (1 - a) + coloured * a, 0, 255)
 
 
+def composite_on_master_background(output, gender, style):
+    """Use reviewed masks only; every style gets an identical scene and layout."""
+    global BACKGROUND_CACHE
+    canvas_size = (1728, 910)
+    portrait = ImageOps.fit(output.convert("RGB"), canvas_size, Image.Resampling.LANCZOS)
+    mask_path = MASKS / f"{style}.png"
+    if not mask_path.exists():
+        raise SystemExit(f"Missing reviewed person mask: {mask_path}")
+    alpha = Image.open(mask_path).convert("L")
+    if alpha.size != canvas_size:
+        raise SystemExit(f"Unexpected mask size for {style}: {alpha.size}")
+    bbox = alpha.getbbox()
+    if not bbox:
+        raise SystemExit(f"Empty person mask: {style}")
+
+    cutout = portrait.crop(bbox)
+    cutout_alpha = alpha.crop(bbox)
+    target_box = {
+        "male": (764, 46, 1412, 910),
+        "female": (455, 22, 1345, 910),
+    }[gender]
+    target_size = (target_box[2] - target_box[0], target_box[3] - target_box[1])
+    cutout = cutout.resize(target_size, Image.Resampling.LANCZOS)
+    cutout_alpha = cutout_alpha.resize(target_size, Image.Resampling.LANCZOS)
+
+    if BACKGROUND_CACHE is None:
+        BACKGROUND_CACHE = ImageOps.fit(
+            Image.open(BACKGROUND).convert("RGB"),
+            canvas_size,
+            Image.Resampling.LANCZOS,
+        ).filter(ImageFilter.UnsharpMask(radius=.7, percent=40, threshold=4))
+    canvas = BACKGROUND_CACHE.copy()
+    canvas.paste(cutout, target_box[:2], cutout_alpha)
+    return canvas
+
+
 def build():
     written = 0
     for gender, styles in MASTERS.items():
@@ -270,7 +329,13 @@ def build():
                                 hair_floor = .62
                             else:
                                 hair_floor = .40
-                        hair_strength = .78 if gender == "female" else 1.0
+                        hair_strength = {
+                            "black": 0.0,
+                            "brown": .46,
+                            "blond": .64,
+                            "red": .58,
+                            "purple": .56,
+                        }[hair_name]
                         hair_ceiling = {
                             "black": .84,
                             "brown": .94,
@@ -278,8 +343,6 @@ def build():
                             "red": .96,
                             "purple": .92,
                         }[hair_name]
-                        if gender == "male":
-                            hair_strength = .84
                         result = tint(
                             skinned,
                             hair_mask,
@@ -298,6 +361,7 @@ def build():
                         output = output.filter(ImageFilter.UnsharpMask(radius=.8, percent=70, threshold=3))
                     else:
                         output = output.filter(ImageFilter.UnsharpMask(radius=.65, percent=55, threshold=3))
+                    output = composite_on_master_background(output, gender, style)
                     output.save(path, "WEBP", quality=91, method=6)
                     written += 1
 

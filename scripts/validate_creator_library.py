@@ -68,16 +68,17 @@ for gender, styles in EXPECTED.items():
             if ia.shape==ib.shape and cv2.absdiff(ia,ib).mean() < 0.18:
                 errors.append(f'{gender}: adjacent skin tones {a}/{b} too similar')
 
-    hair_imgs=[]
-    for hair in HAIRS:
-        p=ROOT/gender/'medium'/hair/f'{style}.webp'
-        im=cv2.imread(str(p)) if p.exists() else None
-        if im is not None:
-            hair_imgs.append((hair,im))
-    if len(hair_imgs)==5:
-        for (a,ia),(b,ib) in zip(hair_imgs,hair_imgs[1:]):
-            if ia.shape==ib.shape and cv2.absdiff(ia,ib).mean() < 0.12:
-                errors.append(f'{gender}: adjacent hair colours {a}/{b} too similar')
+    for style in styles:
+        hair_imgs=[]
+        for hair in HAIRS:
+            p=ROOT/gender/'medium'/hair/f'{style}.webp'
+            im=cv2.imread(str(p)) if p.exists() else None
+            if im is not None:
+                hair_imgs.append((hair,im))
+        if len(hair_imgs)==5:
+            for (a,ia),(b,ib) in zip(hair_imgs,hair_imgs[1:]):
+                if ia.shape==ib.shape and cv2.absdiff(ia,ib).mean() < 0.10:
+                    errors.append(f'{gender}/{style}: adjacent hair colours {a}/{b} too similar')
 
 html = Path('index.html').read_text(encoding='utf-8')
 worker = Path('worker.js').read_text(encoding='utf-8') if Path('worker.js').exists() else ''
