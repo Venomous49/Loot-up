@@ -130,20 +130,34 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          printf 'status=success\nsource_commit=%s\nformat=1728x910\nassets=250\ncloudflare=validated\nruntime_combinations=250\n' "$GITHUB_SHA" > creator-production-status.txt
+          validated_sha="$GITHUB_SHA"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main
+          git checkout -B main origin/main
+          printf 'status=success\nsource_commit=%s\nformat=1728x910\nassets=250\ncloudflare=validated\nruntime_combinations=250\n' "$validated_sha" > creator-production-status.txt
           git add creator-production-status.txt
-          git commit -m 'Record validated creator production deployment' || true
-          git push || true
+          if git diff --cached --quiet; then
+            echo 'Production creator status already current.'
+            exit 0
+          fi
+          git commit -m 'Record validated creator production deployment'
+          git push origin main
       - name: Record production creator failure
         if: failure()
         shell: bash
         run: |
           set -euo pipefail
-          printf 'status=failed\nsource_commit=%s\ncloudflare=not-validated\n' "$GITHUB_SHA" > creator-production-status.txt
+          failed_sha="$GITHUB_SHA"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main
+          git checkout -B main origin/main
+          printf 'status=failed\nsource_commit=%s\ncloudflare=not-validated\n' "$failed_sha" > creator-production-status.txt
           git add creator-production-status.txt
-          git commit -m 'Record failed creator production deployment' || true
-          git push || true
+          if git diff --cached --quiet; then
+            echo 'Production creator failure status already current.'
+            exit 0
+          fi
+          git commit -m 'Record failed creator production deployment'
+          git push origin main
