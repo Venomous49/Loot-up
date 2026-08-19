@@ -1,18 +1,69 @@
-/* Rise Looter creator safe runtime v1 — restored visible source runtime */
+/* Rise Looter creator stable runtime v2
+   Branch-only validation runtime. Uses existing full-frame source images directly.
+   No canvas segmentation/recolouring: prevents eaten bodies, face artifacts and clothing overlays. */
 (() => {
-  const ROOT = '/assets/creator_sources/';
-  const MASK_ROOT = ROOT + 'color_master_masks/';
-  const SKIN_TARGETS = {light:[218,176,154],warm:[190,128,82],medium:[150,97,60],deep:[105,66,39],dark:[62,38,25]};
-  const FEMALE_STYLES = new Set(['female_long','female_wavy','female_bob','female_ponytail','female_short']);
-  const MALE_NATURAL = new Set(['male_medium','male_short','male_textured']);
-  function naturalFile(style,hairColor){const c=hairColor==='black'?'brown':hairColor;if(FEMALE_STYLES.has(style)){if(style==='female_wavy'&&(c==='brown'||hairColor==='black'))return'female_wavy.png';if(hairColor==='black')return`${style}_brown_natural.png`;return`${style}_${c}_natural.png`;}if(MALE_NATURAL.has(style)){if(style==='male_textured'&&hairColor==='black')return'male_textured_brown_natural.png';if(hairColor==='black')return`${style}_brown_natural.png`;return`${style}_${c}_natural.png`;}return`${style}_clean.png`;}
-  function maskFile(style,hairColor,sourceFile){if(sourceFile.includes('_natural.png'))return sourceFile;return style.startsWith('female_')?'female_long_brown_natural.png':'male_textured_brown_natural.png';}
-  function sourcePath(style,hairColor){return ROOT+naturalFile(style,hairColor);}
-  function loadImage(src){return new Promise((resolve,reject)=>{const img=new Image();img.decoding='async';img.onload=()=>resolve(img);img.onerror=reject;img.src=src;});}
-  function recolourSkin(ctx,maskCtx,width,height,skin){const target=SKIN_TARGETS[skin]||SKIN_TARGETS.medium;const pixels=ctx.getImageData(0,0,width,height);const mask=maskCtx.getImageData(0,0,width,height).data;const d=pixels.data;for(let i=0;i<d.length;i+=4){const m=Math.max(mask[i],mask[i+1],mask[i+2],mask[i+3])/255;if(m<0.035)continue;const feather=Math.min(0.86,m*0.78);const y=(0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2])/255;const shade=Math.max(0.48,Math.min(1.42,0.60+y*0.82));const r=Math.min(255,target[0]*shade),g=Math.min(255,target[1]*shade),b=Math.min(255,target[2]*shade);d[i]=Math.round(d[i]*(1-feather)+r*feather);d[i+1]=Math.round(d[i+1]*(1-feather)+g*feather);d[i+2]=Math.round(d[i+2]*(1-feather)+b*feather);}ctx.putImageData(pixels,0,0);}
-  let renderToken=0;
-  async function safeUpdateCreatorPreview(){const preview=document.getElementById('creatorPreview');if(!preview||typeof avatarDraft==='undefined')return;const token=++renderToken;const style=avatarDraft.hairStyle||(avatarDraft.gender==='female'?'female_long':'male_textured');const file=naturalFile(style,avatarDraft.hairColor);const src=ROOT+file;const maskSrc=MASK_ROOT+maskFile(style,avatarDraft.hairColor,file);preview.innerHTML='<canvas class="creator-safe-canvas" aria-label="Aperçu Looter"></canvas><div class="creator-asset-missing" style="display:none"><strong>Aperçu indisponible</strong><span>Le preset sélectionné ne peut pas être chargé.</span></div>';const canvas=preview.querySelector('canvas'),missing=preview.querySelector('.creator-asset-missing');try{const[img,maskImg]=await Promise.all([loadImage(src),loadImage(maskSrc)]);if(token!==renderToken)return;canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0,canvas.width,canvas.height);const mc=document.createElement('canvas');mc.width=canvas.width;mc.height=canvas.height;const mctx=mc.getContext('2d',{willReadFrequently:true});mctx.drawImage(maskImg,0,0,canvas.width,canvas.height);recolourSkin(ctx,mctx,canvas.width,canvas.height,avatarDraft.skin);const save=document.getElementById('saveAvatar');if(save)save.disabled=false;}catch(e){console.error('RiseLooter safe creator preset failed',src,e);canvas.style.display='none';missing.style.display='grid';const save=document.getElementById('saveAvatar');if(save)save.disabled=true;}}
-  function safeRenderHairChoices(){if(typeof avatarDraft==='undefined')return;const list=avatarDraft.gender==='female'?femaleHair:maleHair;if(!list.some(x=>x[0]===avatarDraft.hairStyle))avatarDraft.hairStyle=list[0][0];const root=document.getElementById('hairStyleChoices');if(!root)return;root.innerHTML=list.map(([value,label])=>`<button type="button" class="choice hair-choice ${avatarDraft.hairStyle===value?'selected':''}" data-value="${value}"><span class="hair-thumb"><img src="${sourcePath(value,avatarDraft.hairColor)}" alt="${label}"></span><span>${label}</span></button>`).join('');root.querySelectorAll('.hair-choice').forEach(btn=>btn.addEventListener('click',()=>{avatarDraft.hairStyle=btn.dataset.value;root.querySelectorAll('.hair-choice').forEach(b=>b.classList.toggle('selected',b===btn));safeUpdateCreatorPreview();}));}
-  function install(){window.updateCreatorPreview=safeUpdateCreatorPreview;window.renderHairChoices=safeRenderHairChoices;const creator=document.getElementById('creatorModal');if(!creator)return;['genderChoices','skinChoices','hairColorChoices'].forEach(id=>{const root=document.getElementById(id);if(!root)return;root.addEventListener('click',()=>setTimeout(()=>{safeRenderHairChoices();safeUpdateCreatorPreview();},0),true);});safeRenderHairChoices();safeUpdateCreatorPreview();}
+  const ROOT='/assets/creator_sources/';
+  const FEMALE=new Set(['female_long','female_wavy','female_bob','female_ponytail','female_short']);
+  const MALE_NATURAL=new Set(['male_medium','male_short','male_textured']);
+
+  function fileFor(style,color){
+    const c=color==='black'?'brown':color;
+    if(FEMALE.has(style)){
+      if(style==='female_wavy' && (color==='black'||c==='brown')) return 'female_wavy.png';
+      if(color==='black') return `${style}_brown_natural.png`;
+      return `${style}_${c}_natural.png`;
+    }
+    if(MALE_NATURAL.has(style)){
+      if(style==='male_textured' && color==='black') return 'male_textured_brown_natural.png';
+      if(color==='black') return `${style}_brown_natural.png`;
+      return `${style}_${c}_natural.png`;
+    }
+    return `${style}_clean.png`;
+  }
+  function pathFor(style,color){return ROOT+fileFor(style,color);}
+  function normalizeStyle(){
+    const list=avatarDraft.gender==='female'?femaleHair:maleHair;
+    if(!list.some(([v])=>v===avatarDraft.hairStyle)) avatarDraft.hairStyle=list[0][0];
+    return avatarDraft.hairStyle;
+  }
+  function setSave(ok){const b=document.getElementById('saveAvatar');if(b)b.disabled=!ok;}
+
+  function update(){
+    const preview=document.getElementById('creatorPreview');
+    if(!preview||typeof avatarDraft==='undefined')return;
+    const style=normalizeStyle();
+    const src=pathFor(style,avatarDraft.hairColor);
+    preview.innerHTML=`<img class="creator-real-preview" src="${src}" alt="Aperçu Looter"><div class="creator-asset-missing" style="display:none"><strong>APERÇU INDISPONIBLE</strong><span>Cette source doit être corrigée avant publication.</span></div><div class="creator-live-badge"><b>NIVEAU 1</b><strong>DÉBUTANT</strong></div>`;
+    const img=preview.querySelector('.creator-real-preview');
+    const miss=preview.querySelector('.creator-asset-missing');
+    setSave(false);
+    img.onload=()=>setSave(true);
+    img.onerror=()=>{img.style.display='none';miss.style.display='grid';setSave(false);console.error('[creator stable] missing',src);};
+  }
+
+  function renderHair(){
+    if(typeof avatarDraft==='undefined')return;
+    const list=avatarDraft.gender==='female'?femaleHair:maleHair;
+    normalizeStyle();
+    const root=document.getElementById('hairStyleChoices');
+    if(!root)return;
+    root.innerHTML=list.map(([value,label])=>`<button type="button" class="choice hair-choice ${avatarDraft.hairStyle===value?'selected':''}" data-value="${value}"><span class="hair-thumb"><img src="${pathFor(value,avatarDraft.hairColor)}" alt="${label}"></span><span>${label}</span></button>`).join('');
+    root.querySelectorAll('.hair-choice').forEach(btn=>{
+      const img=btn.querySelector('img');
+      img.onerror=()=>{img.style.visibility='hidden';};
+      btn.onclick=()=>{avatarDraft.hairStyle=btn.dataset.value;renderHair();update();};
+    });
+  }
+
+  function refresh(){renderHair();update();}
+  function install(){
+    window.updateCreatorPreview=update;
+    window.renderHairChoices=renderHair;
+    ['genderChoices','skinChoices','hairColorChoices'].forEach(id=>{
+      const root=document.getElementById(id);if(!root)return;
+      root.addEventListener('click',()=>setTimeout(refresh,0),true);
+    });
+    refresh();
+  }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
