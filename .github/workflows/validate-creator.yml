@@ -44,7 +44,7 @@ jobs:
           test ! -e .github/workflows/one-shot-harden-creator-fallback.yml
           test ! -e .github/workflows/apply-creator-routing.yml
 
-      - name: Validate Cloudflare Worker plus static-asset configuration
+      - name: Validate Cloudflare transparent static-asset routing
         shell: bash
         run: |
           set -euo pipefail
@@ -55,7 +55,9 @@ jobs:
           grep -q '"run_worker_first": true' wrangler.jsonc
           grep -q '"not_found_handling": "single-page-application"' wrangler.jsonc
           grep -q 'env.ASSETS.fetch(request)' worker.js
-          grep -q 'hardenCreatorHtml(html)' worker.js
+          grep -q "x-riselooter-creator-source', 'validated'" worker.js
+          ! grep -q 'hardenCreatorHtml' worker.js
+          ! grep -q 'CREATOR_FALLBACK_NEW' worker.js
           test -s .assetsignore
           grep -q '^\.git$' .assetsignore
           grep -q '^\.github$' .assetsignore
