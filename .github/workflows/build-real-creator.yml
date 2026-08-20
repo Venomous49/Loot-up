@@ -58,13 +58,7 @@ jobs:
           set -euo pipefail
           git diff --exit-code -- index.html worker.js creator-hd.css wrangler.jsonc .assetsignore
 
-      - name: Local creator runtime smoke
-        shell: bash
-        run: |
-          set -euo pipefail
-          node scripts/creator_runtime_smoke.mjs || true
-
-      - name: Publish only fully validated creator assets
+      - name: Publish validated creator assets
         shell: bash
         run: |
           set -euo pipefail
@@ -79,10 +73,13 @@ jobs:
             git push origin HEAD:main
           fi
 
-      - name: Trigger public Cloudflare creator validation
+      - name: Deploy rebuilt creator to Cloudflare
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
+          gh workflow run deploy-cloudflare.yml --ref main
           gh workflow run creator-runtime-smoke.yml --ref main
+
+# force-rebuild: 2026-08-21T00:28+02:00
