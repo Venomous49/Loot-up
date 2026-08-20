@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "loot-up",
+  "account_id": "567d0185b1b286ef05d53aa6834a7635",
   "main": "worker.js",
   "compatibility_date": "2026-08-18",
   "assets": {
@@ -11,5 +12,3 @@
     "html_handling": "auto-trailing-slash"
   }
 }
-
-// Cloudflare Git deployment trigger: dedicated-fullbody-v23-secrets-ready-2026-08-20-1256
