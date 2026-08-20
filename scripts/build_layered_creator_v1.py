@@ -78,24 +78,26 @@ def isolate_hair(im):
 def register_hair(im,person,gender,style):
  crop=isolate_hair(im); fx,fy,fw,fh=face_box(person)
 
- # Default registration shared by all presets.
- width_factor=1.05
- height_factor=.58
- x_nudge=7 if gender=='male' else 0
- y_nudge=0
-
- # Per-style micro-calibration after visual checks. The body/base layer is never moved.
- if gender=='male' and style=='male_medium':
-  width_factor=1.10
-  height_factor=.61
-  x_nudge=2
-  y_nudge=2
- elif gender=='male' and style=='male_slick':
-  # "Coiffé arrière" was still visibly floating to the right/high on the skull.
+ # Global registration. The previous male offset was wrong for every hairstyle:
+ # all male overlays were sitting slightly right and too high on the skull.
+ if gender=='male':
   width_factor=1.08
-  height_factor=.60
+  height_factor=.61
+  x_nudge=-2
+  y_nudge=5
+ else:
+  width_factor=1.05
+  height_factor=.58
   x_nudge=0
-  y_nudge=3
+  y_nudge=0
+
+ # Keep only tiny style-specific size compensation, never a separate position shift.
+ if gender=='male' and style=='male_medium':
+  width_factor=1.11
+  height_factor=.63
+ elif gender=='male' and style=='male_slick':
+  width_factor=1.09
+  height_factor=.62
 
  target_w=int(fw*width_factor); target_h=int(fh*height_factor)
  scale=min(target_w/crop.width,target_h/crop.height)
@@ -111,6 +113,6 @@ def main():
    for color in COLORS: register_hair(exact(HAIR/f'{style}_{color}.png','RGBA'),person,g,style).save(d/f'hair-{style}-{color}.webp','WEBP',lossless=True,method=6)
   files=list(d.glob('*.webp'))
   if len(files)!=31: raise SystemExit(f'{g}: expected 31 assets, got {len(files)}')
- print('layered-v4-fit3: male_medium retained; male_slick +3% width, +2% height, 7px left, 3px down')
+ print('layered-v4-fit4: global male hair registration fixed 9px left, 5px down, slightly enlarged')
 
 if __name__=='__main__': main()
