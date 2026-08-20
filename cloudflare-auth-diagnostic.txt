@@ -1,0 +1,4 @@
+user_verify_http=200
+user_verify_success=true
+account_verify_http=400
+account_verify_success=false
