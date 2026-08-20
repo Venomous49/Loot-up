@@ -1,38 +1,41 @@
 (() => {
-  /*
-    IMPORTANT: the creator and homepage character are owned by index.html and the
-    validated 250-image pre-rendered matrix in assets/creator/**.
-    This hotfix intentionally does NOT touch creatorPreview or mainCharacter.
-  */
-
+  /* UI-only production hotfix. Does not alter creator assets or character rendering. */
   function surveyOnlyUI(){
     document.querySelectorAll('.filter').forEach(btn=>{
       const t=(btn.textContent||'').toLowerCase();
       if(t.includes('jeu')||t.includes('vidéo')||t.includes('video')||t.includes('toutes')) btn.style.display='none';
       if(t.includes('sondage')){btn.style.display='inline-flex';btn.classList.add('active');}
     });
-    document.querySelectorAll('.challenge').forEach(row=>{
-      if(!(row.textContent||'').toLowerCase().includes('sondage')) row.style.display='none';
-    });
-    document.querySelectorAll('.mission-title').forEach(el=>{
-      if(/loot up/i.test(el.textContent||'')) el.textContent=(el.textContent||'').replace(/loot up/ig,'Rise Looter');
-    });
-    document.querySelectorAll('.mission-description').forEach(el=>{
-      if(/lootix|niveau demandé/i.test(el.textContent||'')) el.textContent="Atteins le niveau demandé pour gagner de l'XP.";
-    });
-    document.querySelectorAll('.mission-reward').forEach(el=>{
-      if(/rl coins|lootix/i.test(el.textContent||'')) el.textContent='+ XP';
-    });
+    document.querySelectorAll('.challenge').forEach(row=>{ if(!(row.textContent||'').toLowerCase().includes('sondage')) row.style.display='none'; });
+    document.querySelectorAll('.mission-title').forEach(el=>{ if(/loot up/i.test(el.textContent||'')) el.textContent=(el.textContent||'').replace(/loot up/ig,'Rise Looter'); });
+    document.querySelectorAll('.mission-description').forEach(el=>{ if(/lootix|niveau demandé/i.test(el.textContent||'')) el.textContent="Atteins le niveau demandé pour gagner de l'XP."; });
+    document.querySelectorAll('.mission-reward').forEach(el=>{ if(/rl coins|lootix/i.test(el.textContent||'')) el.textContent='+ XP'; });
     document.querySelectorAll('.bonus').forEach(el=>{el.style.display='none';});
     document.querySelectorAll('.day-wrap').forEach((wrap,i)=>{
-      if(!wrap.querySelector('.day-xp')){
-        const x=document.createElement('div');
-        x.className='day-xp';
-        x.textContent=`+${(i+1)*5} XP`;
-        x.style.cssText='font-size:10px;color:#b77cff;margin-top:4px;font-weight:800';
-        wrap.appendChild(x);
-      }
+      if(!wrap.querySelector('.day-xp')){ const x=document.createElement('div'); x.className='day-xp'; x.textContent=`+${(i+1)*5} XP`; x.style.cssText='font-size:10px;color:#b77cff;margin-top:4px;font-weight:800'; wrap.appendChild(x); }
     });
+  }
+
+  function forceOpenCreator(){
+    try{
+      if(typeof window.openCreatorTest==='function'){ window.openCreatorTest(); return; }
+      document.body.classList.add('creator-test-active');
+      const modal=document.getElementById('creatorModal');
+      if(!modal) return;
+      modal.classList.remove('hidden');
+      modal.classList.add('show');
+      modal.style.setProperty('display','flex','important');
+      modal.setAttribute('aria-hidden','false');
+      if(typeof window.renderHairChoices==='function') window.renderHairChoices();
+      if(typeof window.updateCreatorPreview==='function') window.updateCreatorPreview();
+    }catch(e){ console.error('Creator test open failed',e); }
+  }
+
+  function bindCreatorTest(){
+    const btn=document.getElementById('creatorTestButton');
+    if(!btn || btn.dataset.rlBound==='1') return;
+    btn.dataset.rlBound='1';
+    btn.addEventListener('click',e=>{ e.preventDefault(); e.stopImmediatePropagation(); forceOpenCreator(); },true);
   }
 
   async function awardDailyStreakXP(){
@@ -51,13 +54,8 @@
     if(typeof window.renderDashboard==='function') window.renderDashboard(currentProfile);
   }
 
-  function refresh(){surveyOnlyUI();awardDailyStreakXP();}
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(refresh,180),{once:true});
-  else setTimeout(refresh,180);
-
-  const obs=new MutationObserver(()=>{
-    clearTimeout(window.__rlUiOnlyTimer);
-    window.__rlUiOnlyTimer=setTimeout(refresh,160);
-  });
+  function refresh(){ surveyOnlyUI(); bindCreatorTest(); awardDailyStreakXP(); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(refresh,80),{once:true}); else setTimeout(refresh,80);
+  const obs=new MutationObserver(()=>{ clearTimeout(window.__rlUiOnlyTimer); window.__rlUiOnlyTimer=setTimeout(refresh,80); });
   obs.observe(document.documentElement,{childList:true,subtree:true});
 })();
