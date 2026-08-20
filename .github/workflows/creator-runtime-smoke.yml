@@ -71,8 +71,9 @@ jobs:
             headers="$(mktemp)"
             if curl -fsS -D "$headers" -o /tmp/rise-looter-public.html "${CREATOR_PUBLIC_ORIGIN}/?creatorTest=1&ci=${GITHUB_SHA}"; then
               if grep -qi '^x-riselooter-creator-source: validated' "$headers" \
+                && grep -qi '^x-riselooter-creator-version: clean-source-masters-v7' "$headers" \
                 && grep -q 'id="creatorPreview"' /tmp/rise-looter-public.html \
-                && grep -q 'creator-hd.css?v=1' /tmp/rise-looter-public.html; then
+                && grep -q 'creator-hd.css?v=4' /tmp/rise-looter-public.html; then
                 echo "Cloudflare is serving the validated HD creator presentation."
                 rm -f "$headers"
                 exit 0
