@@ -1,5 +1,5 @@
-status=success
-source_commit=d94cc665af2491212eb8c2a55267f2079a31a236
+status=failure
+source_commit=24bdadc232bf369edebce86a832720f5d5a5e3e5
 generator=layered-v3
 canvas=1728x910
 stale_presets_removed=yes

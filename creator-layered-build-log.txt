@@ -1,1 +1,1 @@
-layered-v3: fullbody source, complete silhouette, debris rejected, skull-anchored hair
+male_base_clean.png missing: clean source must be generated first
