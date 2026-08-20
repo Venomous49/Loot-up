@@ -4,7 +4,7 @@
   const HAIR=FULL+'hair/';
   const maleStyles=new Set(['male_textured','male_short','male_medium','male_undercut','male_slick']);
   const femaleStyles=new Set(['female_long','female_wavy','female_bob','female_ponytail','female_short']);
-  const skinTones={light:'#f5d8c3',warm:'#e7b07a',medium:'#c9875f',deep:'#8b563d',dark:'#5a3528'};
+  const skinTones={light:'#f4d6c0',warm:'#d9a06d',medium:'#b97855',deep:'#7d4b36',dark:'#4a2d24'};
 
   function normalized(gender,style){
     const g=gender==='female'?'female':'male';
@@ -13,24 +13,23 @@
     if(g==='female'&&!femaleStyles.has(style)) style=fallback;
     return [g,style];
   }
-  function baseFor(gender){return gender==='female'?`${FULL}female_base.png`:`${FULL}male_base.png`;}
-  function hairFor(gender,style,color){const [,s]=normalized(gender,style);return `${HAIR}${s}_${color||'brown'}.png`;}
+  function baseFor(g){return `${FULL}${g}_base.png`;}
+  function skinMaskFor(g){return `${FULL}${g}_skin_mask.png`;}
+  function hairFor(g,s,c){return `${HAIR}${s}_${c||'brown'}.png`;}
 
   function avatarMarkup(gender,style,color,skin,home=false){
     const [g,s]=normalized(gender,style);
     const tone=skinTones[skin]||skinTones.medium;
-    return `<div class="rl-avatar-stack ${g==='female'?'female-avatar':''}${home?' home-avatar':''}" data-skin="${skin||'medium'}" style="--skin-tone:${tone}">
-      <img class="rl-avatar-bg" src="${FULL}background.webp?avatar=v13" alt="">
-      <img class="rl-avatar-base" src="${baseFor(g)}?avatar=v13" alt="Looter">
-      <img class="rl-avatar-hair" src="${hairFor(g,s,color)}?avatar=v13" alt="">
-      <div class="rl-avatar-skin"></div>
+    return `<div class="rl-avatar-stack ${g==='female'?'female-avatar':''}${home?' home-avatar':''}" data-gender="${g}" data-skin="${skin||'medium'}" style="--skin-tone:${tone}">
+      <img class="rl-avatar-bg" src="${FULL}background.webp?avatar=v14" alt="">
+      <img class="rl-avatar-base" src="${baseFor(g)}?avatar=v14" alt="Looter">
+      <div class="rl-avatar-skin" style="-webkit-mask-image:url('${skinMaskFor(g)}?avatar=v14');mask-image:url('${skinMaskFor(g)}?avatar=v14')"></div>
+      <img class="rl-avatar-hair" src="${hairFor(g,s,color)}?avatar=v14" alt="">
     </div>`;
   }
 
   function attachFallbacks(root){
-    root.querySelectorAll('.rl-avatar-base').forEach(img=>{img.onerror=()=>{img.style.display='none';};});
-    root.querySelectorAll('.rl-avatar-hair').forEach(img=>{img.onerror=()=>{img.style.display='none';};});
-    root.querySelectorAll('.rl-avatar-bg').forEach(img=>{img.onerror=()=>{img.style.display='none';};});
+    root.querySelectorAll('.rl-avatar-base,.rl-avatar-bg,.rl-avatar-hair').forEach(img=>{img.onerror=()=>{img.style.display='none';};});
   }
 
   function restoreCreator(){
@@ -55,25 +54,6 @@
     attachFallbacks(holder);
   }
 
-  function compactNextEvolutionCard(){
-    const nodes=[...document.querySelectorAll('div,section,aside')];
-    const label=nodes.find(el=>/^\s*PROCHAINE\s+ÉVOLUTION\s*$/i.test((el.textContent||'').trim()) || /^\s*PROCHAINE\s+EVOLUTION\s*$/i.test((el.textContent||'').trim()));
-    if(!label) return;
-    let card=label.parentElement;
-    for(let i=0;i<4 && card;i++,card=card.parentElement){
-      const txt=(card.textContent||'').toUpperCase();
-      if(txt.includes('PROCHAINE') && txt.includes('DÉBROUILLARD')) break;
-    }
-    if(!card) return;
-    card.style.setProperty('width','92%','important');
-    card.style.setProperty('max-width','205px','important');
-    card.style.setProperty('margin-top','8px','important');
-    card.style.setProperty('padding','8px','important');
-    card.style.setProperty('box-sizing','border-box','important');
-    card.style.setProperty('transform','scale(.96)','important');
-    card.style.setProperty('transform-origin','top left','important');
-  }
-
   function surveyOnlyUI(){
     document.querySelectorAll('.filter').forEach(btn=>{
       const t=(btn.textContent||'').toLowerCase();
@@ -86,7 +66,6 @@
     document.querySelectorAll('.mission-reward').forEach(el=>{if(/rl coins|lootix/i.test(el.textContent||'')) el.textContent='+ XP';});
     document.querySelectorAll('.bonus').forEach(el=>{el.style.display='none';});
     document.querySelectorAll('.day-wrap').forEach((wrap,i)=>{if(!wrap.querySelector('.day-xp')){const x=document.createElement('div');x.className='day-xp';x.textContent=`+${(i+1)*5} XP`;x.style.cssText='font-size:10px;color:#b77cff;margin-top:4px;font-weight:800';wrap.appendChild(x);}});
-    compactNextEvolutionCard();
   }
 
   async function awardDailyStreakXP(){
@@ -99,8 +78,8 @@
   }
 
   function refreshAll(){restoreCreator();restoreHomepage();surveyOnlyUI();awardDailyStreakXP();}
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(refreshAll,160),{once:true}); else setTimeout(refreshAll,160);
-  document.addEventListener('click',e=>{if(e.target.closest('#genderChoices,#skinChoices,#hairColorChoices,#hairStyleChoices,#testCreator')) setTimeout(()=>{restoreCreator();surveyOnlyUI();},70);},true);
-  const obs=new MutationObserver(()=>{clearTimeout(window.__rlHotfixTimer);window.__rlHotfixTimer=setTimeout(()=>{restoreHomepage();surveyOnlyUI();awardDailyStreakXP();},140);});
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(refreshAll,180),{once:true}); else setTimeout(refreshAll,180);
+  document.addEventListener('click',e=>{if(e.target.closest('#genderChoices,#skinChoices,#hairColorChoices,#hairStyleChoices,#testCreator')) setTimeout(()=>{restoreCreator();surveyOnlyUI();},80);},true);
+  const obs=new MutationObserver(()=>{clearTimeout(window.__rlHotfixTimer);window.__rlHotfixTimer=setTimeout(()=>{restoreHomepage();surveyOnlyUI();awardDailyStreakXP();},150);});
   obs.observe(document.documentElement,{childList:true,subtree:true});
 })();
