@@ -5,6 +5,7 @@ on:
     paths:
       - 'index.html'
       - 'worker.js'
+      - 'creator-hd.css'
       - 'assets/creator/**'
       - 'assets/creator_sources/**'
       - 'scripts/validate_creator_library.py'
@@ -42,11 +43,28 @@ jobs:
           grep -q 'node scripts/creator_runtime_smoke.mjs' .github/workflows/build-real-creator.yml
           grep -q 'git diff --exit-code -- index.html worker.js creator-hd.css wrangler.jsonc .assetsignore' .github/workflows/build-real-creator.yml
           grep -q 'Publish only fully validated creator assets' .github/workflows/build-real-creator.yml
+
           test ! -e .github/workflows/one-shot-harden-creator-fallback.yml
           test ! -e .github/workflows/one-shot-source-fallback-fix.yml
           test ! -e .github/workflows/apply-creator-routing.yml
           test ! -e .github/workflows/normalize-creator-render.yml
           test ! -e .github/workflows/creator-hd-rebuild.yml
+          test ! -e .github/workflows/build-creator-hair-overlays.yml
+          test ! -e .github/workflows/build-creator-skin-masks.yml
+          test ! -e .github/workflows/build-fullbody-creator.yml
+          test ! -e .github/workflows/validate-creator-assets-strict.yml
+
+      - name: Reject runtime overlay regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -q 'rl-avatar-stack' creator-hd.css
+          ! grep -q 'mix-blend-mode' creator-hd.css
+          ! grep -q 'mask-' creator-hd.css
+          ! grep -q 'creator-safe-runtime.js' worker.js
+          ! grep -q 'creator-safe-runtime.js' index.html
+          grep -q 'creator-real-preview' creator-hd.css
+          grep -q 'hair-thumb img' creator-hd.css
 
       - name: Reject shared-face compositing regressions
         shell: bash
@@ -77,7 +95,12 @@ jobs:
           grep -q 'CREATOR_PUBLIC_ORIGIN: https://loot-up.marin-iglesias.workers.dev' "$smoke"
           grep -q 'Wait for validated HD creator deployment' "$smoke"
           grep -q 'x-riselooter-creator-source: validated' "$smoke"
+          grep -q 'x-riselooter-creator-version: pre-rendered-matrix-v18' "$smoke"
+          grep -q 'creator-hd.css?v=18' "$smoke"
           grep -q 'Verify canonical creator stylesheet is public' "$smoke"
+          grep -q '! grep -q '\''mix-blend-mode'\'' /tmp/creator-hd-public.css' "$smoke"
+          grep -q '! grep -q '\''mask-'\'' /tmp/creator-hd-public.css' "$smoke"
+          grep -q '! grep -q '\''rl-avatar-stack'\'' /tmp/creator-hd-public.css' "$smoke"
           grep -q 'sha256sum creator-hd.css' "$smoke"
           grep -q 'Verify all 250 public creator assets match this commit' "$smoke"
           grep -q 'sha256sum "$path"' "$smoke"
@@ -99,6 +122,8 @@ jobs:
           grep -q '"not_found_handling": "single-page-application"' wrangler.jsonc
           grep -q 'env.ASSETS.fetch(request)' worker.js
           grep -q "x-riselooter-creator-source', 'validated'" worker.js
+          grep -q "x-riselooter-creator-version', 'pre-rendered-matrix-v18'" worker.js
+          grep -q 'creator-hd.css?v=18' worker.js
           ! grep -q 'hardenCreatorHtml' worker.js
           ! grep -q 'CREATOR_FALLBACK_NEW' worker.js
           test -s .assetsignore
