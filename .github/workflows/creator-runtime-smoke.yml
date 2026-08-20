@@ -63,7 +63,7 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Wait for validated pre-rendered creator deployment
+      - name: Wait for validated HD creator deployment
         shell: bash
         run: |
           set -euo pipefail
@@ -94,9 +94,9 @@ jobs:
           local_hash="$(sha256sum creator-hd.css | awk '{print $1}')"
           remote_hash="$(sha256sum /tmp/creator-hd-public.css | awk '{print $1}')"
           test "$local_hash" = "$remote_hash"
-          grep -q 'aspect-ratio:1728 / 910' /tmp/creator-hd-public.css
+          grep -q 'aspect-ratio:1728/910' /tmp/creator-hd-public.css
           grep -q 'object-fit:contain' /tmp/creator-hd-public.css
-          grep -q 'object-position:center center' /tmp/creator-hd-public.css
+          grep -q 'object-position:50% 100%' /tmp/creator-hd-public.css
           echo "Verified canonical 1728x910 creator stylesheet in production."
       - name: Verify all 250 public creator assets match this commit
         shell: bash
