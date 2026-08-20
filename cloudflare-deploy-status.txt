@@ -1,5 +1,5 @@
-status=
-source_commit=a603c3e7649f9a4067afe6656cd314a7fa03e5cd
+status=success
+source_commit=5be1324bc8adc8cb4a88368310d480c666223482
 creator_version=layered-v2-clean
 asset_cache=layered-v2-clean
 api_token_present=true
