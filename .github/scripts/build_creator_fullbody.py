@@ -83,4 +83,4 @@ for g,img in [('male',male),('female',female)]:
     cv2.imwrite(str(OUT/f'{g}_base.png'),img)
     cv2.imwrite(str(OUT/f'{g}_skin_mask.png'),build_skin_mask(img))
 cv2.imwrite(str(OUT/'background.webp'),BG,[cv2.IMWRITE_WEBP_QUALITY,94])
-print('Built fixed 1728x910 canonical full-body bases and skin masks v15')
+print('Built fixed 1728x910 canonical full-body bases and skin masks v15-r1')
