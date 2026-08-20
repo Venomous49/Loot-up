@@ -47,9 +47,10 @@ def load_base_scene():
 def tint_skin(scene_rgb, mask_img, target):
     rgb = np.asarray(scene_rgb, dtype=np.uint8)
     mask = np.asarray(fit(mask_img, 'L'), dtype=np.float32) / 255.0
-    # Skin mask must never reach clothing/lower body.
-    if np.count_nonzero(mask[int(SIZE[1] * .42):] > .05):
-        raise SystemExit('male_skin_mask.png reaches clothing/lower body')
+    # The reviewed mask contains extra exposed-skin regions. Product rule is stricter:
+    # complexion may change only head/neck, never hoodie, torso, arms or legs.
+    mask[int(SIZE[1] * .42):, :] = 0.0
+    mask[mask < .06] = 0.0
     src_lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB).astype(np.float32)
     target_lab = cv2.cvtColor(np.asarray(target, dtype=np.uint8).reshape(1,1,3), cv2.COLOR_RGB2LAB)[0,0].astype(np.float32)
     toned = src_lab.copy()
@@ -72,10 +73,8 @@ def load_hair(style, colour):
     if len(xs) < 50:
         raise SystemExit(f'Empty hair alpha: {path}')
     y0, y1 = int(ys.min()), int(ys.max())
-    # Dedicated hair layers are only allowed near the head.
     if y1 >= int(SIZE[1] * .43):
         raise SystemExit(f'Hair layer reaches torso: {path} y1={y1}')
-    # Remove extremely weak pixels that can look like smoke/halo.
     a = np.asarray(hair.getchannel('A'), dtype=np.uint8)
     a[a < 26] = 0
     hair.putalpha(Image.fromarray(a, 'L'))
@@ -99,7 +98,7 @@ def main():
                 written += 1
     if written != 125:
         raise SystemExit(f'Expected 125 male assets, wrote {written}')
-    print('Built 125 male presets from dedicated fullbody base + reviewed skin mask + 25 dedicated hair layers.')
+    print('Built 125 male presets from dedicated fullbody base + clipped head/neck skin mask + 25 dedicated hair layers.')
 
 
 if __name__ == '__main__':
