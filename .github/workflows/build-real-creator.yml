@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'scripts/build_creator_fullbody_hd_v7.py'
+      - 'scripts/build_layered_creator_v1.py'
       - 'scripts/validate_creator_fullbody_v7.py'
       - 'scripts/validate_creator_body_lock.py'
       - 'assets/creator_sources/fullbody/**'
@@ -38,7 +39,14 @@ jobs:
       - name: Install deterministic image dependencies
         run: python -m pip install --quiet 'numpy<3' pillow opencv-python-headless
 
-      - name: Build dedicated fullbody male presets
+      - name: Build immutable layered creator assets
+        id: layered_build
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_layered_creator_v1.py
+
+      - name: Build legacy male presets for compatibility
         id: hd_build
         continue-on-error: true
         shell: bash
@@ -54,7 +62,7 @@ jobs:
           python scripts/validate_creator_body_lock.py 2>&1 | tee -a /tmp/creator-hd-build.log
           exit ${PIPESTATUS[0]}
 
-      - name: Record failed dedicated fullbody build diagnostics
+      - name: Record failed build diagnostics
         if: steps.hd_build.outcome != 'success'
         shell: bash
         run: |
@@ -62,29 +70,29 @@ jobs:
           {
             echo "status=failed"
             echo "source_commit=${GITHUB_SHA}"
-            echo "generator=dedicated-fullbody-v7-male"
+            echo "generator=layered-v1-plus-legacy-v7"
             echo "--- tail ---"
             tail -n 180 /tmp/creator-hd-build.log || true
           } > creator-hd-build-status.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add creator-hd-build-status.txt
-          git commit -m 'Record failed dedicated fullbody creator build' || true
+          git commit -m 'Record failed creator build' || true
           git pull --rebase origin main || true
           git push || true
           exit 1
 
-      - name: Publish dedicated fullbody male assets
+      - name: Publish layered assets and compatibility presets
         if: steps.hd_build.outcome == 'success'
         shell: bash
         run: |
           set -euo pipefail
-          printf 'status=success\nsource_commit=%s\ngenerator=dedicated-fullbody-v7-male\nformat=1728x910\nmale_assets=125\nfull_body_source=assets/creator_sources/fullbody/male_base.png\nfull_body_skin_mask=assets/creator_sources/fullbody/male_skin_mask.png\ndedicated_hair_layers=25\nhead_to_feet_required=yes\nbody_crop_resize_repaste=disabled\nmale_full_body_locked=yes\nclothes_color_locked=yes\nskin_mask_reviewed=yes\nhair_layers_precoloured=yes\nhair_background_extraction=disabled\nstatic_validation=passed\n' "$GITHUB_SHA" > creator-hd-build-status.txt
+          printf 'status=success\nsource_commit=%s\ngenerator=layered-v1\ncanvas=1728x910\nimmutable_bases=2\nskin_overlays=10\ntransparent_hair_layers=50\nlegacy_male_assets=125\nbackground_locked=yes\nclothes_locked=yes\nbody_geometry_locked=yes\nlayered_runtime_ready=yes\n' "$GITHUB_SHA" > creator-hd-build-status.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add assets/creator/male creator-hd-build-status.txt
+          git add assets/creator_layers assets/creator/male creator-hd-build-status.txt
           if ! git diff --cached --quiet; then
-            git commit -m 'Publish dedicated fullbody male creator presets v7'
+            git commit -m 'Publish immutable layered creator assets'
             git pull --rebase origin main || true
             git push
           fi
