@@ -9,6 +9,7 @@ on:
       - 'creator-cache-v23.js'
       - 'creator-hd.css'
       - 'index.html'
+      - 'safe-ui-bootstrap.js'
       - 'assets/creator/**'
       - 'assets/creator_layers/**'
       - 'creator-layered-build-status.txt'
@@ -22,7 +23,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: riselooter-cloudflare-production-v2
+  group: riselooter-cloudflare-production-v3
   cancel-in-progress: true
 
 jobs:
@@ -45,9 +46,9 @@ jobs:
         run: |
           set -euo pipefail
           grep -q '^status=success$' creator-layered-build-status.txt
-          grep -q '^generator=layered-v2-clean$' creator-layered-build-status.txt
+          grep -q '^generator=layered-v3$' creator-layered-build-status.txt
           test -f assets/creator_layers/manifest.txt
-          grep -q '^creator_version=layered-v2-clean$' assets/creator_layers/manifest.txt
+          grep -q '^creator_version=layered-v3$' assets/creator_layers/manifest.txt
           test "$(find assets/creator_layers/male -maxdepth 1 -type f -name '*.webp' | wc -l)" -eq 31
           test "$(find assets/creator_layers/female -maxdepth 1 -type f -name '*.webp' | wc -l)" -eq 31
       - name: Verify Cloudflare user token
@@ -74,7 +75,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          printf 'status=%s\nsource_commit=%s\ncreator_version=layered-v2-clean\nasset_cache=layered-v2-clean\napi_token_present=%s\naccount_id_source=wrangler-config\n' '${{ steps.deploy.outputs.outcome }}' "$(git rev-parse HEAD)" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
+          printf 'status=%s\nsource_commit=%s\ncreator_version=layered-v3\nasset_cache=layered-v3\napi_token_present=%s\naccount_id_source=wrangler-config\n' '${{ steps.deploy.outputs.outcome }}' "$(git rev-parse HEAD)" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add cloudflare-deploy-status.txt cloudflare-deploy-log.txt
