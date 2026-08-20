@@ -1,5 +1,14 @@
 status=failed
-source_commit=43e43933ff1052111c702b58dde221f0034c90c7
+source_commit=71dd9a6a02916a1f11f1bb59af9039911ae5296e
 generator=dedicated-fullbody-v7-male
 --- tail ---
-male_skin_mask.png reaches clothing/lower body
+Traceback (most recent call last):
+  File "/home/runner/work/Loot-up/Loot-up/scripts/build_creator_fullbody_hd_v7.py", line 105, in <module>
+    main()
+  File "/home/runner/work/Loot-up/Loot-up/scripts/build_creator_fullbody_hd_v7.py", line 93, in main
+    result.alpha_composite(load_hair(style, colour))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/Loot-up/Loot-up/scripts/build_creator_fullbody_hd_v7.py", line 79, in load_hair
+    a[a < 26] = 0
+    ~^^^^^^^^
+ValueError: assignment destination is read-only
