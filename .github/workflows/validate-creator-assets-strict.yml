@@ -1,0 +1,36 @@
+name: Validate creator assets strict
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/validate_creator_assets.py'
+      - 'assets/creator_sources/fullbody/**'
+      - '.github/workflows/validate-creator-assets-strict.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install opencv-python-headless numpy
+      - run: python .github/scripts/validate_creator_assets.py
+      - name: Publish validation status
+        if: success()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add creator-asset-validation.txt
+          if git diff --cached --quiet; then
+            echo 'Validation status unchanged'
+          else
+            git commit -m 'Validate creator assets strict'
+            git push
+          fi
