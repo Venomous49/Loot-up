@@ -5,6 +5,7 @@ on:
     paths:
       - 'index.html'
       - 'worker.js'
+      - 'creator-safe-runtime.js'
       - 'creator-hd.css'
       - 'wrangler.jsonc'
       - '.assetsignore'
@@ -63,7 +64,7 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Wait for validated HD creator deployment
+      - name: Wait for validated matrix creator deployment
         shell: bash
         run: |
           set -euo pipefail
@@ -71,20 +72,33 @@ jobs:
             headers="$(mktemp)"
             if curl -fsS -D "$headers" -o /tmp/rise-looter-public.html "${CREATOR_PUBLIC_ORIGIN}/?creatorTest=1&ci=${GITHUB_SHA}"; then
               if grep -qi '^x-riselooter-creator-source: validated' "$headers" \
-                && grep -qi '^x-riselooter-creator-version: clean-source-masters-v7' "$headers" \
+                && grep -qi '^x-riselooter-creator-version: matrix-runtime-v11' "$headers" \
                 && grep -q 'id="creatorPreview"' /tmp/rise-looter-public.html \
-                && grep -q 'creator-hd.css?v=4' /tmp/rise-looter-public.html; then
-                echo "Cloudflare is serving the validated HD creator presentation."
+                && grep -q 'creator-hd.css?v=4' /tmp/rise-looter-public.html \
+                && grep -q 'creator-safe-runtime.js?v=11' /tmp/rise-looter-public.html; then
+                echo "Cloudflare is serving the validated matrix creator runtime."
                 rm -f "$headers"
                 exit 0
               fi
-              echo "Cloudflare reachable but HD creator presentation is not current yet (attempt $i/30)."
+              echo "Cloudflare reachable but matrix creator runtime is not current yet (attempt $i/30)."
             fi
             rm -f "$headers"
             sleep 10
           done
-          echo "Cloudflare creator endpoint did not expose the validated HD presentation within the validation window."
+          echo "Cloudflare creator endpoint did not expose matrix runtime v11 within the validation window."
           exit 1
+      - name: Verify canonical creator runtime is public
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS --retry 3 --retry-delay 2 -o /tmp/creator-runtime-public.js "${CREATOR_PUBLIC_ORIGIN}/creator-safe-runtime.js?ci=${GITHUB_SHA}"
+          local_hash="$(sha256sum creator-safe-runtime.js | awk '{print $1}')"
+          remote_hash="$(sha256sum /tmp/creator-runtime-public.js | awk '{print $1}')"
+          test "$local_hash" = "$remote_hash"
+          grep -q "const ROOT = '/assets/creator'" /tmp/creator-runtime-public.js
+          grep -q 'data-tried-fallback="0"' /tmp/creator-runtime-public.js
+          ! grep -q "ROOT='/assets/creator_sources/'" /tmp/creator-runtime-public.js
+          echo "Verified canonical matrix creator runtime in production."
       - name: Verify canonical creator stylesheet is public
         shell: bash
         run: |
@@ -136,7 +150,7 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch origin main
           git checkout -B main origin/main
-          printf 'status=success\nsource_commit=%s\nformat=1728x910\nassets=250\ncloudflare=validated\nruntime_combinations=250\n' "$validated_sha" > creator-production-status.txt
+          printf 'status=success\nsource_commit=%s\nformat=1728x910\nassets=250\ncloudflare=validated\nruntime=matrix-v11\nruntime_combinations=250\n' "$validated_sha" > creator-production-status.txt
           git add creator-production-status.txt
           if git diff --cached --quiet; then
             echo 'Production creator status already current.'
