@@ -19,10 +19,6 @@ SKINS = {
 HAIRS = ['black', 'brown', 'blond', 'red', 'purple']
 STYLES = ['male_textured', 'male_short', 'male_medium', 'male_undercut', 'male_slick']
 
-# Uniform scale relative to the detected face width.  Vertical anchor is expressed
-# as a fraction of face height from the top of the detected face component.
-# These values keep every haircut attached to the same head while preserving each
-# source haircut's own aspect ratio.
 HAIR_PLACEMENT = {
     'male_textured': {'width': 1.34, 'bottom': 0.56, 'x': 0.00},
     'male_short': {'width': 1.22, 'bottom': 0.50, 'x': 0.00},
@@ -59,7 +55,6 @@ def load_base_scene():
 def tint_skin(scene_rgb, mask_img, target):
     rgb = np.asarray(scene_rgb, dtype=np.uint8)
     mask = (np.asarray(fit(mask_img, 'L'), dtype=np.float32) / 255.0).copy()
-    # Complexion may change only head/neck, never hoodie, torso, arms or legs.
     mask[int(SIZE[1] * .42):, :] = 0.0
     mask[mask < .06] = 0.0
     src_lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB).astype(np.float32)
@@ -75,9 +70,7 @@ def tint_skin(scene_rgb, mask_img, target):
 
 
 def detect_face_anchor(mask_img, base_img):
-    """Return x0,y0,x1,y1 of the face/neck component used to anchor hair."""
-    mask = np.asarray(fit(mask_img, 'L'), dtype=np.uint8)
-    # Ignore anything below the head/upper-chest zone.
+    mask = np.asarray(fit(mask_img, 'L'), dtype=np.uint8).copy()
     mask[int(SIZE[1] * .40):, :] = 0
     binary = (mask > 24).astype(np.uint8)
     count, labels, stats, centroids = cv2.connectedComponentsWithStats(binary, 8)
@@ -92,7 +85,6 @@ def detect_face_anchor(mask_img, base_img):
         cx, cy = centroids[idx]
         if area < 180 or y > SIZE[1] * .36:
             continue
-        # Prefer a substantial upper component close to the character centre.
         centre_penalty = abs(cx - body_cx)
         score = area - centre_penalty * 3.0 - y * 0.15
         candidates.append((score, (int(x), int(y), int(x+w-1), int(y+h-1))))
@@ -119,8 +111,6 @@ def load_hair(style, colour, face_box):
     if len(xs) < 50:
         raise SystemExit(f'Empty hair alpha: {path}')
 
-    # Crop away the transparent full-canvas padding so placement is based on the
-    # actual haircut pixels, not on the original export canvas coordinates.
     x0, x1 = int(xs.min()), int(xs.max())
     y0, y1 = int(ys.min()), int(ys.max())
     crop = raw.crop((x0, y0, x1 + 1, y1 + 1))
@@ -134,7 +124,6 @@ def load_hair(style, colour, face_box):
     target_w = max(24, int(round(face_w * placement['width'])))
     scale = target_w / max(1, crop.width)
     target_h = max(20, int(round(crop.height * scale)))
-    # Guard against a corrupt source producing a giant wig.
     target_h = min(target_h, int(face_h * 1.35))
     target_w = min(target_w, int(face_w * 1.65))
     crop = crop.resize((target_w, target_h), Image.Resampling.LANCZOS)
@@ -143,15 +132,11 @@ def load_hair(style, colour, face_box):
     left = int(round(cx - target_w / 2))
     bottom = int(round(fy0 + face_h * placement['bottom']))
     top = bottom - target_h
-
-    # Keep the layer on-canvas without changing its relation to the face.
     left = max(0, min(SIZE[0] - target_w, left))
     top = max(0, min(SIZE[1] - target_h, top))
 
     layer = Image.new('RGBA', SIZE, (0, 0, 0, 0))
     layer.alpha_composite(crop, (left, top))
-
-    # Remove tiny semi-transparent export noise.
     a = np.array(layer.getchannel('A'), dtype=np.uint8, copy=True)
     a[a < 26] = 0
     layer.putalpha(Image.fromarray(a, 'L'))
@@ -162,7 +147,6 @@ def load_hair(style, colour, face_box):
     hx0, hx1, hy0, hy1 = int(xs2.min()), int(xs2.max()), int(ys2.min()), int(ys2.max())
     if hy1 >= int(SIZE[1] * .43):
         raise SystemExit(f'Positioned hair reaches torso: {path} y1={hy1}')
-    # Hard sanity bounds around the detected face.
     if abs(((hx0 + hx1) / 2) - face_cx) > face_w * .35:
         raise SystemExit(f'Hair is not centred on face: {path} hair={(hx0,hy0,hx1,hy1)} face={face_box}')
     return layer
