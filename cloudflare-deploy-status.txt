@@ -1,6 +1,6 @@
-status=failure
-source_commit=cdf6334d49672a9bfc9d1329f4bedd9a7e78c74c
+status=success
+source_commit=192cfcc416ff11d6a1f0c0f55ebf98388a3bd59c
 creator_version=dedicated-fullbody-v23
 asset_cache=fullbody23
 api_token_present=true
-account_id_present=true
+account_id_source=wrangler-config
