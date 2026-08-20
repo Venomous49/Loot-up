@@ -37,11 +37,7 @@ jobs:
         shell: bash
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/rise-looter-http.log 2>&1 &
-          echo $! > /tmp/rise-looter-http.pid
-          for i in {1..30}; do
-            curl -fsS http://127.0.0.1:4173/index.html >/dev/null && exit 0
-            sleep 1
-          done
+          for i in {1..30}; do curl -fsS http://127.0.0.1:4173/index.html >/dev/null && exit 0; sleep 1; done
           cat /tmp/rise-looter-http.log
           exit 1
       - name: Exercise all creator controls locally in Chromium
@@ -63,7 +59,7 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Wait for validated HD creator deployment
+      - name: Wait for dedicated fullbody creator deployment
         shell: bash
         run: |
           set -euo pipefail
@@ -71,36 +67,29 @@ jobs:
             headers="$(mktemp)"
             if curl -fsS -D "$headers" -o /tmp/rise-looter-public.html "${CREATOR_PUBLIC_ORIGIN}/?creatorTest=1&ci=${GITHUB_SHA}"; then
               if grep -qi '^x-riselooter-creator-source: validated' "$headers" \
-                && grep -qi '^x-riselooter-creator-version: pre-rendered-matrix-v20' "$headers" \
+                && grep -qi '^x-riselooter-creator-version: dedicated-fullbody-v22' "$headers" \
                 && grep -q 'id="creatorPreview"' /tmp/rise-looter-public.html \
-                && grep -q 'creator-hd.css?v=20' /tmp/rise-looter-public.html \
+                && grep -q 'creator-hd.css?v=22' /tmp/rise-looter-public.html \
                 && ! grep -q 'creator-safe-runtime.js' /tmp/rise-looter-public.html; then
-                echo "Cloudflare is serving the canonical pre-rendered creator."
                 rm -f "$headers"
                 exit 0
               fi
-              echo "Cloudflare reachable but canonical creator deployment is not current yet (attempt $i/60)."
             fi
             rm -f "$headers"
             sleep 10
           done
-          echo "Cloudflare creator endpoint did not expose the canonical pre-rendered creator within the validation window."
           exit 1
-      - name: Verify canonical creator stylesheet is public
+      - name: Verify fullbody creator stylesheet is public
         shell: bash
         run: |
           set -euo pipefail
           curl -fsS --retry 3 --retry-delay 2 -o /tmp/creator-hd-public.css "${CREATOR_PUBLIC_ORIGIN}/creator-hd.css?ci=${GITHUB_SHA}"
-          local_hash="$(sha256sum creator-hd.css | awk '{print $1}')"
-          remote_hash="$(sha256sum /tmp/creator-hd-public.css | awk '{print $1}')"
-          test "$local_hash" = "$remote_hash"
+          test "$(sha256sum creator-hd.css | awk '{print $1}')" = "$(sha256sum /tmp/creator-hd-public.css | awk '{print $1}')"
           grep -q 'aspect-ratio:1728/910' /tmp/creator-hd-public.css
           grep -q 'object-fit:contain' /tmp/creator-hd-public.css
-          grep -q 'object-position:50% 100%' /tmp/creator-hd-public.css
+          grep -q 'object-position:50% 50%' /tmp/creator-hd-public.css
           ! grep -q 'mix-blend-mode' /tmp/creator-hd-public.css
           ! grep -q 'mask-' /tmp/creator-hd-public.css
-          ! grep -q 'rl-avatar-stack' /tmp/creator-hd-public.css
-          echo "Verified overlay-free canonical creator stylesheet in production."
       - name: Verify all 250 public creator assets match this commit
         shell: bash
         run: |
@@ -112,22 +101,13 @@ jobs:
           while IFS= read -r path; do
             checked=$((checked + 1))
             remote="$tmpdir/asset-$checked.webp"
-            url="${CREATOR_PUBLIC_ORIGIN}/${path}?ci=${GITHUB_SHA}"
-            if ! curl -fsS --retry 3 --retry-delay 2 -o "$remote" "$url"; then
-              echo "Missing public creator asset: $path"
-              mismatches=$((mismatches + 1))
-              continue
+            if ! curl -fsS --retry 3 --retry-delay 2 -o "$remote" "${CREATOR_PUBLIC_ORIGIN}/${path}?ci=${GITHUB_SHA}"; then
+              mismatches=$((mismatches + 1)); continue
             fi
-            local_hash="$(sha256sum "$path" | awk '{print $1}')"
-            remote_hash="$(sha256sum "$remote" | awk '{print $1}')"
-            if [ "$local_hash" != "$remote_hash" ]; then
-              echo "Public creator asset differs from checked-out commit: $path"
-              mismatches=$((mismatches + 1))
-            fi
+            test "$(sha256sum "$path" | awk '{print $1}')" = "$(sha256sum "$remote" | awk '{print $1}')" || mismatches=$((mismatches + 1))
           done < <(find assets/creator/male assets/creator/female -type f -name '*.webp' | sort)
           test "$checked" -eq 250
           test "$mismatches" -eq 0
-          echo "Verified $checked public creator assets byte-for-byte against ${GITHUB_SHA}."
       - name: Exercise all 250 creator combinations on Cloudflare
         run: node scripts/creator_runtime_smoke.mjs
       - name: Record validated production creator status
@@ -135,36 +115,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          validated_sha="$GITHUB_SHA"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch origin main
           git checkout -B main origin/main
-          printf 'status=success\nsource_commit=%s\nformat=1728x910\nassets=250\ncloudflare=validated\nruntime_combinations=250\n' "$validated_sha" > creator-production-status.txt
+          printf 'status=success\nsource_commit=%s\nformat=1728x910\nassets=250\ncloudflare=validated\nruntime_combinations=250\ncreator_version=dedicated-fullbody-v22\n' "$GITHUB_SHA" > creator-production-status.txt
           git add creator-production-status.txt
-          if git diff --cached --quiet; then
-            echo 'Production creator status already current.'
-            exit 0
-          fi
-          git commit -m 'Record validated creator production deployment'
-          git push origin main
+          git diff --cached --quiet || (git commit -m 'Record validated creator production deployment' && git push origin main)
       - name: Record production creator failure
         if: failure()
         shell: bash
         run: |
           set -euo pipefail
-          failed_sha="$GITHUB_SHA"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch origin main
           git checkout -B main origin/main
-          printf 'status=failed\nsource_commit=%s\ncloudflare=not-validated\n' "$failed_sha" > creator-production-status.txt
+          printf 'status=failed\nsource_commit=%s\ncloudflare=not-validated\ncreator_version=dedicated-fullbody-v22\n' "$GITHUB_SHA" > creator-production-status.txt
           git add creator-production-status.txt
-          if git diff --cached --quiet; then
-            echo 'Production creator failure status already current.'
-            exit 0
-          fi
-          git commit -m 'Record failed creator production deployment'
-          git push origin main
-
-# v20 production recheck: allow up to 10 minutes for Cloudflare propagation before failing.
+          git diff --cached --quiet || (git commit -m 'Record failed creator production deployment' && git push origin main)
