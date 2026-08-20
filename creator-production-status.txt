@@ -1,4 +1,5 @@
 status=failed
-source_commit=a74c317ccf3c3b1a3666c417feaf553e352dcb6b
+source_commit=405822635c6cab7d5f89299e86f8aa3a4b461a0a
 cloudflare=not-validated
-creator_version=dedicated-fullbody-v22
+creator_version=dedicated-fullbody-v23
+asset_cache=fullbody23
