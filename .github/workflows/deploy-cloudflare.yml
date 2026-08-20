@@ -11,24 +11,19 @@ on:
       - 'index.html'
       - 'safe-ui-bootstrap.js'
       - 'assets/creator/**'
-      - 'assets/creator_layers/**'
-      - 'creator-layered-build-status.txt'
+      - 'creator-production-build-status.txt'
       - '.github/workflows/deploy-cloudflare.yml'
-  workflow_run:
-    workflows: ['Creator layered HD build']
-    types: [completed]
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: riselooter-cloudflare-production-v4
+  group: riselooter-cloudflare-production-v5
   cancel-in-progress: true
 
 jobs:
   deploy:
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -41,17 +36,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Refuse stale creator presets
+      - name: Validate production creator assets
         shell: bash
         run: |
           set -euo pipefail
-          grep -q '^status=success$' creator-layered-build-status.txt
-          grep -q '^generator=layered-v4-clean-source$' creator-layered-build-status.txt
-          test -f assets/creator_layers/manifest.txt
-          grep -q '^creator_version=layered-v4-clean-source$' assets/creator_layers/manifest.txt
-          test -s assets/creator_sources/fullbody/male_base_clean.png
-          test "$(find assets/creator_layers/male -maxdepth 1 -type f -name '*.webp' | wc -l)" -eq 31
-          test "$(find assets/creator_layers/female -maxdepth 1 -type f -name '*.webp' | wc -l)" -eq 31
+          test -f creator-production-build-status.txt
+          grep -q '^male_full_body_locked=yes$' creator-production-build-status.txt
+          grep -q '^male_hair_never_below_head=yes$' creator-production-build-status.txt
+          test "$(find assets/creator/male -type f -name '*.webp' | wc -l)" -eq 125
+          test "$(find assets/creator/female -type f -name '*.webp' | wc -l)" -eq 125
       - name: Verify Cloudflare user token
         shell: bash
         run: |
@@ -76,11 +69,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          printf 'status=%s\nsource_commit=%s\ncreator_version=layered-v4-clean-source\nasset_cache=layered-v4-clean-source\napi_token_present=%s\naccount_id_source=wrangler-config\n' '${{ steps.deploy.outputs.outcome }}' "$(git rev-parse HEAD)" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
+          printf 'status=%s\nsource_commit=%s\ncreator_version=production-fixed-body\napi_token_present=%s\n' '${{ steps.deploy.outputs.outcome }}' "$(git rev-parse HEAD)" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add cloudflare-deploy-status.txt cloudflare-deploy-log.txt
-          git diff --cached --quiet || (git commit -m 'Record Cloudflare deployment diagnostics' && git push origin HEAD:main)
+          git diff --cached --quiet || (git commit -m 'Record Cloudflare deployment diagnostics' && git pull --rebase origin main && git push origin HEAD:main)
       - name: Fail when deployment failed
         if: steps.deploy.outputs.outcome != 'success'
         run: exit 1
