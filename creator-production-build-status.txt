@@ -1,0 +1,4 @@
+male_full_body_locked=yes
+male_hair_never_below_head=yes
+source_commit=e7925c5acec3eedfccb0362ff8e9c2dcf4aac90e
+build_run=32425946070
