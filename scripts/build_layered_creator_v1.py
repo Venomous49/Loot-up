@@ -84,14 +84,18 @@ def register_hair(im,person,gender,style):
  x_nudge=7 if gender=='male' else 0
  y_nudge=0
 
- # Visual micro-calibration for the male mid-length cut only:
- # it was slightly too small and a few pixels too far to the right.
- # Keep the base character untouched; only the hair overlay is adjusted.
+ # Per-style micro-calibration after visual checks. The body/base layer is never moved.
  if gender=='male' and style=='male_medium':
   width_factor=1.10
   height_factor=.61
   x_nudge=2
   y_nudge=2
+ elif gender=='male' and style=='male_slick':
+  # "Coiffé arrière" was still visibly floating to the right/high on the skull.
+  width_factor=1.08
+  height_factor=.60
+  x_nudge=0
+  y_nudge=3
 
  target_w=int(fw*width_factor); target_h=int(fh*height_factor)
  scale=min(target_w/crop.width,target_h/crop.height)
@@ -107,6 +111,6 @@ def main():
    for color in COLORS: register_hair(exact(HAIR/f'{style}_{color}.png','RGBA'),person,g,style).save(d/f'hair-{style}-{color}.webp','WEBP',lossless=True,method=6)
   files=list(d.glob('*.webp'))
   if len(files)!=31: raise SystemExit(f'{g}: expected 31 assets, got {len(files)}')
- print('layered-v4-fit2: male_medium +5% width, +3% height, 5px left, 2px down')
+ print('layered-v4-fit3: male_medium retained; male_slick +3% width, +2% height, 7px left, 3px down')
 
 if __name__=='__main__': main()
