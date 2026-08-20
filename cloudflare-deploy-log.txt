@@ -4,53 +4,16 @@
 🌀 Building list of assets...
 ✨ Read 728 files from the assets directory /home/runner/work/RiseLooter/RiseLooter
 🌀 Starting asset upload...
-🌀 Found 32 new or modified static assets to upload. Proceeding with upload...
-+ /creator-layered-build-log.txt
-+ /cloudflare-deploy-status.txt
-+ /assets/creator_layers/male/hair-male_undercut-red.webp
-+ /assets/creator_layers/male/hair-male_undercut-purple.webp
-+ /assets/creator_layers/male/hair-male_short-black.webp
-+ /assets/creator_layers/male/hair-male_short-blond.webp
-+ /assets/creator_layers/male/hair-male_medium-black.webp
-+ /assets/creator_layers/male/hair-male_undercut-black.webp
-+ /assets/creator_layers/male/hair-male_textured-black.webp
-+ /assets/creator_layers/male/hair-male_textured-brown.webp
-+ /assets/creator_sources/fullbody/male_base_clean.png
-+ /assets/creator_layers/manifest.txt
-+ /cloudflare-deploy-log.txt
-+ /assets/creator_layers/male/hair-male_slick-brown.webp
-+ /assets/creator_layers/male/hair-male_slick-purple.webp
-+ /assets/creator_layers/male/hair-male_short-brown.webp
-+ /assets/creator_layers/male/hair-male_short-red.webp
-+ /assets/creator_layers/male/hair-male_medium-brown.webp
-+ /assets/creator_layers/male/hair-male_medium-red.webp
-+ /assets/creator_layers/male/hair-male_textured-purple.webp
-+ /assets/creator_layers/male/hair-male_textured-red.webp
-+ /assets/creator_layers/male/base.webp
-+ /creator-layered-build-status.txt
-+ /assets/creator_layers/male/hair-male_undercut-brown.webp
-+ /assets/creator_layers/male/hair-male_slick-red.webp
-+ /assets/creator_layers/male/hair-male_undercut-blond.webp
-+ /assets/creator_layers/male/hair-male_slick-blond.webp
-+ /assets/creator_layers/male/hair-male_short-purple.webp
-+ /assets/creator_layers/male/hair-male_medium-purple.webp
-+ /assets/creator_layers/male/hair-male_medium-blond.webp
-+ /assets/creator_layers/male/hair-male_slick-black.webp
-+ /assets/creator_layers/male/hair-male_textured-blond.webp
-Uploaded 10 of 32 assets
-Uploaded 21 of 32 assets
-Uploaded 32 of 32 assets
-✨ Success! Uploaded 32 files (493 already uploaded) (1.44 sec)
-
+No updated asset files to upload. Proceeding with deployment...
 Total Upload: 1.44 KiB / gzip: 0.66 KiB
-Worker Startup Time: 5 ms
+Worker Startup Time: 3 ms
 Your Worker has access to the following bindings:
 Binding            Resource      
 env.ASSETS         Assets        
 
-Uploaded loot-up (6.04 sec)
-Deployed loot-up triggers (0.50 sec)
+Uploaded loot-up (4.53 sec)
+Deployed loot-up triggers (0.32 sec)
   https://loot-up.marin-iglesias.workers.dev
-Current Version ID: cf242ee7-e4d8-4cf9-868d-d7e76ac83fd5
+Current Version ID: c3b8493a-64fb-4f7e-b515-36725ece6821
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
