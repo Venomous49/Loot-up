@@ -1,6 +1,6 @@
 (() => {
   const ROOT='/assets/creator_sources/';
-  const STD=ROOT+'standardized_black/';
+  const FULL=ROOT+'fullbody/';
   const MASKS=ROOT+'color_master_masks/';
   const maleStyles=new Set(['male_textured','male_short','male_medium','male_undercut','male_slick']);
   const femaleStyles=new Set(['female_long','female_wavy','female_bob','female_ponytail','female_short']);
@@ -14,37 +14,39 @@
     if(g==='female'&&!femaleStyles.has(style)) style=fallback;
     return [g,style];
   }
-  function baseFor(gender,style){const [,s]=normalized(gender,style);return `${STD}${s}.webp`;}
+  function baseFor(gender){return gender==='female'?`${FULL}female_base.png`:`${FULL}male_base.png`;}
   function colorFor(gender,style,color){
     const [,s]=normalized(gender,style);
-    if(color==='black') return `${STD}${s}.webp`;
+    if(color==='black') return `${ROOT}standardized_black/${s}.webp`;
     if(naturalColors.has(color)) return `${ROOT}${s}_${color}_natural.png`;
     return `${ROOT}${s}_clean.png`;
   }
   function maskFor(gender,style,color){
     const [,s]=normalized(gender,style);
-    if(color==='black'||!naturalColors.has(color)) return '';
+    if(color==='black') return `${ROOT}person_masks/${s}.png`;
+    if(!naturalColors.has(color)) return '';
     return `${MASKS}${s}_${color}_natural.png`;
   }
-  function fallbackFor(gender){return gender==='female'?`${STD}female_long.webp`:`${STD}male_textured.webp`;}
+  function fallbackFor(gender){return gender==='female'?`${ROOT}standardized_black/female_bob.webp`:`/01-debutant-character.png`;}
 
   function avatarMarkup(gender,style,color,skin,home=false){
-    const base=baseFor(gender,style), col=colorFor(gender,style,color), mask=maskFor(gender,style,color);
+    const base=baseFor(gender), col=colorFor(gender,style,color), mask=maskFor(gender,style,color);
     const tone=skinTones[skin]||skinTones.medium;
     const female=gender==='female'?' female-avatar':'';
     const maskStyle=mask?`-webkit-mask-image:url('${mask}');mask-image:url('${mask}');`:'';
     return `<div class="rl-avatar-stack${female}${home?' home-avatar':''}" data-skin="${skin||'medium'}" style="--skin-tone:${tone}">
-      <img class="rl-avatar-base" src="${base}?avatar=v11" data-fallback="${fallbackFor(gender)}" alt="Looter">
-      ${color==='black'?'':`<img class="rl-avatar-hair" src="${col}?avatar=v11" alt="" style="${maskStyle}">`}
+      <img class="rl-avatar-bg" src="${FULL}background.webp?avatar=v12" alt="">
+      <img class="rl-avatar-base" src="${base}?avatar=v12" data-fallback="${fallbackFor(gender)}" alt="Looter">
+      <img class="rl-avatar-hair" src="${col}?avatar=v12" alt="" style="${maskStyle}">
       <div class="rl-avatar-skin"></div>
     </div>`;
   }
 
   function attachFallbacks(root){
     root.querySelectorAll('.rl-avatar-base').forEach(img=>{
-      img.onerror=()=>{if(img.dataset.used!=='1'){img.dataset.used='1';img.src=img.dataset.fallback+'?avatar=v11';}else img.style.display='none';};
+      img.onerror=()=>{if(img.dataset.used!=='1'){img.dataset.used='1';img.src=img.dataset.fallback+'?avatar=v12';}else img.style.display='none';};
     });
-    root.querySelectorAll('.rl-avatar-hair').forEach(img=>{img.onerror=()=>img.style.display='none';});
+    root.querySelectorAll('.rl-avatar-hair,.rl-avatar-bg').forEach(img=>{img.onerror=()=>img.style.display='none';});
   }
 
   function restoreCreator(){
@@ -93,8 +95,8 @@
   }
 
   function refreshAll(){restoreCreator();restoreHomepage();surveyOnlyUI();awardDailyStreakXP();}
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(refreshAll,120),{once:true}); else setTimeout(refreshAll,120);
-  document.addEventListener('click',e=>{if(e.target.closest('#genderChoices,#skinChoices,#hairColorChoices,#hairStyleChoices,#testCreator')) setTimeout(()=>{restoreCreator();surveyOnlyUI();},60);},true);
-  const obs=new MutationObserver(()=>{clearTimeout(window.__rlHotfixTimer);window.__rlHotfixTimer=setTimeout(()=>{restoreHomepage();surveyOnlyUI();awardDailyStreakXP();},120);});
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(refreshAll,150),{once:true}); else setTimeout(refreshAll,150);
+  document.addEventListener('click',e=>{if(e.target.closest('#genderChoices,#skinChoices,#hairColorChoices,#hairStyleChoices,#testCreator')) setTimeout(()=>{restoreCreator();surveyOnlyUI();},70);},true);
+  const obs=new MutationObserver(()=>{clearTimeout(window.__rlHotfixTimer);window.__rlHotfixTimer=setTimeout(()=>{restoreHomepage();surveyOnlyUI();awardDailyStreakXP();},140);});
   obs.observe(document.documentElement,{childList:true,subtree:true});
 })();
