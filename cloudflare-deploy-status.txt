@@ -1,6 +1,6 @@
-status=success
-source_commit=5c6eba72dc51d1fc7d4fbf5528080c36e9a3d860
-creator_version=layered-v1
-asset_cache=layered-v1
+status=
+source_commit=a603c3e7649f9a4067afe6656cd314a7fa03e5cd
+creator_version=layered-v2-clean
+asset_cache=layered-v2-clean
 api_token_present=true
 account_id_source=wrangler-config
