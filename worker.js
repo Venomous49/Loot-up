@@ -1,6 +1,6 @@
 class RiseLooterHead {
   element(element) {
-    element.append('<link rel="stylesheet" href="/creator-hd.css?v=20">', { html: true });
+    element.append('<link rel="stylesheet" href="/creator-hd.css?v=22">', { html: true });
     element.append('<script src="/silhouette-fix.js?v=6" defer></script>', { html: true });
     element.append('<script src="/rise-looter-ui-hotfix.js?v=7" defer></script>', { html: true });
   }
@@ -14,7 +14,7 @@ export default {
 
     const headers = new Headers(response.headers);
     headers.set('x-riselooter-creator-source', 'validated');
-    headers.set('x-riselooter-creator-version', 'pre-rendered-matrix-v20');
+    headers.set('x-riselooter-creator-version', 'dedicated-fullbody-v22');
     headers.set('x-riselooter-silhouettes', 'character-cutout-v6');
     headers.set('x-riselooter-launch-mode', 'survey-only-v2');
 
