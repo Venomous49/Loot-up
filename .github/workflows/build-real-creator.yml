@@ -11,8 +11,6 @@ on:
       - 'assets/creator_sources/**'
       - '.github/workflows/build-real-creator.yml'
   workflow_dispatch:
-  schedule:
-    - cron: '*/5 * * * *'
 
 permissions:
   contents: write
@@ -74,5 +72,3 @@ jobs:
           set -euo pipefail
           gh workflow run deploy-cloudflare.yml --ref main
           gh workflow run creator-runtime-smoke.yml --ref main
-
-# emergency-scheduled-rebuild: 2026-08-21T00:58+02:00
