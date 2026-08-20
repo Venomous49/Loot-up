@@ -68,27 +68,34 @@ def native_skin_mask(scene, person_alpha):
 
 
 def neutralize_male_base_hair(scene):
+    """Erase the canonical male haircut before applying selectable hairstyles.
+
+    Previous versions only targeted dark pixels, so a left-side tuft survived and
+    visually looked like a persistent horizontal offset. This version removes the
+    full scalp/hair silhouette while explicitly protecting the face.
+    """
     rgb = np.asarray(scene, dtype=np.uint8).copy()
     fx, fy, fw, fh = legacy.base.detect_face(scene)
     h, w = rgb.shape[:2]
     yy, xx = np.mgrid[0:h, 0:w]
+
     cx = fx + fw * .50
-    cy = fy + fh * .02
-    scalp = (((xx - cx) / (fw * .78)) ** 2 + ((yy - cy) / (fh * .62)) ** 2) <= 1.0
-    upper_head_only = yy < (fy + fh * .31)
-    dark = (rgb[..., 0] < 120) & (rgb[..., 1] < 112) & (rgb[..., 2] < 108)
-    warm_dark = (rgb[..., 0] <= rgb[..., 1] * 1.30 + 10) & (rgb[..., 2] <= rgb[..., 1] * 1.18 + 10)
-    mask = (scalp & upper_head_only & dark & warm_dark).astype(np.uint8) * 255
-    side_left = (((xx - (fx + fw * .13)) / (fw * .24)) ** 2 + ((yy - (fy + fh * .20)) / (fh * .34)) ** 2) <= 1.0
-    side_right = (((xx - (fx + fw * .87)) / (fw * .24)) ** 2 + ((yy - (fy + fh * .20)) / (fh * .34)) ** 2) <= 1.0
-    mask = np.maximum(mask, ((side_left | side_right) & upper_head_only & dark).astype(np.uint8) * 255)
-    mask = cv2.dilate(mask, np.ones((7, 7), np.uint8), iterations=1)
-    mask = cv2.GaussianBlur(mask, (0, 0), 1.0)
-    _, mask = cv2.threshold(mask, 28, 255, cv2.THRESH_BINARY)
-    if np.count_nonzero(mask) == 0:
-        return scene
+    scalp = (((xx - cx) / (fw * 1.03)) ** 2 + ((yy - (fy + fh * .02)) / (fh * .82)) ** 2) <= 1.0
+    side_left = (((xx - (fx + fw * .05)) / (fw * .38)) ** 2 + ((yy - (fy + fh * .23)) / (fh * .48)) ** 2) <= 1.0
+    side_right = (((xx - (fx + fw * .95)) / (fw * .34)) ** 2 + ((yy - (fy + fh * .23)) / (fh * .46)) ** 2) <= 1.0
+
+    # Keep eyes, nose, cheeks, mouth and most of the forehead untouched.
+    face_protect = (((xx - cx) / (fw * .50)) ** 2 + ((yy - (fy + fh * .60)) / (fh * .58)) ** 2) <= 1.0
+    top_limit = yy < (fy + fh * .43)
+    erase = (scalp | side_left | side_right) & top_limit & ~face_protect
+
+    mask = erase.astype(np.uint8) * 255
+    mask = cv2.dilate(mask, np.ones((9, 9), np.uint8), iterations=1)
+    mask = cv2.GaussianBlur(mask, (0, 0), 1.4)
+    _, mask = cv2.threshold(mask, 24, 255, cv2.THRESH_BINARY)
+
     bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
-    cleaned = cv2.inpaint(bgr, mask, 5, cv2.INPAINT_TELEA)
+    cleaned = cv2.inpaint(bgr, mask, 7, cv2.INPAINT_TELEA)
     return Image.fromarray(cv2.cvtColor(cleaned, cv2.COLOR_BGR2RGB), "RGB")
 
 
@@ -181,8 +188,8 @@ def safe_align_style_hair(gender, style, head_anchor=None):
     a_crop = cv2.resize(a_crop, (out_w, out_h), interpolation=cv2.INTER_LINEAR)
     if gender == "male" and head_anchor is not None:
         face_center_x, _, _, _ = head_anchor
-        # Second deployed calibration: move the shared male overlay another 7px left.
-        # Total correction is now 12px left from the raw face-centered placement.
+        # Keep the last measured horizontal calibration. The remaining visible
+        # problem was the surviving canonical tuft, not another placement error.
         x = round(face_center_x - out_w / 2) - 12
         y = top_y + 11
     else:
