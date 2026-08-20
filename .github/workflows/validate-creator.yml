@@ -95,8 +95,8 @@ jobs:
           grep -q 'CREATOR_PUBLIC_ORIGIN: https://loot-up.marin-iglesias.workers.dev' "$smoke"
           grep -q 'Wait for validated HD creator deployment' "$smoke"
           grep -q 'x-riselooter-creator-source: validated' "$smoke"
-          grep -q 'x-riselooter-creator-version: pre-rendered-matrix-v18' "$smoke"
-          grep -q 'creator-hd.css?v=18' "$smoke"
+          grep -q 'x-riselooter-creator-version: pre-rendered-matrix-v20' "$smoke"
+          grep -q 'creator-hd.css?v=20' "$smoke"
           grep -q 'Verify canonical creator stylesheet is public' "$smoke"
           grep -q '! grep -q '\''mix-blend-mode'\'' /tmp/creator-hd-public.css' "$smoke"
           grep -q '! grep -q '\''mask-'\'' /tmp/creator-hd-public.css' "$smoke"
@@ -122,8 +122,8 @@ jobs:
           grep -q '"not_found_handling": "single-page-application"' wrangler.jsonc
           grep -q 'env.ASSETS.fetch(request)' worker.js
           grep -q "x-riselooter-creator-source', 'validated'" worker.js
-          grep -q "x-riselooter-creator-version', 'pre-rendered-matrix-v18'" worker.js
-          grep -q 'creator-hd.css?v=18' worker.js
+          grep -q "x-riselooter-creator-version', 'pre-rendered-matrix-v20'" worker.js
+          grep -q 'creator-hd.css?v=20' worker.js
           ! grep -q 'hardenCreatorHtml' worker.js
           ! grep -q 'CREATOR_FALLBACK_NEW' worker.js
           test -s .assetsignore
