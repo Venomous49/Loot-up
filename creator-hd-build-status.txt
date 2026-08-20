@@ -1,7 +1,7 @@
 status=failed
-source_commit=553293132994de8bfc613c768586bd934f7fd71b
+source_commit=e7ec6ae0dc451f83b9e661d0a39429f821e911cf
 generator=dedicated-fullbody-v7-male
 --- tail ---
 Built 125 male presets from dedicated fullbody base + clipped head/neck skin mask + 25 dedicated hair layers.
 Dedicated fullbody male creator validated: head-to-feet base, 125 distinct presets, body/clothes invariant below head.
-Fixed male body regression (skin:light/black/male_textured): mean=0.139, p99=2.0, max=13
+Fixed male body regression (skin:dark/black/male_textured): mean=0.143, p99=2.0, max=15
