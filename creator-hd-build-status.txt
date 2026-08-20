@@ -1,9 +1,10 @@
 status=success
-source_commit=c066ebc734c1d7a7682dd428d5f0ce517ab498c1
-generator=immutable-base-v5-male
+source_commit=3a57e8a70c8bf1a18c4d58629da6c0b5e6785cab
+generator=full-body-v6-male
 format=1728x910
 male_assets=125
-base_scene_untouched=yes
+full_body_source=01-debutant.webp
+head_to_feet_required=yes
 body_segmentation=disabled
 body_crop_resize_repaste=disabled
 male_full_body_locked=yes
