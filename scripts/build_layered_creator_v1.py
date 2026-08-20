@@ -1,7 +1,7 @@
 from pathlib import Path
 import cv2
 import numpy as np
-from PIL import Image, ImageFilter
+from PIL import Image
 
 ROOT=Path(__file__).resolve().parents[1]
 SRC=ROOT/'assets/creator_sources/fullbody'
@@ -22,30 +22,33 @@ def exact(path,mode='RGBA'):
  return im
 
 def clean_subject(im):
- arr=np.asarray(im,dtype=np.uint8).copy(); a=arr[...,3]; bw=(a>18).astype(np.uint8)
+ arr=np.asarray(im,dtype=np.uint8).copy(); bw=(arr[...,3]>18).astype(np.uint8)
  n,labels,stats,_=cv2.connectedComponentsWithStats(bw,8)
  if n<=1: raise SystemExit('NO SUBJECT')
- biggest=1+int(np.argmax(stats[1:,cv2.CC_STAT_AREA])); mx,my,mw,mh,ma=map(int,stats[biggest]); keep=labels==biggest
+ biggest=1+int(np.argmax(stats[1:,cv2.CC_STAT_AREA])); mx,my,mw,mh,_=map(int,stats[biggest]); keep=labels==biggest
  for i in range(1,n):
   if i==biggest: continue
   x,y,w,h,area=map(int,stats[i]); cx=x+w/2; cy=y+h/2
-  limb_zone=(my+mh*.12)<=cy<=(my+mh+16) and (mx-125)<=cx<=(mx+mw+125)
-  if limb_zone and area>=80: keep|=labels==i
+  if (my+mh*.12)<=cy<=(my+mh+16) and (mx-125)<=cx<=(mx+mw+125) and area>=80: keep|=labels==i
  arr[~keep]=0; ys,xs=np.where(keep)
  if len(xs)<1000: raise SystemExit('CLEAN SUBJECT TOO SMALL')
  return Image.fromarray(arr,'RGBA'),(int(xs.min()),int(ys.min()),int(xs.max()+1),int(ys.max()+1))
+
+def normalize_subject(layer,max_w,max_h,bottom=35):
+ a=np.asarray(layer.getchannel('A')); ys,xs=np.where(a>18)
+ if len(xs)<1000: raise SystemExit('SUBJECT ALPHA TOO SMALL')
+ crop=layer.crop((int(xs.min()),int(ys.min()),int(xs.max()+1),int(ys.max()+1)))
+ scale=min(max_w/crop.width,max_h/crop.height)
+ nw,nh=max(1,int(crop.width*scale)),max(1,int(crop.height*scale)); crop=crop.resize((nw,nh),Image.Resampling.LANCZOS)
+ canvas=Image.new('RGBA',SIZE,(0,0,0,0)); left=(SIZE[0]-nw)//2; top=max(18,SIZE[1]-nh-bottom); canvas.alpha_composite(crop,(left,top)); return canvas
 
 def build_person(gender,bg):
  if gender=='male':
   clean=SRC/'male_base_clean.png'
   if not clean.exists(): raise SystemExit('male_base_clean.png missing: clean source must be generated first')
-  layer=exact(clean,'RGBA')
-  if np.count_nonzero(np.asarray(layer.getchannel('A'))>18)<15000: raise SystemExit('clean male alpha too small')
+  layer=normalize_subject(exact(clean,'RGBA'),560,785,32)
   out=bg.copy(); out.alpha_composite(layer); return out,layer
- raw=exact(SRC/f'{gender}_base.png','RGBA'); subject,box=clean_subject(raw); subject=subject.crop(box)
- max_w,max_h=540,790; scale=min(max_w/subject.width,max_h/subject.height); nw,nh=max(1,int(subject.width*scale)),max(1,int(subject.height*scale)); subject=subject.resize((nw,nh),Image.Resampling.LANCZOS)
- left=(SIZE[0]-nw)//2; top=max(20,SIZE[1]-nh-35)
- layer=Image.new('RGBA',SIZE,(0,0,0,0)); layer.alpha_composite(subject,(left,top)); out=bg.copy(); out.alpha_composite(layer); return out,layer
+ raw=exact(SRC/f'{gender}_base.png','RGBA'); subject,_=clean_subject(raw); layer=normalize_subject(subject,540,790,35); out=bg.copy(); out.alpha_composite(layer); return out,layer
 
 def body_box(person):
  a=np.asarray(person.getchannel('A')); ys,xs=np.where(a>24)
@@ -67,15 +70,16 @@ def isolate_hair(im):
   if area>=80 and w<=420 and h<=320: valid.append((area,i))
  if not valid:
   biggest=1+int(np.argmax(stats[1:,cv2.CC_STAT_AREA])); x,y,w,h,_=map(int,stats[biggest]); cutoff=y+max(40,int(h*.24)); mask=(labels==biggest)&(np.indices(labels.shape)[0]<cutoff); arr[~mask]=0
- else:
-  arr[labels!=max(valid)[1]]=0
+ else: arr[labels!=max(valid)[1]]=0
  ys,xs=np.where(arr[...,3]>24)
  if len(xs)<60: raise SystemExit('NO USABLE HAIR')
  return Image.fromarray(arr,'RGBA').crop((int(xs.min()),int(ys.min()),int(xs.max()+1),int(ys.max()+1)))
 
-def register_hair(im,person):
+def register_hair(im,person,gender):
  crop=isolate_hair(im); fx,fy,fw,fh=face_box(person); target_w=int(fw*1.05); target_h=int(fh*.58); scale=min(target_w/crop.width,target_h/crop.height); nw,nh=max(1,int(crop.width*scale)),max(1,int(crop.height*scale)); crop=crop.resize((nw,nh),Image.Resampling.LANCZOS)
- tx=int(fx+fw/2-nw/2); ty=int(fy)
+ # Fine calibration after visual verification: male presets were a few pixels left of the skull.
+ x_nudge=7 if gender=='male' else 0
+ tx=int(fx+fw/2-nw/2+x_nudge); ty=int(fy)
  canvas=Image.new('RGBA',SIZE,(0,0,0,0)); canvas.alpha_composite(crop,(max(0,min(SIZE[0]-nw,tx)),max(0,min(SIZE[1]-nh,ty)))); return canvas
 
 def main():
@@ -83,9 +87,9 @@ def main():
  for g in ('male','female'):
   d=OUT/g; d.mkdir(parents=True,exist_ok=True); out,person=build_person(g,bg); out.convert('RGB').save(d/'base.webp','WEBP',quality=100,method=6); skin_layer(g,out.convert('RGB'))
   for style in STYLES[g]:
-   for color in COLORS: register_hair(exact(HAIR/f'{style}_{color}.png','RGBA'),person).save(d/f'hair-{style}-{color}.webp','WEBP',lossless=True,method=6)
+   for color in COLORS: register_hair(exact(HAIR/f'{style}_{color}.png','RGBA'),person,g).save(d/f'hair-{style}-{color}.webp','WEBP',lossless=True,method=6)
   files=list(d.glob('*.webp'))
   if len(files)!=31: raise SystemExit(f'{g}: expected 31 assets, got {len(files)}')
- print('layered-v4-clean-source: AI-clean male asset, complete silhouette, skull-anchored hair')
+ print('layered-v4-fit1: enlarged centered fullbody and fine skull hair alignment')
 
 if __name__=='__main__': main()
