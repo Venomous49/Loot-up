@@ -67,7 +67,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for i in {1..30}; do
+          for i in {1..60}; do
             headers="$(mktemp)"
             if curl -fsS -D "$headers" -o /tmp/rise-looter-public.html "${CREATOR_PUBLIC_ORIGIN}/?creatorTest=1&ci=${GITHUB_SHA}"; then
               if grep -qi '^x-riselooter-creator-source: validated' "$headers" \
@@ -79,7 +79,7 @@ jobs:
                 rm -f "$headers"
                 exit 0
               fi
-              echo "Cloudflare reachable but canonical creator deployment is not current yet (attempt $i/30)."
+              echo "Cloudflare reachable but canonical creator deployment is not current yet (attempt $i/60)."
             fi
             rm -f "$headers"
             sleep 10
@@ -166,3 +166,5 @@ jobs:
           fi
           git commit -m 'Record failed creator production deployment'
           git push origin main
+
+# v20 production recheck: allow up to 10 minutes for Cloudflare propagation before failing.
