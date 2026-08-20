@@ -1,14 +1,14 @@
-/* Rise Looter — full-body creator presentation v21 */
+/* Rise Looter — dedicated fullbody creator presentation v22 */
 #creatorModal .creator-preview{width:100%!important;height:auto!important;aspect-ratio:1728/910!important;margin:0!important;display:block!important;position:relative!important;overflow:hidden!important;background:#03080d!important;border:1px solid #294052!important;border-radius:9px!important}
 #creatorModal .creator-live-badge{position:absolute!important;right:16px!important;top:16px!important;z-index:20!important}
-/* Never zoom/crop the main preset: the complete 1728x910 asset must be visible. */
-#creatorModal .creator-real-preview{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;display:block!important;object-fit:contain!important;object-position:center center!important;transform:none!important;animation:none!important;filter:none!important;opacity:1!important;image-rendering:auto!important}
+/* The complete pre-rendered asset is always visible in the large preview. */
+#creatorModal .creator-real-preview{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;display:block!important;object-fit:contain!important;object-position:50% 50%!important;transform:none!important;animation:none!important;filter:none!important;opacity:1!important;image-rendering:auto!important}
 #creatorModal .creator-asset-missing{position:absolute!important;inset:0!important;place-content:center!important;text-align:center!important}
 
-/* Hairstyle choices show the actual head/hair region, never torso/legs. */
+/* Hair tiles use the same complete asset but crop visually around the fixed head position. */
 #hairStyleChoices .hair-choice{min-height:124px!important;padding:6px!important;display:grid!important;grid-template-rows:90px auto!important;gap:5px!important;align-items:stretch!important}
 #hairStyleChoices .hair-thumb{width:100%!important;height:90px!important;display:block!important;overflow:hidden!important;border-radius:6px!important;background:#03080d!important;position:relative!important}
-#hairStyleChoices .hair-thumb img{position:absolute!important;width:430%!important;height:430%!important;max-width:none!important;left:-165%!important;top:-38%!important;display:block!important;object-fit:contain!important;object-position:center top!important;transform:none!important;animation:none!important;filter:none!important;opacity:1!important;image-rendering:auto!important}
+#hairStyleChoices .hair-thumb img{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;display:block!important;object-fit:cover!important;object-position:50% 18%!important;transform:scale(3.7)!important;transform-origin:50% 18%!important;animation:none!important;filter:none!important;opacity:1!important;image-rendering:auto!important}
 #hairStyleChoices .hair-choice>span:last-child{min-height:24px!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;line-height:1.05!important}
 #hairStyleChoices .hair-thumb-missing{display:grid!important;place-items:center!important;color:#d16f75!important;font-weight:900!important}
 
