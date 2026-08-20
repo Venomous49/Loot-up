@@ -3,11 +3,14 @@ name: Creator layered HD build
 on:
   push:
     branches: [main]
+    paths:
+      - 'scripts/build_layered_creator_v1.py'
+      - 'assets/creator_sources/fullbody/**'
+      - '.github/workflows/build-real-creator.yml'
   workflow_dispatch:
 
 permissions:
   contents: write
-  actions: write
 
 concurrency:
   group: riselooter-layered-creator
@@ -38,5 +41,5 @@ jobs:
           if ! git diff --cached --quiet; then
             git commit -m 'Publish final layered creator assets'
             git pull --rebase origin main
-            git push
+            git push origin HEAD:main
           fi
