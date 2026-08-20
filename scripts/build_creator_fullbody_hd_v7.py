@@ -19,6 +19,18 @@ SKINS = {
 HAIRS = ['black', 'brown', 'blond', 'red', 'purple']
 STYLES = ['male_textured', 'male_short', 'male_medium', 'male_undercut', 'male_slick']
 
+# Uniform scale relative to the detected face width.  Vertical anchor is expressed
+# as a fraction of face height from the top of the detected face component.
+# These values keep every haircut attached to the same head while preserving each
+# source haircut's own aspect ratio.
+HAIR_PLACEMENT = {
+    'male_textured': {'width': 1.34, 'bottom': 0.56, 'x': 0.00},
+    'male_short': {'width': 1.22, 'bottom': 0.50, 'x': 0.00},
+    'male_medium': {'width': 1.48, 'bottom': 0.78, 'x': 0.00},
+    'male_undercut': {'width': 1.24, 'bottom': 0.54, 'x': 0.00},
+    'male_slick': {'width': 1.34, 'bottom': 0.56, 'x': 0.01},
+}
+
 
 def fit(im, mode):
     if im.size == SIZE:
@@ -47,8 +59,7 @@ def load_base_scene():
 def tint_skin(scene_rgb, mask_img, target):
     rgb = np.asarray(scene_rgb, dtype=np.uint8)
     mask = (np.asarray(fit(mask_img, 'L'), dtype=np.float32) / 255.0).copy()
-    # The reviewed mask contains extra exposed-skin regions. Product rule is stricter:
-    # complexion may change only head/neck, never hoodie, torso, arms or legs.
+    # Complexion may change only head/neck, never hoodie, torso, arms or legs.
     mask[int(SIZE[1] * .42):, :] = 0.0
     mask[mask < .06] = 0.0
     src_lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB).astype(np.float32)
@@ -63,34 +74,111 @@ def tint_skin(scene_rgb, mask_img, target):
     return Image.fromarray(out, 'RGB')
 
 
-def load_hair(style, colour):
+def detect_face_anchor(mask_img, base_img):
+    """Return x0,y0,x1,y1 of the face/neck component used to anchor hair."""
+    mask = np.asarray(fit(mask_img, 'L'), dtype=np.uint8)
+    # Ignore anything below the head/upper-chest zone.
+    mask[int(SIZE[1] * .40):, :] = 0
+    binary = (mask > 24).astype(np.uint8)
+    count, labels, stats, centroids = cv2.connectedComponentsWithStats(binary, 8)
+
+    base_alpha = np.asarray(fit(base_img, 'RGBA').getchannel('A'), dtype=np.uint8)
+    ys, xs = np.where(base_alpha > 18)
+    body_cx = float((xs.min() + xs.max()) / 2) if len(xs) else SIZE[0] / 2
+
+    candidates = []
+    for idx in range(1, count):
+        x, y, w, h, area = stats[idx]
+        cx, cy = centroids[idx]
+        if area < 180 or y > SIZE[1] * .36:
+            continue
+        # Prefer a substantial upper component close to the character centre.
+        centre_penalty = abs(cx - body_cx)
+        score = area - centre_penalty * 3.0 - y * 0.15
+        candidates.append((score, (int(x), int(y), int(x+w-1), int(y+h-1))))
+
+    if not candidates:
+        raise SystemExit('Unable to detect face anchor from male_skin_mask.png')
+
+    _, box = max(candidates, key=lambda item: item[0])
+    x0, y0, x1, y1 = box
+    if (x1-x0) < 35 or (y1-y0) < 45:
+        raise SystemExit(f'Detected face anchor is implausible: {box}')
+    print(f'Face anchor detected: {box}')
+    return box
+
+
+def load_hair(style, colour, face_box):
     path = HAIR_DIR / f'{style}_{colour}.png'
     if not path.exists():
         raise SystemExit(f'Missing hair source: {path}')
-    hair = fit(Image.open(path), 'RGBA')
-    alpha = np.asarray(hair.getchannel('A'), dtype=np.uint8)
+
+    raw = fit(Image.open(path), 'RGBA')
+    alpha = np.asarray(raw.getchannel('A'), dtype=np.uint8)
     ys, xs = np.where(alpha > 20)
     if len(xs) < 50:
         raise SystemExit(f'Empty hair alpha: {path}')
+
+    # Crop away the transparent full-canvas padding so placement is based on the
+    # actual haircut pixels, not on the original export canvas coordinates.
+    x0, x1 = int(xs.min()), int(xs.max())
     y0, y1 = int(ys.min()), int(ys.max())
-    if y1 >= int(SIZE[1] * .43):
-        raise SystemExit(f'Hair layer reaches torso: {path} y1={y1}')
-    a = np.array(hair.getchannel('A'), dtype=np.uint8, copy=True)
+    crop = raw.crop((x0, y0, x1 + 1, y1 + 1))
+
+    fx0, fy0, fx1, fy1 = face_box
+    face_w = fx1 - fx0 + 1
+    face_h = fy1 - fy0 + 1
+    face_cx = (fx0 + fx1) / 2.0
+
+    placement = HAIR_PLACEMENT[style]
+    target_w = max(24, int(round(face_w * placement['width'])))
+    scale = target_w / max(1, crop.width)
+    target_h = max(20, int(round(crop.height * scale)))
+    # Guard against a corrupt source producing a giant wig.
+    target_h = min(target_h, int(face_h * 1.35))
+    target_w = min(target_w, int(face_w * 1.65))
+    crop = crop.resize((target_w, target_h), Image.Resampling.LANCZOS)
+
+    cx = face_cx + face_w * placement['x']
+    left = int(round(cx - target_w / 2))
+    bottom = int(round(fy0 + face_h * placement['bottom']))
+    top = bottom - target_h
+
+    # Keep the layer on-canvas without changing its relation to the face.
+    left = max(0, min(SIZE[0] - target_w, left))
+    top = max(0, min(SIZE[1] - target_h, top))
+
+    layer = Image.new('RGBA', SIZE, (0, 0, 0, 0))
+    layer.alpha_composite(crop, (left, top))
+
+    # Remove tiny semi-transparent export noise.
+    a = np.array(layer.getchannel('A'), dtype=np.uint8, copy=True)
     a[a < 26] = 0
-    hair.putalpha(Image.fromarray(a, 'L'))
-    return hair
+    layer.putalpha(Image.fromarray(a, 'L'))
+
+    ys2, xs2 = np.where(a > 20)
+    if len(xs2) < 50:
+        raise SystemExit(f'Positioned hair became empty: {path}')
+    hx0, hx1, hy0, hy1 = int(xs2.min()), int(xs2.max()), int(ys2.min()), int(ys2.max())
+    if hy1 >= int(SIZE[1] * .43):
+        raise SystemExit(f'Positioned hair reaches torso: {path} y1={hy1}')
+    # Hard sanity bounds around the detected face.
+    if abs(((hx0 + hx1) / 2) - face_cx) > face_w * .35:
+        raise SystemExit(f'Hair is not centred on face: {path} hair={(hx0,hy0,hx1,hy1)} face={face_box}')
+    return layer
 
 
 def main():
-    base_scene, _ = load_base_scene()
+    base_scene, base_rgba = load_base_scene()
     skin_mask = Image.open(SRC / 'male_skin_mask.png')
+    face_box = detect_face_anchor(skin_mask, base_rgba)
     written = 0
     for skin_name, skin_rgb in SKINS.items():
         skinned = tint_skin(base_scene, skin_mask, skin_rgb).convert('RGBA')
         for colour in HAIRS:
             for style in STYLES:
                 result = skinned.copy()
-                result.alpha_composite(load_hair(style, colour))
+                result.alpha_composite(load_hair(style, colour, face_box))
                 out = result.convert('RGB')
                 path = OUT / skin_name / colour / f'{style}.webp'
                 path.parent.mkdir(parents=True, exist_ok=True)
@@ -98,7 +186,7 @@ def main():
                 written += 1
     if written != 125:
         raise SystemExit(f'Expected 125 male assets, wrote {written}')
-    print('Built 125 male presets from dedicated fullbody base + clipped head/neck skin mask + 25 dedicated hair layers.')
+    print('Built 125 male presets with face-anchored, uniformly scaled dedicated hair layers.')
 
 
 if __name__ == '__main__':
