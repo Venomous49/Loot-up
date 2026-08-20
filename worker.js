@@ -2,7 +2,7 @@ class RiseLooterHead {
   element(element) {
     element.append('<link rel="stylesheet" href="/creator-hd.css?v=18">', { html: true });
     element.append('<script src="/silhouette-fix.js?v=6" defer></script>', { html: true });
-    element.append('<script src="/rise-looter-ui-hotfix.js?v=6" defer></script>', { html: true });
+    element.append('<script src="/rise-looter-ui-hotfix.js?v=7" defer></script>', { html: true });
   }
 }
 
