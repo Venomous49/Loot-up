@@ -4,49 +4,16 @@
 🌀 Building list of assets...
 ✨ Read 725 files from the assets directory /home/runner/work/RiseLooter/RiseLooter
 🌀 Starting asset upload...
-🌀 Found 28 new or modified static assets to upload. Proceeding with upload...
-+ /creator-layered-build-log.txt
-+ /assets/creator_layers/female/hair-female_wavy-brown.webp
-+ /assets/creator_layers/female/hair-female_wavy-red.webp
-+ /assets/creator_layers/female/hair-female_wavy-black.webp
-+ /assets/creator_layers/female/hair-female_long-purple.webp
-+ /assets/creator_layers/female/hair-female_bob-blond.webp
-+ /assets/creator_layers/female/hair-female_ponytail-black.webp
-+ /assets/creator_layers/female/hair-female_short-brown.webp
-+ /assets/creator_layers/female/hair-female_short-purple.webp
-+ /assets/creator_layers/female/hair-female_ponytail-purple.webp
-+ /assets/creator_layers/manifest.txt
-+ /assets/creator_layers/female/hair-female_bob-black.webp
-+ /assets/creator_layers/female/hair-female_bob-brown.webp
-+ /assets/creator_layers/female/hair-female_long-brown.webp
-+ /assets/creator_layers/female/hair-female_long-blond.webp
-+ /assets/creator_layers/female/hair-female_long-red.webp
-+ /assets/creator_layers/female/hair-female_ponytail-blond.webp
-+ /assets/creator_layers/female/hair-female_ponytail-red.webp
-+ /assets/creator_layers/female/hair-female_short-black.webp
-+ /creator-layered-build-status.txt
-+ /assets/creator_layers/female/hair-female_long-black.webp
-+ /assets/creator_layers/female/hair-female_bob-purple.webp
-+ /assets/creator_layers/female/hair-female_wavy-purple.webp
-+ /assets/creator_layers/female/hair-female_bob-red.webp
-+ /assets/creator_layers/female/hair-female_wavy-blond.webp
-+ /assets/creator_layers/female/hair-female_ponytail-brown.webp
-+ /assets/creator_layers/female/hair-female_short-red.webp
-+ /assets/creator_layers/female/hair-female_short-blond.webp
-Uploaded 9 of 28 assets
-Uploaded 19 of 28 assets
-Uploaded 28 of 28 assets
-✨ Success! Uploaded 28 files (495 already uploaded) (1.08 sec)
-
+No updated asset files to upload. Proceeding with deployment...
 Total Upload: 1.43 KiB / gzip: 0.65 KiB
-Worker Startup Time: 5 ms
+Worker Startup Time: 4 ms
 Your Worker has access to the following bindings:
 Binding            Resource      
 env.ASSETS         Assets        
 
-Uploaded loot-up (6.26 sec)
-Deployed loot-up triggers (0.52 sec)
+Uploaded loot-up (9.13 sec)
+Deployed loot-up triggers (2.66 sec)
   https://loot-up.marin-iglesias.workers.dev
-Current Version ID: 880fc60d-bba2-495e-b529-ba9ee7554f62
+Current Version ID: d104fc19-9411-46dd-90ac-607851ad39a4
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
