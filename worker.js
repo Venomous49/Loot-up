@@ -1,8 +1,8 @@
 class RiseLooterHead {
   element(element) {
-    element.append('<link rel="stylesheet" href="/creator-hd.css?v=22">', { html: true });
-    element.append('<script src="/creator-cache-v23.js?v=25" defer></script>', { html: true });
-    element.append('<script src="/safe-ui-bootstrap.js?v=layered12" defer></script>', { html: true });
+    element.append('<link rel="stylesheet" href="/creator-hd.css?v=23">', { html: true });
+    element.append('<script src="/creator-cache-v23.js?v=26" defer></script>', { html: true });
+    element.append('<script src="/safe-ui-bootstrap.js?v=layered-clean3" defer></script>', { html: true });
   }
 }
 
@@ -15,9 +15,9 @@ export default {
     headers.set('cache-control', 'no-store, no-cache, must-revalidate, max-age=0');
     headers.set('pragma', 'no-cache');
     headers.set('expires', '0');
-    headers.set('x-riselooter-creator-source', 'layered');
-    headers.set('x-riselooter-creator-version', 'layered-v1');
-    headers.set('x-riselooter-runtime-hotfixes', 'safe-bootstrap-layered12-cache-loop-fix-v25');
+    headers.set('x-riselooter-creator-source', 'layered-clean');
+    headers.set('x-riselooter-creator-version', 'layered-clean3');
+    headers.set('x-riselooter-runtime-hotfixes', 'safe-bootstrap-layered-clean3');
     return new HTMLRewriter().on('head', new RiseLooterHead()).transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
   }
 };
