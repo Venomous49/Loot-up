@@ -75,11 +75,28 @@ def isolate_hair(im):
  if len(xs)<60: raise SystemExit('NO USABLE HAIR')
  return Image.fromarray(arr,'RGBA').crop((int(xs.min()),int(ys.min()),int(xs.max()+1),int(ys.max()+1)))
 
-def register_hair(im,person,gender):
- crop=isolate_hair(im); fx,fy,fw,fh=face_box(person); target_w=int(fw*1.05); target_h=int(fh*.58); scale=min(target_w/crop.width,target_h/crop.height); nw,nh=max(1,int(crop.width*scale)),max(1,int(crop.height*scale)); crop=crop.resize((nw,nh),Image.Resampling.LANCZOS)
- # Fine calibration after visual verification: male presets were a few pixels left of the skull.
+def register_hair(im,person,gender,style):
+ crop=isolate_hair(im); fx,fy,fw,fh=face_box(person)
+
+ # Default registration shared by all presets.
+ width_factor=1.05
+ height_factor=.58
  x_nudge=7 if gender=='male' else 0
- tx=int(fx+fw/2-nw/2+x_nudge); ty=int(fy)
+ y_nudge=0
+
+ # Visual micro-calibration for the male mid-length cut only:
+ # it was slightly too small and a few pixels too far to the right.
+ # Keep the base character untouched; only the hair overlay is adjusted.
+ if gender=='male' and style=='male_medium':
+  width_factor=1.10
+  height_factor=.61
+  x_nudge=2
+  y_nudge=2
+
+ target_w=int(fw*width_factor); target_h=int(fh*height_factor)
+ scale=min(target_w/crop.width,target_h/crop.height)
+ nw,nh=max(1,int(crop.width*scale)),max(1,int(crop.height*scale)); crop=crop.resize((nw,nh),Image.Resampling.LANCZOS)
+ tx=int(fx+fw/2-nw/2+x_nudge); ty=int(fy+y_nudge)
  canvas=Image.new('RGBA',SIZE,(0,0,0,0)); canvas.alpha_composite(crop,(max(0,min(SIZE[0]-nw,tx)),max(0,min(SIZE[1]-nh,ty)))); return canvas
 
 def main():
@@ -87,9 +104,9 @@ def main():
  for g in ('male','female'):
   d=OUT/g; d.mkdir(parents=True,exist_ok=True); out,person=build_person(g,bg); out.convert('RGB').save(d/'base.webp','WEBP',quality=100,method=6); skin_layer(g,out.convert('RGB'))
   for style in STYLES[g]:
-   for color in COLORS: register_hair(exact(HAIR/f'{style}_{color}.png','RGBA'),person,g).save(d/f'hair-{style}-{color}.webp','WEBP',lossless=True,method=6)
+   for color in COLORS: register_hair(exact(HAIR/f'{style}_{color}.png','RGBA'),person,g,style).save(d/f'hair-{style}-{color}.webp','WEBP',lossless=True,method=6)
   files=list(d.glob('*.webp'))
   if len(files)!=31: raise SystemExit(f'{g}: expected 31 assets, got {len(files)}')
- print('layered-v4-fit1: enlarged centered fullbody and fine skull hair alignment')
+ print('layered-v4-fit2: male_medium +5% width, +3% height, 5px left, 2px down')
 
 if __name__=='__main__': main()
