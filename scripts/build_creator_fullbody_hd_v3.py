@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import sys
 
 import cv2
@@ -67,6 +68,11 @@ def native_skin_mask(scene, person_alpha):
 
 
 def robust_canonical_body(gender):
+    """Build exactly one fixed full-body scene per gender.
+
+    Every preset is derived from this exact scene. Hairstyle source images are never
+    allowed to contribute torso, arms, legs, clothing or pose pixels.
+    """
     path, _ = legacy.CANONICAL[gender]
     scene = native_scene(path)
     person_alpha = robust_person_mask(scene, gender)
@@ -95,7 +101,7 @@ def robust_canonical_body(gender):
 
 
 def hair_shape_envelope(gender, style, h, w):
-    """Soft geometric safety envelope: hair may overlap the scalp, never a rectangular face patch."""
+    """Allow hairstyle pixels only around the scalp/hair silhouette, never the face/body."""
     yy, xx = np.mgrid[0:h, 0:w]
     xn = xx / float(w)
     yn = yy / float(h)
@@ -110,9 +116,10 @@ def hair_shape_envelope(gender, style, h, w):
         }[style]
         cy = .155
         env = 1.0 - np.clip(((xn-cx)/rx)**2 + ((yn-cy)/ry)**2, 0, 1)
-        # Hard safety rule: the central lower face can never receive pasted hairstyle pixels.
         face = (((xn-cx)/.062)**2 + ((yn-.235)/.082)**2) < 1.0
         env[face] = 0
+        # Absolute male body lock: no hairstyle pixel may exist below the head zone.
+        env[yn > .295] = 0
     else:
         cx = .52
         top = 1.0 - np.clip(((xn-cx)/.13)**2 + ((yn-.16)/.15)**2, 0, 1)
@@ -133,7 +140,6 @@ def safe_align_style_hair(gender, style):
     h, w = raw.shape
     hair_alpha = np.clip(raw * hair_shape_envelope(gender, style, h, w), 0, 1)
     mask = np.clip(hair_alpha * 255, 0, 255).astype(np.uint8)
-    # Remove tiny islands and feather the true non-rectangular silhouette.
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
     mask = cv2.GaussianBlur(mask, (0, 0), .75)
     ys, xs = np.where(mask > 12)
@@ -165,9 +171,59 @@ def safe_align_style_hair(gender, style):
     aligned_rgb[y:y2, x:x2] = rgb_crop[:ch, :cw].astype(np.float32)
     aligned_alpha[y:y2, x:x2] = a_crop[:ch, :cw].astype(np.float32) / 255.0
     aligned_alpha = cv2.GaussianBlur(aligned_alpha, (0, 0), 0.72)
+    if gender == "male":
+        # Final hard guard in output coordinates. This guarantees that hair cannot
+        # replace the torso, arms or legs even if an upstream mask regresses.
+        aligned_alpha[330:, :] = 0
     return aligned_rgb, np.clip(aligned_alpha, 0, 1)
 
 
-legacy.canonical_body = robust_canonical_body
-legacy.align_style_hair = safe_align_style_hair
-legacy.build()
+def build_locked_presets():
+    """Pre-render 250 assets from fixed full-body bases.
+
+    Allowed differences are strictly:
+      1) skin-tone transfer inside the fixed skin mask;
+      2) hairstyle + hair colour inside the fixed head/hair mask.
+    The underlying full-body pose/clothes/arms/legs never come from hairstyle assets.
+    """
+    requested_gender = os.environ.get("CREATOR_BUILD_GENDER")
+    written = 0
+    for gender, styles in legacy.STYLE_SOURCES.items():
+        if requested_gender and gender != requested_gender:
+            continue
+
+        fixed_body, skin_alpha = robust_canonical_body(gender)
+        fixed_rgb = np.asarray(fixed_body, dtype=np.float32)
+        aligned_hair = {style: safe_align_style_hair(gender, style) for style in styles}
+
+        for skin_name, skin_rgb in legacy.base.SKINS.items():
+            skinned = legacy.recolor_skin(fixed_rgb, skin_alpha, skin_rgb)
+            for hair_name, hair_rgb in legacy.base.HAIRS.items():
+                for style in styles:
+                    hair_source, hair_alpha = aligned_hair[style]
+                    hair_coloured = legacy.recolor_hair(hair_source, hair_alpha, hair_rgb, hair_name)
+                    a = np.clip(hair_alpha, 0, 1)[..., None]
+                    result = np.clip(skinned * (1 - a) + hair_coloured * a, 0, 255)
+
+                    # Before compression, prove that hairstyle composition cannot alter
+                    # any male pixel below the head line. Skin tone may still affect the
+                    # fixed skin mask, but hair can never move/replace the body.
+                    if gender == "male":
+                        expected_lower = skinned[330:, :, :]
+                        actual_lower = result[330:, :, :]
+                        if not np.array_equal(np.rint(expected_lower).astype(np.uint8), np.rint(actual_lower).astype(np.uint8)):
+                            raise SystemExit(f"Male body lock violated by hairstyle: {skin_name}/{hair_name}/{style}")
+
+                    out = Image.fromarray(np.rint(result).astype(np.uint8), "RGB")
+                    path = legacy.base.OUTPUT / gender / skin_name / hair_name / f"{style}.webp"
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    out.save(path, "WEBP", quality=legacy.WEBP_QUALITY, method=legacy.WEBP_METHOD)
+                    written += 1
+
+    expected = 125 if requested_gender else 250
+    if written != expected:
+        raise SystemExit(f"Unexpected creator preset count: {written}, expected {expected}")
+    print(f"Built {written} fixed-body creator presets")
+
+
+build_locked_presets()
