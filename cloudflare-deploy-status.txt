@@ -1,6 +1,6 @@
 status=success
-source_commit=59be2d45142e5fb7e03b7b84645d449302a22821
-creator_version=dedicated-fullbody-v23
-asset_cache=fullbody23
+source_commit=26622fc09592e9289df402e147514bbf148017f1
+creator_version=layered-v1
+asset_cache=layered-v1
 api_token_present=true
 account_id_source=wrangler-config
