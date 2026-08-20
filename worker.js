@@ -1,7 +1,7 @@
 class RiseLooterHead {
   element(element) {
     element.append('<link rel="stylesheet" href="/creator-hd.css?v=22">', { html: true });
-    element.append('<script src="/creator-cache-v23.js?v=23" defer></script>', { html: true });
+    element.append('<script src="/creator-cache-v23.js?v=24" defer></script>', { html: true });
     // Independent creator-test fallback: must keep working even if the main app runtime fails.
     element.append('<script src="/safe-ui-bootstrap.js?v=10" defer></script>', { html: true });
   }
@@ -15,7 +15,7 @@ export default {
     const headers = new Headers(response.headers);
     headers.set('x-riselooter-creator-source', 'validated');
     headers.set('x-riselooter-creator-version', 'dedicated-fullbody-v23');
-    headers.set('x-riselooter-runtime-hotfixes', 'safe-bootstrap-v10');
+    headers.set('x-riselooter-runtime-hotfixes', 'safe-bootstrap-v10-cache-loop-fix-v24');
     return new HTMLRewriter().on('head', new RiseLooterHead()).transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
   }
 };
