@@ -71,9 +71,9 @@ jobs:
             headers="$(mktemp)"
             if curl -fsS -D "$headers" -o /tmp/rise-looter-public.html "${CREATOR_PUBLIC_ORIGIN}/?creatorTest=1&ci=${GITHUB_SHA}"; then
               if grep -qi '^x-riselooter-creator-source: validated' "$headers" \
-                && grep -qi '^x-riselooter-creator-version: pre-rendered-matrix-v9' "$headers" \
+                && grep -qi '^x-riselooter-creator-version: pre-rendered-matrix-v18' "$headers" \
                 && grep -q 'id="creatorPreview"' /tmp/rise-looter-public.html \
-                && grep -q 'creator-hd.css?v=6' /tmp/rise-looter-public.html \
+                && grep -q 'creator-hd.css?v=18' /tmp/rise-looter-public.html \
                 && ! grep -q 'creator-safe-runtime.js' /tmp/rise-looter-public.html; then
                 echo "Cloudflare is serving the canonical pre-rendered creator."
                 rm -f "$headers"
@@ -97,7 +97,10 @@ jobs:
           grep -q 'aspect-ratio:1728/910' /tmp/creator-hd-public.css
           grep -q 'object-fit:contain' /tmp/creator-hd-public.css
           grep -q 'object-position:50% 100%' /tmp/creator-hd-public.css
-          echo "Verified canonical 1728x910 creator stylesheet in production."
+          ! grep -q 'mix-blend-mode' /tmp/creator-hd-public.css
+          ! grep -q 'mask-' /tmp/creator-hd-public.css
+          ! grep -q 'rl-avatar-stack' /tmp/creator-hd-public.css
+          echo "Verified overlay-free canonical creator stylesheet in production."
       - name: Verify all 250 public creator assets match this commit
         shell: bash
         run: |

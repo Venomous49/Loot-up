@@ -1,32 +1,22 @@
-/* Rise Looter — stable visual presentation */
+/* Rise Looter — canonical pre-rendered creator presentation */
 #creatorModal .creator-preview{width:100%!important;height:auto!important;aspect-ratio:1728/910!important;margin:0!important;display:block!important;position:relative!important;overflow:hidden!important;background:#03080d!important;border:1px solid #294052!important;border-radius:9px!important}
 #creatorModal .creator-live-badge{position:absolute!important;right:16px!important;top:16px!important;z-index:20!important}
+#creatorModal .creator-real-preview{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;display:block!important;object-fit:contain!important;object-position:50% 100%!important;transform:none!important;animation:none!important;filter:none!important;opacity:1!important;image-rendering:auto!important}
+#creatorModal .creator-asset-missing{position:absolute!important;inset:0!important;place-content:center!important;text-align:center!important}
 
-/* Canonical creator stack: ONE full-body base, ONE background, swappable hair + skin layers. */
-.rl-avatar-stack{position:absolute!important;inset:0!important;overflow:hidden!important;isolation:isolate!important;transform-origin:50% 100%!important}
-.rl-avatar-stack .rl-avatar-bg,.rl-avatar-stack .rl-avatar-base,.rl-avatar-stack .rl-avatar-hair,.rl-avatar-stack .rl-avatar-skin{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;transform:none!important;animation:none!important}
-.rl-avatar-stack .rl-avatar-bg{z-index:0!important;object-fit:cover!important;object-position:center!important;display:block!important}
-.rl-avatar-stack .rl-avatar-base{z-index:1!important;display:block!important;object-fit:contain!important;object-position:50% 100%!important;filter:drop-shadow(0 18px 18px rgba(0,0,0,.35))!important;opacity:1!important;image-rendering:auto!important}
-.rl-avatar-stack .rl-avatar-skin{z-index:2!important;pointer-events:none!important;background:var(--skin-tone)!important;mix-blend-mode:color!important;opacity:.72!important;-webkit-mask-repeat:no-repeat!important;mask-repeat:no-repeat!important;-webkit-mask-size:contain!important;mask-size:contain!important;-webkit-mask-position:50% 100%!important;mask-position:50% 100%!important}
-.rl-avatar-stack .rl-avatar-hair{z-index:3!important;display:block!important;object-fit:contain!important;object-position:50% 100%!important;opacity:1!important;mix-blend-mode:normal!important;filter:drop-shadow(0 0 1px rgba(0,0,0,.16))!important;image-rendering:auto!important}
-.rl-avatar-stack[data-skin="light"] .rl-avatar-skin{opacity:.48!important}.rl-avatar-stack[data-skin="warm"] .rl-avatar-skin{opacity:.58!important}.rl-avatar-stack[data-skin="medium"] .rl-avatar-skin{opacity:.68!important}.rl-avatar-stack[data-skin="deep"] .rl-avatar-skin{opacity:.78!important}.rl-avatar-stack[data-skin="dark"] .rl-avatar-skin{opacity:.86!important}
-.rl-avatar-stack.female-avatar{transform:perspective(1400px) rotateY(-3deg)!important}
-
+/* Hair choices use the exact same complete pre-rendered assets as the live preview. */
 #hairStyleChoices .hair-choice{min-height:104px!important;padding:6px!important;display:grid!important;grid-template-rows:70px auto!important;gap:5px!important;align-items:stretch!important}
-#hairStyleChoices .hair-thumb{width:100%!important;height:70px!important;display:block!important;overflow:hidden!important;border-radius:6px!important;background-image:url('/assets/creator_sources/fullbody/background.webp')!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;position:relative!important}
-#hairStyleChoices .hair-thumb img{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;display:block!important;object-fit:contain!important;object-position:50% 100%!important;transform:none!important;animation:none!important;filter:none!important;image-rendering:auto!important}
+#hairStyleChoices .hair-thumb{width:100%!important;height:70px!important;display:block!important;overflow:hidden!important;border-radius:6px!important;background:#03080d!important;position:relative!important}
+#hairStyleChoices .hair-thumb img{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;display:block!important;object-fit:contain!important;object-position:50% 100%!important;transform:none!important;animation:none!important;filter:none!important;opacity:1!important;image-rendering:auto!important}
 #hairStyleChoices .hair-choice>span:last-child{min-height:24px!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;line-height:1.05!important}
+#hairStyleChoices .hair-thumb-missing{display:grid!important;place-items:center!important;color:#d16f75!important;font-weight:900!important}
 
-.character-holder .character-scene-clean{position:absolute!important;inset:0!important;overflow:hidden!important}
-.character-holder .character-scene-clean:before,.character-holder .character-scene-clean:after{display:none!important;content:none!important}
-.character-holder .rl-avatar-stack .rl-avatar-base,.character-holder .rl-avatar-stack .rl-avatar-hair{object-fit:contain!important;object-position:50% 100%!important}
-
-/* Evolution silhouettes remain untouched. */
+/* Evolution silhouettes remain untouched by creator styling. */
 .generic-shadow{display:none!important}
 .evolution-character,.evolution-card .character-scene-clean{position:absolute!important;inset:8px 5px 42px!important;display:block!important;overflow:hidden!important;border-radius:7px!important;background:#c1c7cb!important}
 .evolution-character img,.evolution-card .scene-clean-image{display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;object-fit:contain!important;object-position:50% 100%!important;transform:none!important;animation:none!important;opacity:1!important;image-rendering:auto!important}
 .evolution-card.locked .evolution-character img,.evolution-card.locked .scene-clean-image{filter:none!important;opacity:1!important}
-.evolution-card.unlocked .evolution-character img,.evolution-card.unlocked .scene-clean-image{filter:none!important;opacity:1!important}
+.evolution-card.unlocked .evolution-character img,.evolution-card.unlocked .scene-clean-image{filter:none!important}
 .evolution-card .character-scene-clean:before,.evolution-card .character-scene-clean:after,.evolution-card.locked .evolution-character:before,.evolution-card.locked .evolution-character:after{display:none!important;content:none!important}
 .shadow-character{height:145px!important;margin:10px auto!important;overflow:hidden!important;border-radius:8px!important;position:relative!important;background:#c1c7cb!important}
 .shadow-character img{display:block!important;width:100%!important;height:100%!important;max-width:none!important;object-fit:contain!important;object-position:50% 100%!important;transform:none!important;filter:none!important;opacity:1!important}
