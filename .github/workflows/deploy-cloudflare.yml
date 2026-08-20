@@ -10,6 +10,8 @@ on:
       - 'creator-hd.css'
       - 'index.html'
       - 'assets/creator/**'
+      - 'assets/creator_layers/**'
+      - 'creator-layered-build-status.txt'
       - '.github/workflows/deploy-cloudflare.yml'
   workflow_dispatch:
 
@@ -55,7 +57,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          printf 'status=%s\nsource_commit=%s\ncreator_version=dedicated-fullbody-v23\nasset_cache=fullbody23\napi_token_present=%s\naccount_id_source=wrangler-config\n' '${{ steps.deploy.outputs.outcome }}' "$GITHUB_SHA" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
+          printf 'status=%s\nsource_commit=%s\ncreator_version=layered-v1\nasset_cache=layered-v1\napi_token_present=%s\naccount_id_source=wrangler-config\n' '${{ steps.deploy.outputs.outcome }}' "$GITHUB_SHA" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add cloudflare-deploy-status.txt cloudflare-deploy-log.txt
