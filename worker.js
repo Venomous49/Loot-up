@@ -11,7 +11,8 @@ export default {
     const contentType=response.headers.get('content-type')||'';
     if(!contentType.includes('text/html')) return response;
     const headers=new Headers(response.headers);
-    headers.set('x-riselooter-creator-source','clean-source-masters-v7');
+    headers.set('x-riselooter-creator-source','validated');
+    headers.set('x-riselooter-creator-version','clean-source-masters-v7');
     headers.set('x-riselooter-silhouettes','character-cutout-v6');
     return new HTMLRewriter().on('head',new RiseLooterHead()).transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
   }
