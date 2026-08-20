@@ -1,16 +1,5 @@
-status=success
-source_commit=3a57e8a70c8bf1a18c4d58629da6c0b5e6785cab
-generator=full-body-v6-male
-format=1728x910
-male_assets=125
-full_body_source=01-debutant.webp
-head_to_feet_required=yes
-body_segmentation=disabled
-body_crop_resize_repaste=disabled
-male_full_body_locked=yes
-clothes_color_locked=yes
-skin_mask_face_neck_only=yes
-hair_scalp_only=yes
-hair_weak_alpha_halo=rejected
-hair_never_below_head=yes
-static_validation=passed
+status=failed
+source_commit=43e43933ff1052111c702b58dde221f0034c90c7
+generator=dedicated-fullbody-v7-male
+--- tail ---
+male_skin_mask.png reaches clothing/lower body
