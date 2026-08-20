@@ -1,9 +1,9 @@
 class RiseLooterHead {
   element(element) {
+    // Keep only the validated creator assets. Runtime DOM hotfixes are disabled
+    // because their MutationObservers can fight the page renderer and freeze UI.
     element.append('<link rel="stylesheet" href="/creator-hd.css?v=22">', { html: true });
     element.append('<script src="/creator-cache-v23.js?v=23" defer></script>', { html: true });
-    element.append('<script src="/silhouette-fix.js?v=7" defer></script>', { html: true });
-    element.append('<script src="/rise-looter-ui-hotfix.js?v=8" defer></script>', { html: true });
   }
 }
 
@@ -15,9 +15,7 @@ export default {
     const headers = new Headers(response.headers);
     headers.set('x-riselooter-creator-source', 'validated');
     headers.set('x-riselooter-creator-version', 'dedicated-fullbody-v23');
-    headers.set('x-riselooter-silhouettes', 'character-cutout-v7');
-    headers.set('x-riselooter-ui-hotfix', 'v8');
-    headers.set('x-riselooter-launch-mode', 'survey-only-v2');
+    headers.set('x-riselooter-runtime-hotfixes', 'disabled');
     return new HTMLRewriter().on('head', new RiseLooterHead()).transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
   }
 };
