@@ -1,6 +1,8 @@
 /* Rise Looter — stable visual presentation */
 #creatorModal .creator-preview{width:100%!important;height:auto!important;aspect-ratio:1728/910!important;margin:0!important;display:block!important;position:relative!important;overflow:hidden!important;background:#03080d!important;border:1px solid #294052!important;border-radius:9px!important}
 #creatorModal .creator-live-badge{position:absolute!important;right:16px!important;top:16px!important;z-index:20!important}
+#creatorModal .creator-fixed-bg{position:absolute!important;inset:0!important;z-index:0!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}
+#creatorModal .creator-real-preview{position:absolute!important;inset:0!important;z-index:2!important;width:100%!important;height:100%!important;max-width:none!important;display:block!important;object-fit:contain!important;object-position:50% 100%!important;transform:none!important;animation:none!important;filter:none!important;image-rendering:auto!important}
 
 /* Canonical avatar stack: one standardized body/background per hairstyle, full body, same framing. */
 .rl-avatar-stack{position:absolute!important;inset:0!important;overflow:hidden!important;isolation:isolate!important}
@@ -9,11 +11,10 @@
 .rl-avatar-hair{z-index:3!important;-webkit-mask-repeat:no-repeat!important;mask-repeat:no-repeat!important;-webkit-mask-size:contain!important;mask-size:contain!important;-webkit-mask-position:50% 100%!important;mask-position:50% 100%!important;mix-blend-mode:normal!important;filter:drop-shadow(0 0 1px rgba(0,0,0,.18))!important}
 .rl-avatar-skin{position:absolute!important;inset:0!important;z-index:4!important;pointer-events:none!important;background:var(--skin-tone)!important;mix-blend-mode:soft-light!important;opacity:.34!important;-webkit-mask-image:radial-gradient(ellipse 8% 11% at 50% 20%,#000 50%,transparent 72%),radial-gradient(ellipse 3.2% 5% at 42.2% 52%,#000 42%,transparent 72%),radial-gradient(ellipse 3.2% 5% at 57.8% 52%,#000 42%,transparent 72%)!important;mask-image:radial-gradient(ellipse 8% 11% at 50% 20%,#000 50%,transparent 72%),radial-gradient(ellipse 3.2% 5% at 42.2% 52%,#000 42%,transparent 72%),radial-gradient(ellipse 3.2% 5% at 57.8% 52%,#000 42%,transparent 72%)!important;-webkit-mask-composite:source-over!important}
 .rl-avatar-stack[data-skin="light"] .rl-avatar-skin{opacity:.20!important}.rl-avatar-stack[data-skin="warm"] .rl-avatar-skin{opacity:.25!important}.rl-avatar-stack[data-skin="medium"] .rl-avatar-skin{opacity:.31!important}.rl-avatar-stack[data-skin="deep"] .rl-avatar-skin{opacity:.47!important}.rl-avatar-stack[data-skin="dark"] .rl-avatar-skin{opacity:.61!important}
-/* Female composition gets a subtle natural three-quarter feel without changing body scale. */
 .rl-avatar-stack.female-avatar{transform:perspective(1200px) rotateY(-2.2deg)!important;transform-origin:50% 100%!important}
 
 #hairStyleChoices .hair-choice{min-height:104px!important;padding:6px!important;display:grid!important;grid-template-rows:70px auto!important;gap:5px!important;align-items:stretch!important}
-#hairStyleChoices .hair-thumb{width:100%!important;height:70px!important;display:block!important;overflow:hidden!important;border-radius:6px!important;background:#09131b!important;position:relative!important}
+#hairStyleChoices .hair-thumb{width:100%!important;height:70px!important;display:block!important;overflow:hidden!important;border-radius:6px!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;position:relative!important}
 #hairStyleChoices .hair-thumb img{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;display:block!important;object-fit:cover!important;object-position:50% 18%!important;transform:none!important;animation:none!important;filter:none!important;image-rendering:auto!important}
 #hairStyleChoices .hair-choice>span:last-child{min-height:24px!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;line-height:1.05!important}
 
