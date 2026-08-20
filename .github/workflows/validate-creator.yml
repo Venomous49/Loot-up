@@ -5,6 +5,7 @@ on:
     paths:
       - 'index.html'
       - 'worker.js'
+      - 'rise-looter-ui-hotfix.js'
       - 'assets/creator/**'
       - 'assets/creator_sources/**'
       - 'scripts/validate_creator_library.py'
@@ -47,6 +48,19 @@ jobs:
           test ! -e .github/workflows/apply-creator-routing.yml
           test ! -e .github/workflows/normalize-creator-render.yml
           test ! -e .github/workflows/creator-hd-rebuild.yml
+          test ! -e .github/workflows/build-creator-hair-overlays.yml
+          test ! -e .github/workflows/build-creator-skin-masks.yml
+          test ! -e .github/workflows/build-fullbody-creator.yml
+
+      - name: Reject modular creator runtime regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -qE 'rl-avatar-stack|skinMaskFor|rl-avatar-skin|mask-image|creator_sources/fullbody' rise-looter-ui-hotfix.js
+          ! grep -q 'modular-canonical-fullbody' worker.js
+          ! grep -q 'fullbody-v14' worker.js
+          grep -q "x-riselooter-creator-source', 'validated'" worker.js
+          grep -q "x-riselooter-creator-version', 'pre-rendered-matrix-v9'" worker.js
 
       - name: Reject shared-face compositing regressions
         shell: bash
@@ -77,6 +91,7 @@ jobs:
           grep -q 'CREATOR_PUBLIC_ORIGIN: https://loot-up.marin-iglesias.workers.dev' "$smoke"
           grep -q 'Wait for validated HD creator deployment' "$smoke"
           grep -q 'x-riselooter-creator-source: validated' "$smoke"
+          grep -q 'x-riselooter-creator-version: pre-rendered-matrix-v9' "$smoke"
           grep -q 'Verify canonical creator stylesheet is public' "$smoke"
           grep -q 'sha256sum creator-hd.css' "$smoke"
           grep -q 'Verify all 250 public creator assets match this commit' "$smoke"
@@ -99,6 +114,7 @@ jobs:
           grep -q '"not_found_handling": "single-page-application"' wrangler.jsonc
           grep -q 'env.ASSETS.fetch(request)' worker.js
           grep -q "x-riselooter-creator-source', 'validated'" worker.js
+          grep -q "x-riselooter-creator-version', 'pre-rendered-matrix-v9'" worker.js
           ! grep -q 'hardenCreatorHtml' worker.js
           ! grep -q 'CREATOR_FALLBACK_NEW' worker.js
           test -s .assetsignore
