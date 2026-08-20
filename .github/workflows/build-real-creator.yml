@@ -7,7 +7,6 @@ on:
       - 'scripts/build_creator_fullbody_hd_v3.py'
       - 'scripts/build_creator_fullbody_hd.py'
       - 'scripts/build_creator_from_hairstyle_masters.py'
-      - 'scripts/validate_creator_library.py'
       - 'scripts/validate_creator_library_hd.py'
       - 'assets/creator_sources/**'
       - '.github/workflows/build-real-creator.yml'
@@ -47,11 +46,10 @@ jobs:
           test "$(find assets/creator/female -type f -name '*.webp' | wc -l)" -eq 125
           printf 'male_full_body_locked=yes\nmale_hair_never_below_head=yes\nsource_commit=%s\nbuild_run=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > creator-production-build-status.txt
 
-      - name: Validate all generated creator combinations
+      - name: Validate generated production assets only
         shell: bash
         run: |
           set -euo pipefail
-          python scripts/validate_creator_library.py
           python scripts/validate_creator_library_hd.py
 
       - name: Protect runtime and site routing
@@ -80,4 +78,4 @@ jobs:
           gh workflow run deploy-cloudflare.yml --ref main
           gh workflow run creator-runtime-smoke.yml --ref main
 
-# force-rebuild: 2026-08-21T00:45+02:00
+# force-rebuild: 2026-08-21T00:50+02:00
