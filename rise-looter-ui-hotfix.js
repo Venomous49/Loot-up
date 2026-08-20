@@ -1,59 +1,43 @@
 (() => {
   const ROOT='/assets/creator_sources/';
   const FULL=ROOT+'fullbody/';
-  const MASKS=ROOT+'color_master_masks/';
+  const HAIR=FULL+'hair/';
   const maleStyles=new Set(['male_textured','male_short','male_medium','male_undercut','male_slick']);
   const femaleStyles=new Set(['female_long','female_wavy','female_bob','female_ponytail','female_short']);
-  const naturalColors=new Set(['brown','blond','red','purple']);
   const skinTones={light:'#f5d8c3',warm:'#e7b07a',medium:'#c9875f',deep:'#8b563d',dark:'#5a3528'};
 
   function normalized(gender,style){
     const g=gender==='female'?'female':'male';
-    const fallback=g==='female'?'female_long':'male_textured';
+    const fallback=g==='female'?'female_bob':'male_textured';
     if(g==='male'&&!maleStyles.has(style)) style=fallback;
     if(g==='female'&&!femaleStyles.has(style)) style=fallback;
     return [g,style];
   }
   function baseFor(gender){return gender==='female'?`${FULL}female_base.png`:`${FULL}male_base.png`;}
-  function colorFor(gender,style,color){
-    const [,s]=normalized(gender,style);
-    if(color==='black') return `${ROOT}standardized_black/${s}.webp`;
-    if(naturalColors.has(color)) return `${ROOT}${s}_${color}_natural.png`;
-    return `${ROOT}${s}_clean.png`;
-  }
-  function maskFor(gender,style,color){
-    const [,s]=normalized(gender,style);
-    if(color==='black') return `${ROOT}person_masks/${s}.png`;
-    if(!naturalColors.has(color)) return '';
-    return `${MASKS}${s}_${color}_natural.png`;
-  }
-  function fallbackFor(gender){return gender==='female'?`${ROOT}standardized_black/female_bob.webp`:`/01-debutant-character.png`;}
+  function hairFor(gender,style,color){const [,s]=normalized(gender,style);return `${HAIR}${s}_${color||'brown'}.png`;}
 
   function avatarMarkup(gender,style,color,skin,home=false){
-    const base=baseFor(gender), col=colorFor(gender,style,color), mask=maskFor(gender,style,color);
+    const [g,s]=normalized(gender,style);
     const tone=skinTones[skin]||skinTones.medium;
-    const female=gender==='female'?' female-avatar':'';
-    const maskStyle=mask?`-webkit-mask-image:url('${mask}');mask-image:url('${mask}');`:'';
-    return `<div class="rl-avatar-stack${female}${home?' home-avatar':''}" data-skin="${skin||'medium'}" style="--skin-tone:${tone}">
-      <img class="rl-avatar-bg" src="${FULL}background.webp?avatar=v12" alt="">
-      <img class="rl-avatar-base" src="${base}?avatar=v12" data-fallback="${fallbackFor(gender)}" alt="Looter">
-      <img class="rl-avatar-hair" src="${col}?avatar=v12" alt="" style="${maskStyle}">
+    return `<div class="rl-avatar-stack ${g==='female'?'female-avatar':''}${home?' home-avatar':''}" data-skin="${skin||'medium'}" style="--skin-tone:${tone}">
+      <img class="rl-avatar-bg" src="${FULL}background.webp?avatar=v13" alt="">
+      <img class="rl-avatar-base" src="${baseFor(g)}?avatar=v13" alt="Looter">
+      <img class="rl-avatar-hair" src="${hairFor(g,s,color)}?avatar=v13" alt="">
       <div class="rl-avatar-skin"></div>
     </div>`;
   }
 
   function attachFallbacks(root){
-    root.querySelectorAll('.rl-avatar-base').forEach(img=>{
-      img.onerror=()=>{if(img.dataset.used!=='1'){img.dataset.used='1';img.src=img.dataset.fallback+'?avatar=v12';}else img.style.display='none';};
-    });
-    root.querySelectorAll('.rl-avatar-hair,.rl-avatar-bg').forEach(img=>{img.onerror=()=>img.style.display='none';});
+    root.querySelectorAll('.rl-avatar-base').forEach(img=>{img.onerror=()=>{img.style.display='none';};});
+    root.querySelectorAll('.rl-avatar-hair').forEach(img=>{img.onerror=()=>{img.style.display='none';};});
+    root.querySelectorAll('.rl-avatar-bg').forEach(img=>{img.onerror=()=>{img.style.display='none';};});
   }
 
   function restoreCreator(){
     if(typeof avatarDraft==='undefined') return;
     const preview=document.getElementById('creatorPreview'); if(!preview) return;
     const gender=avatarDraft.gender||'male';
-    const style=avatarDraft.hairStyle||(gender==='female'?'female_long':'male_textured');
+    const style=avatarDraft.hairStyle||(gender==='female'?'female_bob':'male_textured');
     const color=avatarDraft.hairColor||'brown';
     const skin=avatarDraft.skin||'medium';
     preview.innerHTML=`${avatarMarkup(gender,style,color,skin,false)}<div class="creator-live-badge"><b>NIVEAU 1</b><strong>DÉBUTANT</strong></div>`;
@@ -64,7 +48,7 @@
     const holder=document.getElementById('mainCharacter'); if(!holder) return;
     const p=window.currentProfile||{};
     const gender=p.avatar_gender||'male';
-    const style=p.avatar_hair_style||(gender==='female'?'female_long':'male_textured');
+    const style=p.avatar_hair_style||(gender==='female'?'female_bob':'male_textured');
     const color=p.avatar_hair_color||'brown';
     const skin=p.avatar_skin||'medium';
     holder.innerHTML=`<div class="character-scene-clean">${avatarMarkup(gender,style,color,skin,true)}</div>`;
@@ -95,7 +79,7 @@
   }
 
   function refreshAll(){restoreCreator();restoreHomepage();surveyOnlyUI();awardDailyStreakXP();}
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(refreshAll,150),{once:true}); else setTimeout(refreshAll,150);
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(refreshAll,160),{once:true}); else setTimeout(refreshAll,160);
   document.addEventListener('click',e=>{if(e.target.closest('#genderChoices,#skinChoices,#hairColorChoices,#hairStyleChoices,#testCreator')) setTimeout(()=>{restoreCreator();surveyOnlyUI();},70);},true);
   const obs=new MutationObserver(()=>{clearTimeout(window.__rlHotfixTimer);window.__rlHotfixTimer=setTimeout(()=>{restoreHomepage();surveyOnlyUI();awardDailyStreakXP();},140);});
   obs.observe(document.documentElement,{childList:true,subtree:true});
