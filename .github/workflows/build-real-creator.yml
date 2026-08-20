@@ -134,3 +134,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run creator-runtime-smoke.yml --ref main
+
+# Manual deployment trigger: fixed-body creator, 2026-08-20 11:34 CEST
