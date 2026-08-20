@@ -2,18 +2,78 @@
  ⛅️ wrangler 4.86.0
 ───────────────────
 🌀 Building list of assets...
-✨ Read 725 files from the assets directory /home/runner/work/RiseLooter/RiseLooter
+✨ Read 728 files from the assets directory /home/runner/work/RiseLooter/RiseLooter
 🌀 Starting asset upload...
-No updated asset files to upload. Proceeding with deployment...
-Total Upload: 1.41 KiB / gzip: 0.64 KiB
-Worker Startup Time: 7 ms
+🌀 Found 55 new or modified static assets to upload. Proceeding with upload...
++ /creator-layered-build-log.txt
++ /assets/creator_layers/male/hair-male_slick-brown.webp
++ /assets/creator_layers/male/hair-male_undercut-red.webp
++ /assets/creator_layers/male/hair-male_short-black.webp
++ /assets/creator_layers/male/hair-male_short-brown.webp
++ /assets/creator_layers/male/hair-male_short-purple.webp
++ /assets/creator_layers/male/hair-male_medium-purple.webp
++ /assets/creator_layers/male/hair-male_undercut-black.webp
++ /assets/creator_layers/male/hair-male_textured-purple.webp
++ /assets/creator_layers/male/hair-male_textured-red.webp
++ /assets/creator_layers/female/hair-female_ponytail-brown.webp
++ /assets/creator_layers/female/hair-female_short-purple.webp
++ /assets/creator_layers/female/hair-female_short-red.webp
++ /assets/creator_layers/female/hair-female_wavy-red.webp
++ /assets/creator_layers/female/hair-female_long-black.webp
++ /assets/creator_layers/female/hair-female_bob-purple.webp
++ /assets/creator_layers/female/hair-female_long-blond.webp
++ /assets/creator_layers/female/hair-female_bob-red.webp
++ /assets/creator_layers/male/base.webp
++ /assets/creator_layers/manifest.txt
++ /assets/creator_layers/male/hair-male_slick-red.webp
++ /assets/creator_layers/male/hair-male_slick-purple.webp
++ /assets/creator_layers/male/hair-male_undercut-purple.webp
++ /assets/creator_layers/male/hair-male_medium-black.webp
++ /assets/creator_layers/male/hair-male_short-red.webp
++ /assets/creator_layers/male/hair-male_medium-red.webp
++ /assets/creator_layers/male/hair-male_slick-black.webp
++ /assets/creator_layers/male/hair-male_textured-brown.webp
++ /assets/creator_layers/male/hair-male_textured-blond.webp
++ /assets/creator_layers/female/hair-female_ponytail-blond.webp
++ /assets/creator_layers/female/hair-female_short-brown.webp
++ /assets/creator_layers/female/hair-female_short-black.webp
++ /assets/creator_layers/female/hair-female_wavy-black.webp
++ /assets/creator_layers/female/hair-female_bob-brown.webp
++ /assets/creator_layers/female/hair-female_wavy-purple.webp
++ /assets/creator_layers/female/hair-female_bob-blond.webp
++ /assets/creator_layers/female/hair-female_long-red.webp
++ /creator-layered-build-status.txt
++ /assets/creator_layers/male/hair-male_undercut-brown.webp
++ /assets/creator_layers/male/hair-male_slick-blond.webp
++ /assets/creator_layers/male/hair-male_undercut-blond.webp
++ /assets/creator_layers/male/hair-male_short-blond.webp
++ /assets/creator_layers/male/hair-male_medium-brown.webp
++ /assets/creator_layers/male/hair-male_medium-blond.webp
++ /assets/creator_layers/male/hair-male_textured-black.webp
++ /assets/creator_layers/female/hair-female_wavy-brown.webp
++ /assets/creator_layers/female/hair-female_ponytail-black.webp
++ /assets/creator_layers/female/hair-female_ponytail-red.webp
++ /assets/creator_layers/female/hair-female_short-blond.webp
++ /assets/creator_layers/female/hair-female_ponytail-purple.webp
++ /assets/creator_layers/female/hair-female_bob-black.webp
++ /assets/creator_layers/female/hair-female_long-brown.webp
++ /assets/creator_layers/female/hair-female_long-purple.webp
++ /assets/creator_layers/female/hair-female_wavy-blond.webp
++ /assets/creator_sources/fullbody/male_base_clean.png
+Uploaded 18 of 55 assets
+Uploaded 36 of 55 assets
+Uploaded 55 of 55 assets
+✨ Success! Uploaded 55 files (470 already uploaded) (1.40 sec)
+
+Total Upload: 1.46 KiB / gzip: 0.65 KiB
+Worker Startup Time: 4 ms
 Your Worker has access to the following bindings:
 Binding            Resource      
 env.ASSETS         Assets        
 
-Uploaded loot-up (4.68 sec)
-Deployed loot-up triggers (0.53 sec)
+Uploaded loot-up (6.38 sec)
+Deployed loot-up triggers (0.58 sec)
   https://loot-up.marin-iglesias.workers.dev
-Current Version ID: 6a1bdce7-bf2c-4df0-9e61-ea90c2d700dd
+Current Version ID: 5f61e205-37a7-4390-b430-fa591f542ad6
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
