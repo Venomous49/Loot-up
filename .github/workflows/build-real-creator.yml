@@ -117,14 +117,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          printf 'status=success\nsource_commit=%s\nformat=1728x910\nassets=250\ncenter_x=864\nground_y=900\nstanding_height=780\ncanonical_body_per_gender=yes\nrobust_native_segmentation=yes\nsafe_hair_masks=yes\nrectangular_hair_patches=rejected\nprepublish_runtime_combinations=250\n' "$GITHUB_SHA" > creator-hd-build-status.txt
+          printf 'status=success\nsource_commit=%s\nformat=1728x910\nassets=250\ncenter_x=864\nground_y=900\nstanding_height=780\ncanonical_body_per_gender=yes\nmale_full_body_locked=yes\nmale_hair_never_below_head=yes\nrobust_native_segmentation=yes\nsafe_hair_masks=yes\nrectangular_hair_patches=rejected\nprepublish_runtime_combinations=250\n' "$GITHUB_SHA" > creator-hd-build-status.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add assets/creator/male assets/creator/female creator-hd-build-status.txt
           if git diff --cached --quiet; then
             echo 'No creator changes to publish'
           else
-            git commit -m 'Publish square-free full-body creator presets'
+            git commit -m 'Publish fixed-body full-body creator presets'
             git pull --rebase origin main || true
             git push
           fi
