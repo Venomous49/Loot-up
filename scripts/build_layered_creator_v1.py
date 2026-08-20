@@ -23,51 +23,71 @@ def exact(path,mode='RGBA'):
   else: raise SystemExit(f'BAD SIZE {path}: {im.size}, expected {SIZE}')
  return im
 
-def face_box(gender):
- mask=np.asarray(exact(SRC/f'{gender}_skin_mask.png','L'),dtype=np.uint8)
- bw=(mask>80).astype(np.uint8)
+def largest_alpha_component(im,threshold=16):
+ arr=np.asarray(im,dtype=np.uint8).copy(); a=arr[...,3]
+ bw=(a>threshold).astype(np.uint8)
  n,labels,stats,cent=cv2.connectedComponentsWithStats(bw,8)
- candidates=[]
- for i in range(1,n):
-  x,y,w,h,area=stats[i]
-  if area>=120: candidates.append((y,-area,x,y,w,h))
- if not candidates: raise SystemExit(f'{gender}: cannot detect face anchor')
- _,_,x,y,w,h=sorted(candidates)[0]
- return x,y,w,h
+ if n<=1: raise SystemExit('NO ALPHA COMPONENT')
+ idx=1+int(np.argmax(stats[1:,cv2.CC_STAT_AREA]))
+ keep=labels==idx
+ arr[~keep]=0
+ ys,xs=np.where(keep)
+ return Image.fromarray(arr,'RGBA'), (int(xs.min()),int(ys.min()),int(xs.max()+1),int(ys.max()+1))
+
+def male_anchor_box():
+ # The old full-canvas source has the correct body location even though it contains visual contamination.
+ # Use only the largest alpha component geometry as the anchor; never render its pixels.
+ old=exact(SRC/'male_base.png','RGBA')
+ _,box=largest_alpha_component(old)
+ x0,y0,x1,y1=box
+ w=x1-x0; h=y1-y0
+ # Add safety room so hands/feet are never clipped and keep the body visually centered.
+ pad_x=max(18,int(w*.06)); pad_y=max(14,int(h*.025))
+ return (max(0,x0-pad_x), max(0,y0-pad_y), min(SIZE[0],x1+pad_x), min(SIZE[1],y1+pad_y))
 
 def build_clean_male(bg):
- # Use the dedicated transparent character-only source: no black level plaque,
- # no rectangular background patch, and no hard-cut canvas around the body.
- src=Image.open(ROOT/'01-debutant-character.png').convert('RGBA')
- fx,fy,fw,fh=face_box('male')
- sm=np.asarray(exact(SRC/'male_skin_mask.png','L'),dtype=np.uint8)
- ys,xs=np.where(sm>60)
- skin_bottom=int(ys.max()) if len(ys) else int(SIZE[1]*.86)
- target_h=int(np.clip((skin_bottom-fy)*1.18, SIZE[1]*.62, SIZE[1]*.80))
- target_w=max(1,int(src.width*target_h/src.height))
- src=src.resize((target_w,target_h),Image.Resampling.LANCZOS)
- # Keep the head aligned with the existing face/skin/hair coordinate system while
- # centering the full body naturally in the preview.
- cx=fx+fw/2
- left=int(cx-target_w/2)
- top=int(fy-target_h*.075)
- left=max(0,min(SIZE[0]-target_w,left)); top=max(0,min(SIZE[1]-target_h,top))
- layer=Image.new('RGBA',SIZE,(0,0,0,0)); layer.alpha_composite(src,(left,top))
+ # Use only the isolated main subject from the dedicated character PNG.
+ raw=Image.open(ROOT/'01-debutant-character.png').convert('RGBA')
+ subject,box=largest_alpha_component(raw)
+ x0,y0,x1,y1=box
+ subject=subject.crop(box)
+ ax0,ay0,ax1,ay1=male_anchor_box(); aw=ax1-ax0; ah=ay1-ay0
+ # Fit inside the trusted full-body anchor with margin; no floating tiny character and no edge clipping.
+ fit_w=int(aw*.90); fit_h=int(ah*.94)
+ scale=min(fit_w/subject.width,fit_h/subject.height)
+ nw=max(1,int(subject.width*scale)); nh=max(1,int(subject.height*scale))
+ subject=subject.resize((nw,nh),Image.Resampling.LANCZOS)
+ # Center horizontally and vertically in the original full-body position, then keep feet slightly above frame edge.
+ left=int((ax0+ax1)/2-nw/2)
+ top=int((ay0+ay1)/2-nh/2)
+ left=max(0,min(SIZE[0]-nw,left)); top=max(0,min(SIZE[1]-nh,top))
+ layer=Image.new('RGBA',SIZE,(0,0,0,0)); layer.alpha_composite(subject,(left,top))
  out=bg.copy(); out.alpha_composite(layer)
- return out
+ return out, layer
 
 def build_base(gender):
  bg=exact(SRC/'background.webp','RGBA')
  if gender=='male':
-  out=build_clean_male(bg)
+  out,person_layer=build_clean_male(bg)
  else:
-  person=exact(SRC/f'{gender}_base.png','RGBA')
-  a=np.asarray(person.getchannel('A'))
+  person_layer=exact(SRC/f'{gender}_base.png','RGBA')
+  a=np.asarray(person_layer.getchannel('A'))
   if np.count_nonzero(a>12)<10000: raise SystemExit(f'{gender} base alpha invalid')
-  out=bg.copy(); out.alpha_composite(person)
+  out=bg.copy(); out.alpha_composite(person_layer)
  d=OUT/gender; d.mkdir(parents=True,exist_ok=True)
  out.convert('RGB').save(d/'base.webp','WEBP',quality=100,method=6)
- return out.convert('RGB')
+ return out.convert('RGB'),person_layer
+
+def face_box_from_person(person_layer):
+ arr=np.asarray(person_layer,dtype=np.uint8); a=arr[...,3]
+ ys,xs=np.where(a>24)
+ if len(xs)<1000: raise SystemExit('PERSON ALPHA TOO SMALL')
+ x0,x1,y0,y1=int(xs.min()),int(xs.max()),int(ys.min()),int(ys.max())
+ w=x1-x0+1; h=y1-y0+1
+ # Stable anatomical head box derived from body bounds, independent of old contaminated skin masks.
+ fw=max(60,int(w*.36)); fh=max(70,int(h*.19))
+ fx=int((x0+x1)/2-fw/2); fy=int(y0+h*.015)
+ return fx,fy,fw,fh
 
 def skin_layer(gender,base):
  mask=exact(SRC/f'{gender}_skin_mask.png','L')
@@ -84,50 +104,39 @@ def skin_layer(gender,base):
   rgba=np.zeros((SIZE[1],SIZE[0],4),dtype=np.uint8); rgba[...,:3]=trgb; rgba[...,3]=np.clip(soft*255,0,255).astype(np.uint8)
   Image.fromarray(rgba,'RGBA').save(OUT/gender/f'skin-{name}.webp','WEBP',lossless=True,method=6)
 
-def register_hair(im,gender):
+def register_hair(im,person_layer):
  arr=np.asarray(im,dtype=np.uint8).copy(); a=arr[...,3]
- if np.count_nonzero(a>16)<180: raise SystemExit('EMPTY HAIR SOURCE')
- fx,fy,fw,fh=face_box(gender); cx=fx+fw/2
- # Hard safety ROI around the head only. This removes hood/shoulder/background fragments.
- x0=max(0,int(cx-fw*1.35)); x1=min(SIZE[0],int(cx+fw*1.35))
- y0=max(0,int(fy-fh*1.20)); y1=min(SIZE[1],int(fy+fh*1.25))
+ if np.count_nonzero(a>16)<120: raise SystemExit('EMPTY HAIR SOURCE')
+ fx,fy,fw,fh=face_box_from_person(person_layer); cx=fx+fw/2
+ # Keep only pixels in a strict head-sized window: removes hood, text and detached artifacts.
+ x0=max(0,int(cx-fw*.95)); x1=min(SIZE[0],int(cx+fw*.95))
+ y0=max(0,int(fy-fh*.65)); y1=min(SIZE[1],int(fy+fh*.95))
  keep=np.zeros_like(a,dtype=bool); keep[y0:y1,x0:x1]=True
  arr[~keep]=0; a=arr[...,3]
  ys,xs=np.where(a>16)
- if len(xs)<120: raise SystemExit('HAIR ROI REMOVED TOO MUCH')
- # Keep components close to the face and discard detached floating debris.
- bw=(a>16).astype(np.uint8); n,labels,stats,cent=cv2.connectedComponentsWithStats(bw,8)
- target=np.array([cx, fy+fh*.05])
- chosen=[]
- for i in range(1,n):
-  x,y,w,h,area=stats[i]
-  if area<35: continue
-  dist=np.linalg.norm(cent[i]-target)
-  if dist < max(fw,fh)*1.35: chosen.append(i)
- if chosen:
-  km=np.isin(labels,chosen); arr[~km]=0
- a=arr[...,3]; ys,xs=np.where(a>16)
- if len(xs)<120: raise SystemExit('HAIR COMPONENT CLEANUP REMOVED TOO MUCH')
- # Apply only a bounded registration correction; never arbitrary full-canvas scaling.
- bx0,bx1,by0,by1=int(xs.min()),int(xs.max()+1),int(ys.min()),int(ys.max()+1)
- crop=Image.fromarray(arr[by0:by1,bx0:bx1],'RGBA')
- max_w=max(40,int(fw*2.0)); max_h=max(35,int(fh*1.35))
- scale=min(1.0,max_w/crop.width,max_h/crop.height)
- if crop.width>max_w or crop.height>max_h:
-  scale=min(max_w/crop.width,max_h/crop.height)
-  crop=crop.resize((max(1,int(crop.width*scale)),max(1,int(crop.height*scale))),Image.Resampling.LANCZOS)
- tx=int(cx-crop.width/2)
- desired_bottom=int(fy+fh*.22)
- ty=int(desired_bottom-crop.height)
- tx=max(0,min(SIZE[0]-crop.width,tx)); ty=max(0,min(SIZE[1]-crop.height,ty))
+ if len(xs)<80:
+  # Source coordinates may not match the rebuilt body; isolate its largest hair-like component globally, then re-anchor.
+  raw=Image.fromarray(np.asarray(im,dtype=np.uint8),'RGBA')
+  comp,box=largest_alpha_component(raw)
+  crop=comp.crop(box)
+ else:
+  bx0,bx1,by0,by1=int(xs.min()),int(xs.max()+1),int(ys.min()),int(ys.max()+1)
+  crop=Image.fromarray(arr[by0:by1,bx0:bx1],'RGBA')
+ # Force natural head proportions without allowing miniature floating hair.
+ target_w=max(78,int(fw*1.18)); target_h=max(55,int(fh*.72))
+ scale=min(target_w/crop.width,target_h/crop.height)
+ nw=max(1,int(crop.width*scale)); nh=max(1,int(crop.height*scale))
+ crop=crop.resize((nw,nh),Image.Resampling.LANCZOS)
+ tx=int(cx-nw/2); ty=int(fy-nh*.28)
+ tx=max(0,min(SIZE[0]-nw,tx)); ty=max(0,min(SIZE[1]-nh,ty))
  canvas=Image.new('RGBA',SIZE,(0,0,0,0)); canvas.alpha_composite(crop,(tx,ty))
  return canvas
 
-def hair_layers(gender):
+def hair_layers(gender,person_layer):
  for style in STYLES[gender]:
   for color in COLORS:
    p=HAIR/f'{style}_{color}.png'; im=exact(p,'RGBA')
-   out=register_hair(im,gender)
+   out=register_hair(im,person_layer)
    out.save(OUT/gender/f'hair-{style}-{color}.webp','WEBP',lossless=True,method=6)
 
 def validate_outputs():
@@ -139,8 +148,8 @@ def validate_outputs():
 
 def main():
  for g in ('male','female'):
-  base=build_base(g); skin_layer(g,base); hair_layers(g)
+  base,person_layer=build_base(g); skin_layer(g,base); hair_layers(g,person_layer)
  validate_outputs()
- print('Layered creator validated: clean centered male base, no plaque/cutout, face-registered hair')
+ print('Layered creator validated: isolated full body, centered anchor, no plaque/text debris, head-sized hair')
 
 if __name__=='__main__': main()
