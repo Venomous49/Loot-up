@@ -1,0 +1,38 @@
+name: Build creator hair overlays
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/build_creator_hair_overlays.py'
+      - 'assets/creator_sources/person_masks/**'
+      - 'assets/creator_sources/color_master_masks/**'
+      - 'assets/creator_sources/standardized_black/**'
+      - 'assets/creator_sources/*_natural.png'
+      - 'assets/creator_sources/face_detection_yunet_2023mar.onnx'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install opencv-python-headless numpy
+      - run: python .github/scripts/build_creator_hair_overlays.py
+      - name: Commit generated clean hair overlays
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/creator_sources/fullbody/hair/
+          if git diff --cached --quiet; then
+            echo 'No generated changes'
+          else
+            git commit -m 'Generate clean full-body hairstyle overlays'
+            git push
+          fi
