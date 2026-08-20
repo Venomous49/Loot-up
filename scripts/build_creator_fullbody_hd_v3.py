@@ -175,17 +175,32 @@ def safe_align_style_hair(gender, style, head_anchor=None):
     out_h = max(1, round(rgb_crop.shape[0] * scale))
     rgb_crop = cv2.resize(rgb_crop, (out_w, out_h), interpolation=cv2.INTER_LANCZOS4)
     a_crop = cv2.resize(a_crop, (out_w, out_h), interpolation=cv2.INTER_LINEAR)
+
     if gender == "male" and head_anchor is not None:
         face_center_x, _, face_w, _ = head_anchor
-        # Do not use a tiny fixed-pixel nudge anymore. The character's head is
-        # turned/leaning, so the visual scalp center sits substantially left of
-        # the detected face-box center. Anchor proportionally to face width.
-        scalp_center_x = face_center_x - (face_w * 0.55)
-        x = round(scalp_center_x - out_w / 2)
+        # Align the actual HAIRLINE/root mass, not the rectangular overlay box.
+        # The five style masks are asymmetric, so centering their bounding boxes
+        # leaves the visible hair shifted right even after large fixed offsets.
+        weights = a_crop.astype(np.float32) / 255.0
+        gy, gx = np.mgrid[0:out_h, 0:out_w]
+        root_band = gy >= (out_h * .55)
+        root_weights = weights * root_band.astype(np.float32)
+        total = float(root_weights.sum())
+        if total < 1e-3:
+            root_weights = weights
+            total = float(root_weights.sum())
+        root_centroid_x = float((gx * root_weights).sum() / max(total, 1e-6))
+
+        # The character leans slightly left; place the hairline a little left of
+        # the detected face-box center. This scales with face size and therefore
+        # stays stable across all five styles and output sizes.
+        target_hairline_x = face_center_x - (face_w * .12)
+        x = round(target_hairline_x - root_centroid_x)
         y = top_y + 11
     else:
         x = round(legacy.CENTER_X - out_w / 2)
         y = top_y
+
     aligned_rgb = np.zeros((legacy.CANVAS_SIZE[1], legacy.CANVAS_SIZE[0], 3), dtype=np.float32)
     aligned_alpha = np.zeros((legacy.CANVAS_SIZE[1], legacy.CANVAS_SIZE[0]), dtype=np.float32)
     x2 = min(legacy.CANVAS_SIZE[0], x + out_w)
