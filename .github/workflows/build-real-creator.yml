@@ -5,11 +5,12 @@ on:
     branches: [main]
     paths:
       - 'scripts/build_creator_fullbody_hd.py'
-      - 'scripts/build_creator_fullbody_hd_v5.py'
+      - 'scripts/build_creator_fullbody_hd_v6.py'
       - 'scripts/build_creator_from_hairstyle_masters.py'
       - 'scripts/validate_creator_library_hd.py'
       - 'scripts/validate_creator_body_lock.py'
       - 'assets/creator_sources/**'
+      - 'assets/characters/male/medium/brown/male_textured/01-debutant.webp'
       - 'creator-hd.css'
       - '.github/workflows/build-real-creator.yml'
   workflow_dispatch:
@@ -40,14 +41,14 @@ jobs:
       - name: Install deterministic image dependencies
         run: python -m pip install --quiet 'numpy<3' pillow opencv-python-headless
 
-      - name: Build immutable-base male presets only
+      - name: Build full-body male presets
         id: hd_build
         continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
           : > /tmp/creator-hd-build.log
-          CREATOR_BUILD_GENDER=male python scripts/build_creator_fullbody_hd_v5.py 2>&1 | tee -a /tmp/creator-hd-build.log
+          CREATOR_BUILD_GENDER=male python scripts/build_creator_fullbody_hd_v6.py 2>&1 | tee -a /tmp/creator-hd-build.log
           build_status=${PIPESTATUS[0]}
           if [ "$build_status" -ne 0 ]; then exit "$build_status"; fi
           python scripts/validate_creator_library_hd.py 2>&1 | tee -a /tmp/creator-hd-build.log
@@ -56,7 +57,7 @@ jobs:
           python scripts/validate_creator_body_lock.py 2>&1 | tee -a /tmp/creator-hd-build.log
           exit ${PIPESTATUS[0]}
 
-      - name: Record failed immutable-base build diagnostics
+      - name: Record failed full-body build diagnostics
         if: steps.hd_build.outcome != 'success'
         shell: bash
         run: |
@@ -64,14 +65,14 @@ jobs:
           {
             echo "status=failed"
             echo "source_commit=${GITHUB_SHA}"
-            echo "generator=immutable-base-v5-male"
+            echo "generator=full-body-v6-male"
             echo "--- tail ---"
             tail -n 180 /tmp/creator-hd-build.log || true
           } > creator-hd-build-status.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add creator-hd-build-status.txt
-          git commit -m 'Record failed immutable male creator build' || true
+          git commit -m 'Record failed full-body male creator build' || true
           git pull --rebase origin main || true
           git push || true
           exit 1
@@ -80,17 +81,17 @@ jobs:
         if: steps.hd_build.outcome == 'success'
         run: git diff --exit-code -- index.html worker.js creator-hd.css wrangler.jsonc .assetsignore
 
-      - name: Publish validated immutable male assets immediately
+      - name: Publish validated full-body male assets immediately
         if: steps.hd_build.outcome == 'success'
         shell: bash
         run: |
           set -euo pipefail
-          printf 'status=success\nsource_commit=%s\ngenerator=immutable-base-v5-male\nformat=1728x910\nmale_assets=125\nbase_scene_untouched=yes\nbody_segmentation=disabled\nbody_crop_resize_repaste=disabled\nmale_full_body_locked=yes\nclothes_color_locked=yes\nskin_mask_face_neck_only=yes\nhair_scalp_only=yes\nhair_weak_alpha_halo=rejected\nhair_never_below_head=yes\nstatic_validation=passed\n' "$GITHUB_SHA" > creator-hd-build-status.txt
+          printf 'status=success\nsource_commit=%s\ngenerator=full-body-v6-male\nformat=1728x910\nmale_assets=125\nfull_body_source=01-debutant.webp\nhead_to_feet_required=yes\nbody_segmentation=disabled\nbody_crop_resize_repaste=disabled\nmale_full_body_locked=yes\nclothes_color_locked=yes\nskin_mask_face_neck_only=yes\nhair_scalp_only=yes\nhair_weak_alpha_halo=rejected\nhair_never_below_head=yes\nstatic_validation=passed\n' "$GITHUB_SHA" > creator-hd-build-status.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add assets/creator/male creator-hd-build-status.txt
           if ! git diff --cached --quiet; then
-            git commit -m 'Publish immutable-base male creator presets'
+            git commit -m 'Publish full-body male creator presets v6'
             git pull --rebase origin main || true
             git push
           fi
