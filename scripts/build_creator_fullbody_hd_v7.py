@@ -46,7 +46,7 @@ def load_base_scene():
 
 def tint_skin(scene_rgb, mask_img, target):
     rgb = np.asarray(scene_rgb, dtype=np.uint8)
-    mask = np.asarray(fit(mask_img, 'L'), dtype=np.float32) / 255.0
+    mask = (np.asarray(fit(mask_img, 'L'), dtype=np.float32) / 255.0).copy()
     # The reviewed mask contains extra exposed-skin regions. Product rule is stricter:
     # complexion may change only head/neck, never hoodie, torso, arms or legs.
     mask[int(SIZE[1] * .42):, :] = 0.0
@@ -75,7 +75,7 @@ def load_hair(style, colour):
     y0, y1 = int(ys.min()), int(ys.max())
     if y1 >= int(SIZE[1] * .43):
         raise SystemExit(f'Hair layer reaches torso: {path} y1={y1}')
-    a = np.asarray(hair.getchannel('A'), dtype=np.uint8)
+    a = np.array(hair.getchannel('A'), dtype=np.uint8, copy=True)
     a[a < 26] = 0
     hair.putalpha(Image.fromarray(a, 'L'))
     return hair
