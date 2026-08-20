@@ -68,31 +68,21 @@ def native_skin_mask(scene, person_alpha):
 
 
 def neutralize_male_base_hair(scene):
-    """Erase the canonical male haircut before applying selectable hairstyles.
-
-    Previous versions only targeted dark pixels, so a left-side tuft survived and
-    visually looked like a persistent horizontal offset. This version removes the
-    full scalp/hair silhouette while explicitly protecting the face.
-    """
     rgb = np.asarray(scene, dtype=np.uint8).copy()
     fx, fy, fw, fh = legacy.base.detect_face(scene)
     h, w = rgb.shape[:2]
     yy, xx = np.mgrid[0:h, 0:w]
-
     cx = fx + fw * .50
     scalp = (((xx - cx) / (fw * 1.03)) ** 2 + ((yy - (fy + fh * .02)) / (fh * .82)) ** 2) <= 1.0
     side_left = (((xx - (fx + fw * .05)) / (fw * .38)) ** 2 + ((yy - (fy + fh * .23)) / (fh * .48)) ** 2) <= 1.0
     side_right = (((xx - (fx + fw * .95)) / (fw * .34)) ** 2 + ((yy - (fy + fh * .23)) / (fh * .46)) ** 2) <= 1.0
-
     face_protect = (((xx - cx) / (fw * .50)) ** 2 + ((yy - (fy + fh * .60)) / (fh * .58)) ** 2) <= 1.0
     top_limit = yy < (fy + fh * .43)
     erase = (scalp | side_left | side_right) & top_limit & ~face_protect
-
     mask = erase.astype(np.uint8) * 255
     mask = cv2.dilate(mask, np.ones((9, 9), np.uint8), iterations=1)
     mask = cv2.GaussianBlur(mask, (0, 0), 1.4)
     _, mask = cv2.threshold(mask, 24, 255, cv2.THRESH_BINARY)
-
     bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
     cleaned = cv2.inpaint(bgr, mask, 7, cv2.INPAINT_TELEA)
     return Image.fromarray(cv2.cvtColor(cleaned, cv2.COLOR_BGR2RGB), "RGB")
@@ -186,10 +176,12 @@ def safe_align_style_hair(gender, style, head_anchor=None):
     rgb_crop = cv2.resize(rgb_crop, (out_w, out_h), interpolation=cv2.INTER_LANCZOS4)
     a_crop = cv2.resize(a_crop, (out_w, out_h), interpolation=cv2.INTER_LINEAR)
     if gender == "male" and head_anchor is not None:
-        face_center_x, _, _, _ = head_anchor
-        # Deployed screenshot still shows the selectable hairstyle to the right.
-        # Shift all five male styles 6px further left: total = -18px.
-        x = round(face_center_x - out_w / 2) - 18
+        face_center_x, _, face_w, _ = head_anchor
+        # Do not use a tiny fixed-pixel nudge anymore. The character's head is
+        # turned/leaning, so the visual scalp center sits substantially left of
+        # the detected face-box center. Anchor proportionally to face width.
+        scalp_center_x = face_center_x - (face_w * 0.55)
+        x = round(scalp_center_x - out_w / 2)
         y = top_y + 11
     else:
         x = round(legacy.CENTER_X - out_w / 2)
