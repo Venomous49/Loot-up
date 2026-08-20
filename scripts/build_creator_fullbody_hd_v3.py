@@ -84,7 +84,6 @@ def neutralize_male_base_hair(scene):
     side_left = (((xx - (fx + fw * .05)) / (fw * .38)) ** 2 + ((yy - (fy + fh * .23)) / (fh * .48)) ** 2) <= 1.0
     side_right = (((xx - (fx + fw * .95)) / (fw * .34)) ** 2 + ((yy - (fy + fh * .23)) / (fh * .46)) ** 2) <= 1.0
 
-    # Keep eyes, nose, cheeks, mouth and most of the forehead untouched.
     face_protect = (((xx - cx) / (fw * .50)) ** 2 + ((yy - (fy + fh * .60)) / (fh * .58)) ** 2) <= 1.0
     top_limit = yy < (fy + fh * .43)
     erase = (scalp | side_left | side_right) & top_limit & ~face_protect
@@ -188,9 +187,9 @@ def safe_align_style_hair(gender, style, head_anchor=None):
     a_crop = cv2.resize(a_crop, (out_w, out_h), interpolation=cv2.INTER_LINEAR)
     if gender == "male" and head_anchor is not None:
         face_center_x, _, _, _ = head_anchor
-        # Keep the last measured horizontal calibration. The remaining visible
-        # problem was the surviving canonical tuft, not another placement error.
-        x = round(face_center_x - out_w / 2) - 12
+        # Deployed screenshot still shows the selectable hairstyle to the right.
+        # Shift all five male styles 6px further left: total = -18px.
+        x = round(face_center_x - out_w / 2) - 18
         y = top_y + 11
     else:
         x = round(legacy.CENTER_X - out_w / 2)
