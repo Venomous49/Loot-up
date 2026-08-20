@@ -7,7 +7,6 @@ ROOT=Path(__file__).resolve().parents[1]
 SRC=ROOT/'assets/creator_sources/fullbody'
 HAIR=SRC/'hair'
 OUT=ROOT/'assets/creator_layers'
-# PIL size is (width,height). Source creator assets are 1728x910.
 SIZE=(1728,910)
 SKINS={'light':(224,181,153),'warm':(198,139,101),'medium':(158,105,76),'deep':(105,69,50),'dark':(62,43,34)}
 STYLES={'male':['male_textured','male_short','male_medium','male_undercut','male_slick'],'female':['female_long','female_wavy','female_bob','female_ponytail','female_short']}
@@ -15,7 +14,18 @@ COLORS=['black','brown','blond','red','purple']
 
 def exact(path,mode='RGBA'):
  im=Image.open(path).convert(mode)
- if im.size!=SIZE: raise SystemExit(f'BAD SIZE {path}: {im.size}, expected {SIZE}')
+ if im.size != SIZE:
+  # Source exports occasionally contain a one-pixel transparent/edge drift.
+  # Normalize only tiny canvas drift; never scale character geometry.
+  dw=im.size[0]-SIZE[0]; dh=im.size[1]-SIZE[1]
+  if abs(dw)<=1 and abs(dh)<=1:
+   if im.size[0]>=SIZE[0] and im.size[1]>=SIZE[1]:
+    im=im.crop((0,0,SIZE[0],SIZE[1]))
+   else:
+    fill=0 if mode=='L' else (0,0,0,0)
+    canvas=Image.new(mode,SIZE,fill); canvas.paste(im,(0,0)); im=canvas
+  else:
+   raise SystemExit(f'BAD SIZE {path}: {im.size}, expected {SIZE}')
  return im
 
 def build_base(gender):
@@ -37,7 +47,6 @@ def skin_layer(gender,base):
  for name,target in SKINS.items():
   tlab=cv2.cvtColor(np.array(target,dtype=np.uint8).reshape(1,1,3),cv2.COLOR_RGB2LAB)[0,0].astype(np.float32)
   toned=lab.copy()
-  # Preserve source luminance and microtexture. Teint changes are chromatic, not a dark overlay.
   toned[...,0]=np.clip(lab[...,0]*.88+tlab[0]*.12,0,255)
   toned[...,1]=np.clip(lab[...,1]*.20+tlab[1]*.80,0,255)
   toned[...,2]=np.clip(lab[...,2]*.20+tlab[2]*.80,0,255)
@@ -52,7 +61,6 @@ def hair_layers(gender):
    if np.count_nonzero(a>16)<250: raise SystemExit(f'EMPTY HAIR {p}')
    arr=np.asarray(im,dtype=np.uint8).copy(); arr[a==0,:3]=0
    ys,xs=np.where(a>16)
-   # Hair must remain in upper body/head region and must never touch canvas edges/background bounds.
    if ys.max()>int(SIZE[1]*.60): raise SystemExit(f'HAIR SPILLS TOO LOW {p}: y={ys.max()}')
    if xs.min()<2 or xs.max()>SIZE[0]-3 or ys.min()<2: raise SystemExit(f'HAIR TOUCHES CANVAS EDGE {p}')
    Image.fromarray(arr,'RGBA').save(OUT/gender/f'hair-{style}-{color}.webp','WEBP',lossless=True,method=6)
@@ -64,7 +72,6 @@ def validate_outputs():
   for p in files:
    im=Image.open(p)
    if im.size!=SIZE: raise SystemExit(f'OUTPUT SIZE DRIFT {p}: {im.size}')
-  base=np.asarray(Image.open(d/'base.webp').convert('RGB'))
   for skin in SKINS:
    ov=np.asarray(Image.open(d/f'skin-{skin}.webp').convert('RGBA'))
    if np.count_nonzero(ov[...,3])<1000: raise SystemExit(f'EMPTY SKIN OUTPUT {g}/{skin}')
