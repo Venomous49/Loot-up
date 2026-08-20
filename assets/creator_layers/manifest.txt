@@ -1,4 +1,4 @@
-creator_version=layered-v2-clean
-source_commit=099411756a600cd8512a354dd18a1d13ac9e405e
+creator_version=layered-v3
+source_commit=d94cc665af2491212eb8c2a55267f2079a31a236
 male_assets=31
 female_assets=31
