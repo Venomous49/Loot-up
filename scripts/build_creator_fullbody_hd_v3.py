@@ -67,20 +67,51 @@ def native_skin_mask(scene, person_alpha):
     return Image.fromarray(cv2.GaussianBlur(layer, (0, 0), 1.15), "L")
 
 
-def robust_canonical_body(gender):
-    """Build exactly one fixed full-body scene per gender and return its head anchor.
+def neutralize_male_base_hair(scene):
+    """Remove the canonical male hairstyle before any selectable hair is composited.
 
-    The head anchor is measured from the real canonical face after the same crop,
-    scale and paste transform used for the body. This is critical because the
-    character leans: the face is not centered on the canvas/body bounding box.
+    Only dark pixels in the scalp cap are inpainted. The face/forehead below the
+    hairline is protected so facial identity, skin, pose and clothing stay intact.
     """
+    rgb = np.asarray(scene, dtype=np.uint8).copy()
+    fx, fy, fw, fh = legacy.base.detect_face(scene)
+    h, w = rgb.shape[:2]
+    yy, xx = np.mgrid[0:h, 0:w]
+
+    cx = fx + fw * .50
+    cy = fy + fh * .02
+    scalp = (((xx - cx) / (fw * .78)) ** 2 + ((yy - cy) / (fh * .62)) ** 2) <= 1.0
+    upper_head_only = yy < (fy + fh * .31)
+    dark = (rgb[..., 0] < 120) & (rgb[..., 1] < 112) & (rgb[..., 2] < 108)
+    warm_dark = (rgb[..., 0] <= rgb[..., 1] * 1.30 + 10) & (rgb[..., 2] <= rgb[..., 1] * 1.18 + 10)
+    mask = (scalp & upper_head_only & dark & warm_dark).astype(np.uint8) * 255
+
+    # Include the little side tufts that remain visible beside several overlays.
+    side_left = (((xx - (fx + fw * .13)) / (fw * .24)) ** 2 + ((yy - (fy + fh * .20)) / (fh * .34)) ** 2) <= 1.0
+    side_right = (((xx - (fx + fw * .87)) / (fw * .24)) ** 2 + ((yy - (fy + fh * .20)) / (fh * .34)) ** 2) <= 1.0
+    mask = np.maximum(mask, ((side_left | side_right) & upper_head_only & dark).astype(np.uint8) * 255)
+
+    mask = cv2.dilate(mask, np.ones((7, 7), np.uint8), iterations=1)
+    mask = cv2.GaussianBlur(mask, (0, 0), 1.0)
+    _, mask = cv2.threshold(mask, 28, 255, cv2.THRESH_BINARY)
+    if np.count_nonzero(mask) == 0:
+        return scene
+
+    bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+    cleaned = cv2.inpaint(bgr, mask, 5, cv2.INPAINT_TELEA)
+    return Image.fromarray(cv2.cvtColor(cleaned, cv2.COLOR_BGR2RGB), "RGB")
+
+
+def robust_canonical_body(gender):
+    """Build exactly one fixed full-body scene per gender and return its head anchor."""
     path, _ = legacy.CANONICAL[gender]
-    scene = native_scene(path)
-    person_alpha = robust_person_mask(scene, gender)
+    original_scene = native_scene(path)
+    scene = neutralize_male_base_hair(original_scene) if gender == "male" else original_scene
+    person_alpha = robust_person_mask(original_scene, gender)
     bbox = person_alpha.getbbox()
     if not bbox:
         raise SystemExit(f"No canonical {gender} body bbox")
-    skin = native_skin_mask(scene, person_alpha)
+    skin = native_skin_mask(original_scene, person_alpha)
     cutout = scene.crop(bbox)
     cutout_alpha = person_alpha.crop(bbox)
     skin_crop = skin.crop(bbox)
@@ -99,10 +130,7 @@ def robust_canonical_body(gender):
     skin_layer.paste(skin_crop, (x, y))
     skin_layer = skin_layer.filter(ImageFilter.GaussianBlur(.8))
 
-    # Measure the actual face in the canonical source and transform that point
-    # into final-canvas coordinates. This removes the shared left/right offset
-    # that affected all five male hairstyles when CENTER_X was used directly.
-    fx, fy, fw, fh = legacy.base.detect_face(scene)
+    fx, fy, fw, fh = legacy.base.detect_face(original_scene)
     left, top, _, _ = bbox
     face_center_x = x + ((fx + fw * .50) - left) * scale
     face_top_y = y + (fy - top) * scale
@@ -174,10 +202,10 @@ def safe_align_style_hair(gender, style, head_anchor=None):
     a_crop = cv2.resize(a_crop, (out_w, out_h), interpolation=cv2.INTER_LINEAR)
 
     if gender == "male" and head_anchor is not None:
-        # The five hairstyles now follow the actual canonical face center rather
-        # than the global canvas center. Keep the proven vertical calibration.
         face_center_x, _, _, _ = head_anchor
-        x = round(face_center_x - out_w / 2)
+        # Fine calibration from the deployed screenshot: all five styles still
+        # sat a few pixels to the right of the face after face anchoring.
+        x = round(face_center_x - out_w / 2) - 5
         y = top_y + 11
     else:
         x = round(legacy.CENTER_X - out_w / 2)
@@ -234,7 +262,7 @@ def build_locked_presets():
     expected = 125 if requested_gender else 250
     if written != expected:
         raise SystemExit(f"Unexpected creator preset count: {written}, expected {expected}")
-    print(f"Built {written} fixed-body creator presets anchored to canonical face")
+    print(f"Built {written} fixed-body creator presets with neutral base scalp and calibrated hair alignment")
 
 
 build_locked_presets()
