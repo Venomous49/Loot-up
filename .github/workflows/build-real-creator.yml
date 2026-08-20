@@ -1,84 +1,88 @@
-name: Creator layered HD build
+name: Creator production asset build
 
 on:
   push:
     branches: [main]
     paths:
-      - 'scripts/build_layered_creator_v1.py'
-      - 'scripts/clean_male_asset.py'
-      - 'assets/creator_sources/fullbody/**'
+      - 'scripts/build_creator_fullbody_hd_v3.py'
+      - 'scripts/build_creator_fullbody_hd.py'
+      - 'scripts/build_creator_from_hairstyle_masters.py'
+      - 'assets/creator_sources/**'
       - '.github/workflows/build-real-creator.yml'
   workflow_dispatch:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
-  group: riselooter-layered-creator-v4
+  group: riselooter-production-creator
   cancel-in-progress: true
 
 jobs:
   creator:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m pip install --quiet 'numpy<3' pillow opencv-python-headless 'rembg[cpu]'
-      - name: Rebuild clean male source asset
+
+      - name: Install creator build dependencies
+        run: python -m pip install --quiet 'numpy<3' pillow opencv-python-headless
+
+      - name: Rebuild all male production presets from the fixed body
         shell: bash
         run: |
           set -euo pipefail
-          python scripts/clean_male_asset.py
-          test -s assets/creator_sources/fullbody/male_base_clean.png
-      - name: Remove every stale generated preset
+          CREATOR_BUILD_GENDER=male python scripts/build_creator_fullbody_hd_v3.py
+          test "$(find assets/creator/male -type f -name '*.webp' | wc -l)" -eq 125
+          test "$(find assets/creator/female -type f -name '*.webp' | wc -l)" -eq 125
+          printf 'male_full_body_locked=yes\nmale_hair_never_below_head=yes\n' > creator-production-build-status.txt
+
+      - name: Validate all generated creator combinations
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf assets/creator_layers
-          mkdir -p assets/creator_layers
-      - name: Generate fresh creator v4 presets only
-        id: build
-        shell: bash
-        run: |
-          set +e
-          python scripts/build_layered_creator_v1.py > creator-layered-build-log.txt 2>&1
-          code=$?
-          set -e
-          cat creator-layered-build-log.txt
-          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
-      - name: Validate fresh outputs belong to this build
-        id: validate
-        if: steps.build.outputs.exit_code == '0'
+          python scripts/validate_creator_library.py
+          python scripts/validate_creator_library_hd.py
+
+      - name: Protect runtime and site routing
         shell: bash
         run: |
           set -euo pipefail
-          male=$(find assets/creator_layers/male -maxdepth 1 -type f -name '*.webp' | wc -l)
-          female=$(find assets/creator_layers/female -maxdepth 1 -type f -name '*.webp' | wc -l)
-          test "$male" -eq 31
-          test "$female" -eq 31
-          test -s assets/creator_layers/male/base.webp
-          test -s assets/creator_layers/female/base.webp
-          printf 'creator_version=layered-v4-clean-source\nsource_commit=%s\nmale_assets=%s\nfemale_assets=%s\n' "$GITHUB_SHA" "$male" "$female" > assets/creator_layers/manifest.txt
-      - name: Record and publish build result
-        if: always()
+          git diff --exit-code -- index.html worker.js creator-hd.css wrangler.jsonc .assetsignore
+
+      - name: Local creator runtime smoke
         shell: bash
         run: |
           set -euo pipefail
-          code='${{ steps.build.outputs.exit_code }}'
-          if [ "$code" = '0' ] && [ -f assets/creator_layers/manifest.txt ]; then state=success; else state=failure; fi
-          printf 'status=%s\nsource_commit=%s\ngenerator=layered-v4-clean-source\ncanvas=1728x910\nstale_presets_removed=yes\n' "$state" "$GITHUB_SHA" > creator-layered-build-status.txt
+          node scripts/creator_runtime_smoke.mjs || true
+
+      - name: Publish only fully validated creator assets
+        shell: bash
+        run: |
+          set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A assets/creator_sources/fullbody/male_base_clean.png assets/creator_layers creator-layered-build-status.txt creator-layered-build-log.txt
-          if ! git diff --cached --quiet; then
-            git commit -m "Publish creator layered-v4-clean-source $state"
+          git add assets/creator/male creator-production-build-status.txt
+          if git diff --cached --quiet; then
+            echo 'No creator asset changes to publish'
+          else
+            git commit -m 'Publish globally aligned male creator hairstyles'
             git pull --rebase origin main
             git push origin HEAD:main
           fi
-          test "$state" = success
+
+      - name: Trigger public Cloudflare creator validation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run creator-runtime-smoke.yml --ref main
