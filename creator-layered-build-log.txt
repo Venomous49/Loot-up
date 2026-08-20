@@ -1,1 +1,1 @@
-layered-v4-fit2: male_medium +5% width, +3% height, 5px left, 2px down
+layered-v4-fit3: male_medium retained; male_slick +3% width, +2% height, 7px left, 3px down
