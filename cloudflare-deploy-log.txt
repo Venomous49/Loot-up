@@ -4,24 +4,69 @@
 🌀 Building list of assets...
 ✨ Read 700 files from the assets directory /home/runner/work/RiseLooter/RiseLooter
 🌀 Starting asset upload...
-🌀 Found 13 new or modified static assets to upload. Proceeding with upload...
+🌀 Found 58 new or modified static assets to upload. Proceeding with upload...
 + /creator-layered-build-log.txt
-+ /assets/creator_layers/male/hair-male_slick-red.webp
-+ /assets/creator_layers/male/hair-male_undercut-brown.webp
-+ /assets/creator_layers/male/hair-male_undercut-blond.webp
-+ /assets/creator_layers/male/hair-male_undercut-black.webp
-+ /creator-layered-build-status.txt
-+ /assets/creator_layers/male/hair-male_slick-purple.webp
-+ /assets/creator_layers/male/hair-male_undercut-red.webp
-+ /safe-ui-bootstrap.js
++ /assets/creator_layers/male/hair-male_short-black.webp
 + /assets/creator_layers/male/hair-male_slick-brown.webp
-+ /assets/creator_layers/male/hair-male_slick-blond.webp
-+ /assets/creator_layers/male/hair-male_undercut-purple.webp
++ /assets/creator_layers/male/hair-male_undercut-blond.webp
++ /assets/creator_layers/male/hair-male_short-red.webp
++ /assets/creator_layers/male/hair-male_slick-purple.webp
++ /assets/creator_layers/male/hair-male_textured-black.webp
 + /assets/creator_layers/male/hair-male_slick-black.webp
-Uploaded 4 of 13 assets
-Uploaded 9 of 13 assets
-Uploaded 13 of 13 assets
-✨ Success! Uploaded 13 files (508 already uploaded) (0.82 sec)
++ /assets/creator_layers/male/hair-male_textured-purple.webp
++ /assets/creator_layers/female/hair-female_short-black.webp
++ /assets/creator_layers/female/hair-female_short-brown.webp
++ /assets/creator_layers/female/hair-female_short-blond.webp
++ /assets/creator_layers/female/hair-female_bob-black.webp
++ /assets/creator_layers/female/hair-female_long-black.webp
++ /assets/creator_layers/female/hair-female_bob-blond.webp
++ /assets/creator_layers/female/hair-female_long-blond.webp
++ /assets/creator_layers/female/hair-female_wavy-black.webp
++ /assets/creator_layers/female/hair-female_wavy-blond.webp
++ /assets/creator_layers/male/skin-medium.webp
++ /assets/creator_layers/male/base.webp
++ /creator-layered-build-status.txt
++ /assets/creator_layers/male/hair-male_undercut-brown.webp
++ /assets/creator_layers/male/hair-male_short-blond.webp
++ /assets/creator_layers/male/hair-male_undercut-purple.webp
++ /assets/creator_layers/male/hair-male_medium-red.webp
++ /assets/creator_layers/male/hair-male_medium-purple.webp
++ /assets/creator_layers/male/hair-male_short-purple.webp
++ /assets/creator_layers/male/hair-male_undercut-black.webp
++ /assets/creator_layers/male/hair-male_textured-red.webp
++ /assets/creator_layers/female/hair-female_ponytail-purple.webp
++ /assets/creator_layers/female/hair-female_short-purple.webp
++ /assets/creator_layers/female/hair-female_ponytail-black.webp
++ /assets/creator_layers/female/hair-female_bob-purple.webp
++ /assets/creator_layers/female/hair-female_long-purple.webp
++ /assets/creator_layers/female/hair-female_ponytail-blond.webp
++ /assets/creator_layers/female/hair-female_bob-red.webp
++ /assets/creator_layers/female/hair-female_wavy-red.webp
++ /assets/creator_layers/male/skin-light.webp
++ /assets/creator_layers/male/skin-warm.webp
++ /assets/creator_layers/male/hair-male_medium-black.webp
++ /assets/creator_layers/male/hair-male_undercut-red.webp
++ /assets/creator_layers/male/hair-male_slick-red.webp
++ /assets/creator_layers/male/hair-male_slick-blond.webp
++ /assets/creator_layers/male/hair-male_medium-brown.webp
++ /assets/creator_layers/male/hair-male_medium-blond.webp
++ /assets/creator_layers/male/hair-male_short-brown.webp
++ /assets/creator_layers/male/hair-male_textured-brown.webp
++ /assets/creator_layers/male/hair-male_textured-blond.webp
++ /assets/creator_layers/female/hair-female_wavy-brown.webp
++ /assets/creator_layers/female/hair-female_short-red.webp
++ /assets/creator_layers/female/hair-female_ponytail-brown.webp
++ /assets/creator_layers/female/hair-female_bob-brown.webp
++ /assets/creator_layers/female/hair-female_long-brown.webp
++ /assets/creator_layers/female/hair-female_ponytail-red.webp
++ /assets/creator_layers/female/hair-female_wavy-purple.webp
++ /assets/creator_layers/female/hair-female_long-red.webp
++ /assets/creator_layers/male/skin-dark.webp
++ /assets/creator_layers/male/skin-deep.webp
+Uploaded 19 of 58 assets
+Uploaded 39 of 58 assets
+Uploaded 58 of 58 assets
+✨ Success! Uploaded 58 files (463 already uploaded) (1.56 sec)
 
 Total Upload: 1.43 KiB / gzip: 0.66 KiB
 Worker Startup Time: 4 ms
@@ -29,9 +74,9 @@ Your Worker has access to the following bindings:
 Binding            Resource      
 env.ASSETS         Assets        
 
-Uploaded loot-up (5.66 sec)
-Deployed loot-up triggers (0.51 sec)
+Uploaded loot-up (7.10 sec)
+Deployed loot-up triggers (0.70 sec)
   https://loot-up.marin-iglesias.workers.dev
-Current Version ID: 995c9cac-a42c-4259-a784-0714f5ef0d85
+Current Version ID: 3715197c-53fc-41b5-ad52-7786c9a2b3ce
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
