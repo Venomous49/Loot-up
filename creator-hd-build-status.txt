@@ -1,5 +1,5 @@
 status=success
-source_commit=10be3e8b709a5f177396281cbedb14c073e08c48
+source_commit=26ec45e8423baa891596f53ee6f22bdc3ae7a3d2
 format=1728x910
 assets=250
 center_x=864
