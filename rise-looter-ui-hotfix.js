@@ -55,6 +55,25 @@
     attachFallbacks(holder);
   }
 
+  function compactNextEvolutionCard(){
+    const nodes=[...document.querySelectorAll('div,section,aside')];
+    const label=nodes.find(el=>/^\s*PROCHAINE\s+ÉVOLUTION\s*$/i.test((el.textContent||'').trim()) || /^\s*PROCHAINE\s+EVOLUTION\s*$/i.test((el.textContent||'').trim()));
+    if(!label) return;
+    let card=label.parentElement;
+    for(let i=0;i<4 && card;i++,card=card.parentElement){
+      const txt=(card.textContent||'').toUpperCase();
+      if(txt.includes('PROCHAINE') && txt.includes('DÉBROUILLARD')) break;
+    }
+    if(!card) return;
+    card.style.setProperty('width','92%','important');
+    card.style.setProperty('max-width','205px','important');
+    card.style.setProperty('margin-top','8px','important');
+    card.style.setProperty('padding','8px','important');
+    card.style.setProperty('box-sizing','border-box','important');
+    card.style.setProperty('transform','scale(.96)','important');
+    card.style.setProperty('transform-origin','top left','important');
+  }
+
   function surveyOnlyUI(){
     document.querySelectorAll('.filter').forEach(btn=>{
       const t=(btn.textContent||'').toLowerCase();
@@ -67,6 +86,7 @@
     document.querySelectorAll('.mission-reward').forEach(el=>{if(/rl coins|lootix/i.test(el.textContent||'')) el.textContent='+ XP';});
     document.querySelectorAll('.bonus').forEach(el=>{el.style.display='none';});
     document.querySelectorAll('.day-wrap').forEach((wrap,i)=>{if(!wrap.querySelector('.day-xp')){const x=document.createElement('div');x.className='day-xp';x.textContent=`+${(i+1)*5} XP`;x.style.cssText='font-size:10px;color:#b77cff;margin-top:4px;font-weight:800';wrap.appendChild(x);}});
+    compactNextEvolutionCard();
   }
 
   async function awardDailyStreakXP(){
