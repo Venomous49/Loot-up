@@ -1,16 +1,14 @@
-status=success
-source_commit=dcd7dc72e10869577eebebe399e889ff92ccabf8
+status=failed
+source_commit=738bdb2a9e287cd8686e2809819566712e24d9d8
 generator=dedicated-fullbody-v7-male
-format=1728x910
-male_assets=125
-full_body_source=assets/creator_sources/fullbody/male_base.png
-full_body_skin_mask=assets/creator_sources/fullbody/male_skin_mask.png
-dedicated_hair_layers=25
-head_to_feet_required=yes
-body_crop_resize_repaste=disabled
-male_full_body_locked=yes
-clothes_color_locked=yes
-skin_mask_reviewed=yes
-hair_layers_precoloured=yes
-hair_background_extraction=disabled
-static_validation=passed
+--- tail ---
+Traceback (most recent call last):
+  File "/home/runner/work/RiseLooter/RiseLooter/scripts/build_creator_fullbody_hd_v7.py", line 193, in <module>
+    main()
+  File "/home/runner/work/RiseLooter/RiseLooter/scripts/build_creator_fullbody_hd_v7.py", line 174, in main
+    face_box = detect_face_anchor(skin_mask, base_rgba)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/RiseLooter/RiseLooter/scripts/build_creator_fullbody_hd_v7.py", line 81, in detect_face_anchor
+    mask[int(SIZE[1] * .40):, :] = 0
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: assignment destination is read-only
