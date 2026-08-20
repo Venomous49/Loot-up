@@ -96,9 +96,6 @@ for gender, styles in EXPECTED.items():
                         errors.append(f'ground placement drift: {p} bottom={ground}, target={TARGET_GROUND_Y}')
                     reference_boxes.append((center, ground, h))
 
-                # YuNet can legitimately miss darker complexions or faces partly
-                # bordered by certain hairstyles.  It is useful as a diagnostic,
-                # but must never reject an otherwise valid full-body asset.
                 if face_detector is not None and skin == 'medium' and hair == 'brown':
                     checked_faces += 1
                     _, faces = face_detector.detect(im)
@@ -125,6 +122,36 @@ for gender, styles in EXPECTED.items():
         if np.ptp(heights) > 35:
             errors.append(f'{gender}: creator body-height spread too large ({heights.min():.0f}-{heights.max():.0f})')
 
+
+# Strong invariant required by the product: for a given male skin tone, changing
+# hairstyle or hair colour is forbidden from changing the full-body base below
+# the head.  Only codec noise is tolerated after WebP encoding.
+MALE_BODY_Y0 = 350
+MALE_BODY_X0 = 430
+MALE_BODY_X1 = 1298
+for skin in SKINS:
+    ref_path = ROOT / 'male' / skin / 'brown' / 'male_textured.webp'
+    ref = cv2.imread(str(ref_path), cv2.IMREAD_COLOR)
+    if ref is None:
+        errors.append(f'male fixed-body reference missing: {ref_path}')
+        continue
+    ref_body = ref[MALE_BODY_Y0:900, MALE_BODY_X0:MALE_BODY_X1].astype(np.int16)
+    for hair in HAIRS:
+        for style in EXPECTED['male']:
+            p = ROOT / 'male' / skin / hair / f'{style}.webp'
+            im = cv2.imread(str(p), cv2.IMREAD_COLOR)
+            if im is None:
+                continue
+            body = im[MALE_BODY_Y0:900, MALE_BODY_X0:MALE_BODY_X1].astype(np.int16)
+            diff = np.abs(body - ref_body)
+            mean_diff = float(diff.mean())
+            p99 = float(np.percentile(diff, 99))
+            if mean_diff > 1.35 or p99 > 7.0:
+                errors.append(
+                    f'male full-body base changed outside head: {p} '
+                    f'mean_diff={mean_diff:.3f} p99={p99:.1f}'
+                )
+
 if warnings:
     print('CREATOR HD VALIDATION WARNINGS')
     for warning in warnings:
@@ -136,4 +163,4 @@ if errors:
         print(' -', error)
     raise SystemExit(1)
 
-print('Creator HD library validated: 250 assets, same 1728x910 background, centered full-body male/female canonical bodies, fixed ground line and consistent scale.')
+print('Creator HD library validated: 250 assets; male body/clothes/arms/legs remain locked to one canonical full-body base; only skin tone and head/hair area may vary.')
