@@ -1,10 +1,11 @@
-/* Rise Looter creator runtime v7
-   Visual stability first: use the clean full-frame hairstyle masters directly.
-   Keeps the validated street background and full-body framing intact.
-   Skin selection remains stored in avatarDraft and will be used by evolution assets,
-   but is never allowed to corrupt the base creator image. */
+/* Rise Looter creator runtime v8
+   One fixed scene for every hairstyle: the character is isolated with the
+   existing per-style person mask and composited over creator_background_master.
+*/
 (() => {
   const ROOT='/assets/creator_sources/';
+  const BG=`${ROOT}creator_background_master.png`;
+  const MASK_ROOT=`${ROOT}person_masks/`;
   const FEMALE=new Set(['female_long','female_wavy','female_bob','female_ponytail','female_short']);
   const MALE_NATURAL=new Set(['male_textured','male_short','male_medium']);
 
@@ -27,8 +28,13 @@
     }
     return `${ROOT}${style}_clean.png`;
   }
+  function maskSource(style){ return `${MASK_ROOT}${style}.png`; }
   function fallbackSource(){
     return avatarDraft.gender==='female' ? `${ROOT}female_long_brown_natural.png` : `${ROOT}male_textured_brown_natural.png`;
+  }
+  function maskedImage(src,style,cls='creator-real-preview'){
+    const mask=maskSource(style);
+    return `<img class="${cls}" src="${src}" alt="" style="-webkit-mask-image:url('${mask}');mask-image:url('${mask}');-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center">`;
   }
   function setSave(ok){ const b=document.getElementById('saveAvatar'); if(b) b.disabled=!ok; }
 
@@ -38,17 +44,15 @@
     const s=normalizeStyle();
     const src=cleanSource(s,avatarDraft.hairColor);
     const fallback=fallbackSource();
-    p.innerHTML=`<img class="creator-real-preview" src="${src}" alt="Aperçu Looter" data-fallback="${fallback}" data-fallback-used="0"><div class="creator-asset-missing" hidden><strong>APERÇU INDISPONIBLE</strong></div><div class="creator-live-badge"><b>NIVEAU 1</b><strong>DÉBUTANT</strong></div>`;
+    p.innerHTML=`<div class="creator-fixed-bg"></div>${maskedImage(src,s)}<div class="creator-asset-missing" hidden><strong>APERÇU INDISPONIBLE</strong></div><div class="creator-live-badge"><b>NIVEAU 1</b><strong>DÉBUTANT</strong></div>`;
+    const bg=p.querySelector('.creator-fixed-bg');
+    bg.style.backgroundImage=`url('${BG}?bg=v1')`;
     const img=p.querySelector('.creator-real-preview');
     const miss=p.querySelector('.creator-asset-missing');
     setSave(false);
     img.onload=()=>setSave(true);
     img.onerror=()=>{
-      if(img.dataset.fallbackUsed==='0' && img.src!==new URL(fallback,location.href).href){
-        img.dataset.fallbackUsed='1';
-        img.src=fallback;
-        return;
-      }
+      if(!img.dataset.fallbackUsed){ img.dataset.fallbackUsed='1'; img.src=fallback; return; }
       img.hidden=true; miss.hidden=false; setSave(false);
     };
   }
@@ -59,7 +63,8 @@
     const root=document.getElementById('hairStyleChoices'); if(!root) return;
     root.innerHTML=list.map(([v,label])=>{
       const src=cleanSource(v,avatarDraft.hairColor);
-      return `<button type="button" class="choice hair-choice ${avatarDraft.hairStyle===v?'selected':''}" data-value="${v}"><span class="hair-thumb"><img src="${src}" alt=""></span><span>${label}</span></button>`;
+      const mask=maskSource(v);
+      return `<button type="button" class="choice hair-choice ${avatarDraft.hairStyle===v?'selected':''}" data-value="${v}"><span class="hair-thumb" style="background-image:url('${BG}?bg=v1')"><img src="${src}" alt="" style="-webkit-mask-image:url('${mask}');mask-image:url('${mask}');-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center"></span><span>${label}</span></button>`;
     }).join('');
     root.querySelectorAll('.hair-choice').forEach(btn=>{
       const img=btn.querySelector('img');
@@ -90,6 +95,8 @@
       avatarDraft.gender=oldG; avatarDraft.hairColor=oldC;
       return src;
     };
+    window.creatorMaskPath=(style)=>maskSource(style);
+    window.creatorFixedBackground=BG;
     const oldAssetPath=window.assetPath;
     window.assetPath=(profile,stage)=> stage===0 ? cleanBeginnerPath(profile) : oldAssetPath(profile,stage);
     ['genderChoices','skinChoices','hairColorChoices'].forEach(id=>{
@@ -97,9 +104,6 @@
       if(root) root.addEventListener('click',()=>setTimeout(()=>{renderHair();updateCreator();},0),true);
     });
     renderHair(); updateCreator();
-    if(window.currentProfile && document.getElementById('mainCharacter')){
-      document.getElementById('mainCharacter').innerHTML=window.characterHTML(window.currentProfile,0);
-    }
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install,{once:true}); else install();
 })();
