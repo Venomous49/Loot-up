@@ -44,21 +44,18 @@ def segment_person(path):
     if img is None:
         raise SystemExit(f'missing {path}')
     h,w = img.shape[:2]
-    # conservative person mask: central full-height subject; background forced around edges
     mask = np.full((h,w), cv2.GC_PR_BGD, np.uint8)
     mask[:int(h*.02),:] = cv2.GC_BGD
     mask[int(h*.98):,:] = cv2.GC_BGD
     mask[:,:int(w*.10)] = cv2.GC_BGD
     mask[:,int(w*.90):] = cv2.GC_BGD
     mask[int(h*.04):int(h*.96), int(w*.20):int(w*.80)] = cv2.GC_PR_FGD
-    # face/torso/legs core; does not crop the extremities, only seeds GrabCut
     cv2.ellipse(mask,(int(w*.50),int(h*.18)),(int(w*.11),int(h*.13)),0,0,360,cv2.GC_FGD,-1)
     cv2.rectangle(mask,(int(w*.36),int(h*.25)),(int(w*.64),int(h*.63)),cv2.GC_FGD,-1)
     cv2.rectangle(mask,(int(w*.39),int(h*.58)),(int(w*.61),int(h*.94)),cv2.GC_FGD,-1)
     bgd=np.zeros((1,65),np.float64); fgd=np.zeros((1,65),np.float64)
     cv2.grabCut(img,mask,None,bgd,fgd,8,cv2.GC_INIT_WITH_MASK)
     fg=np.where((mask==cv2.GC_FGD)|(mask==cv2.GC_PR_FGD),1,0).astype(np.uint8)
-    # retain connected components belonging to the central person and close small gaps
     num, labels, stats, cent = cv2.connectedComponentsWithStats(fg,8)
     keep=np.zeros_like(fg)
     comps=[]
@@ -76,19 +73,19 @@ def segment_person(path):
     rgba[:,:,3]=alpha
     return rgba
 
-# Male: use the already validated transparent beginner cutout, which is genuinely full body.
+# Canonical male: validated full-body beginner cutout.
 male = cv2.imread(str(ROOT / '01-debutant-character.png'), cv2.IMREAD_UNCHANGED)
 if male is None or male.shape[2] != 4:
     raise SystemExit('01-debutant-character.png missing')
 male = fit_rgba(male, .90, .54)
 cv2.imwrite(str(OUT/'male_base.png'), male)
 
-# Female: derive one canonical body from the same family used by the creator, then reuse it for every hairstyle.
+# Canonical female: one body/pose reused by every hairstyle and color.
 female_src = ROOT / 'assets' / 'creator' / 'female' / 'medium' / 'brown' / 'female_bob.webp'
 female = segment_person(female_src)
 female = fit_rgba(female, .90, .52)
 cv2.imwrite(str(OUT/'female_base.png'), female)
 
-# Shared background: one and only one creator background for both sexes and every haircut.
+# One shared background for both sexes and every haircut.
 cv2.imwrite(str(OUT/'background.webp'), BG, [cv2.IMWRITE_WEBP_QUALITY, 94])
-print('Built canonical full-body male/female bases and shared background')
+print('Built canonical full-body male/female bases and shared background v12')
