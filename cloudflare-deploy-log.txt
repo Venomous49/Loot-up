@@ -11,9 +11,9 @@ Your Worker has access to the following bindings:
 Binding            Resource      
 env.ASSETS         Assets        
 
-Uploaded loot-up (4.68 sec)
-Deployed loot-up triggers (0.51 sec)
+Uploaded loot-up (5.18 sec)
+Deployed loot-up triggers (0.59 sec)
   https://loot-up.marin-iglesias.workers.dev
-Current Version ID: 7425891f-e8e3-4e57-a071-e34cddee59fd
+Current Version ID: 921a135c-fdbe-4b4d-b878-7a398cd06da1
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
