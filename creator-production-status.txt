@@ -1,6 +1,3 @@
-status=success
-source_commit=cb606f926d9b3c055232e78c11168644e1ee9af9
-format=1728x910
-assets=250
-cloudflare=validated
-runtime_combinations=250
+status=failed
+source_commit=e0f72e4551cffee0d0bf23934655ece12189114e
+cloudflare=not-validated
