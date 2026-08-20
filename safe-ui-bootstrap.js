@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const $=id=>document.getElementById(id); const VERSION='layered-v3';
+  const $=id=>document.getElementById(id); const VERSION='layered-v4-clean-source';
   const hair={male:[['male_textured','Texturé'],['male_short','Court classique'],['male_medium','Mi-long'],['male_undercut','Dégradé'],['male_slick','Coiffé arrière']],female:[['female_long','Long lisse'],['female_wavy','Ondulé'],['female_bob','Carré'],['female_ponytail','Queue attachée'],['female_short','Court moderne']]};
   const state={gender:'male',skin:'medium',hairColor:'brown',hairStyle:'male_textured'}; const isOpen=()=>document.body.classList.contains('creator-test-active');
   const root=()=>`/assets/creator_layers/${state.gender}`; const layer=k=>k==='base'?`${root()}/base.webp?v=${VERSION}`:k==='skin'?`${root()}/skin-${state.skin}.webp?v=${VERSION}`:`${root()}/hair-${state.hairStyle}-${state.hairColor}.webp?v=${VERSION}`;
