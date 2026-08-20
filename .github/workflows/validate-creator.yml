@@ -8,7 +8,9 @@ on:
       - 'creator-hd.css'
       - 'assets/creator/**'
       - 'assets/creator_sources/**'
+      - 'scripts/build_creator_fullbody_hd_v3.py'
       - 'scripts/validate_creator_library.py'
+      - 'scripts/validate_creator_library_hd.py'
       - 'scripts/creator_runtime_smoke.mjs'
       - '.github/workflows/**'
       - 'wrangler.jsonc'
@@ -26,9 +28,26 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m pip install --quiet 'numpy<3' opencv-python-headless
+      - run: python -m pip install --quiet 'numpy<3' pillow opencv-python-headless
       - name: Validate all 250 pre-rendered creator assets and UI routing
-        run: python scripts/validate_creator_library.py
+        run: |
+          python scripts/validate_creator_library.py
+          python scripts/validate_creator_library_hd.py
+
+      - name: Require one fixed full-body male base
+        shell: bash
+        run: |
+          set -euo pipefail
+          generator=scripts/build_creator_fullbody_hd_v3.py
+          validator=scripts/validate_creator_library_hd.py
+          grep -q 'def build_locked_presets' "$generator"
+          grep -q 'fixed_body, skin_alpha = robust_canonical_body(gender)' "$generator"
+          grep -q 'Male body lock violated by hairstyle' "$generator"
+          grep -q 'aligned_alpha\[330:, :\] = 0' "$generator"
+          grep -q 'male full-body base changed outside head' "$validator"
+          grep -q 'MALE_BODY_Y0 = 350' "$validator"
+          grep -q 'male_full_body_locked=yes' .github/workflows/build-real-creator.yml
+          grep -q 'male_hair_never_below_head=yes' .github/workflows/build-real-creator.yml
 
       - name: Reject workflows that can rewrite production creator routing
         shell: bash
