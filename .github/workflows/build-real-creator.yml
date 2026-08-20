@@ -10,6 +10,7 @@ on:
       - 'scripts/build_creator_fullbody_hd_v4.py'
       - 'scripts/build_creator_from_hairstyle_masters.py'
       - 'scripts/validate_creator_library_hd.py'
+      - 'scripts/validate_creator_body_lock.py'
       - 'scripts/creator_runtime_smoke.mjs'
       - 'assets/creator_sources/**'
       - 'creator-hd.css'
@@ -55,6 +56,11 @@ jobs:
             exit "$build_status"
           fi
           python scripts/validate_creator_library_hd.py 2>&1 | tee -a /tmp/creator-hd-build.log
+          validate_status=${PIPESTATUS[0]}
+          if [ "$validate_status" -ne 0 ]; then
+            exit "$validate_status"
+          fi
+          python scripts/validate_creator_body_lock.py 2>&1 | tee -a /tmp/creator-hd-build.log
           exit ${PIPESTATUS[0]}
 
       - name: Record failed HD build diagnostics
