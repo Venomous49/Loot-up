@@ -43,7 +43,7 @@ jobs:
           CREATOR_BUILD_GENDER=male python scripts/build_creator_fullbody_hd_v3.py
           test "$(find assets/creator/male -type f -name '*.webp' | wc -l)" -eq 125
           test "$(find assets/creator/female -type f -name '*.webp' | wc -l)" -eq 125
-          printf 'male_full_body_locked=yes\nmale_hair_never_below_head=yes\n' > creator-production-build-status.txt
+          printf 'male_full_body_locked=yes\nmale_hair_never_below_head=yes\nsource_commit=%s\nbuild_run=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > creator-production-build-status.txt
 
       - name: Validate all generated creator combinations
         shell: bash
@@ -65,13 +65,9 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add assets/creator/male creator-production-build-status.txt
-          if git diff --cached --quiet; then
-            echo 'No creator asset changes to publish'
-          else
-            git commit -m 'Publish globally aligned male creator hairstyles'
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
+          git commit -m 'Publish globally aligned male creator hairstyles'
+          git pull --rebase origin main
+          git push origin HEAD:main
 
       - name: Deploy rebuilt creator to Cloudflare
         env:
@@ -82,4 +78,4 @@ jobs:
           gh workflow run deploy-cloudflare.yml --ref main
           gh workflow run creator-runtime-smoke.yml --ref main
 
-# force-rebuild: 2026-08-21T00:33+02:00
+# force-rebuild: 2026-08-21T00:40+02:00
