@@ -94,12 +94,48 @@ def robust_canonical_body(gender):
     return body, np.asarray(skin_layer, dtype=np.float32) / 255.0
 
 
+def hair_shape_envelope(gender, style, h, w):
+    """Soft geometric safety envelope: hair may overlap the scalp, never a rectangular face patch."""
+    yy, xx = np.mgrid[0:h, 0:w]
+    xn = xx / float(w)
+    yn = yy / float(h)
+    if gender == "male":
+        cx = .58
+        rx, ry = {
+            "male_textured": (.105, .115),
+            "male_short": (.090, .100),
+            "male_medium": (.120, .145),
+            "male_undercut": (.105, .115),
+            "male_slick": (.105, .110),
+        }[style]
+        cy = .155
+        env = 1.0 - np.clip(((xn-cx)/rx)**2 + ((yn-cy)/ry)**2, 0, 1)
+        # Hard safety rule: the central lower face can never receive pasted hairstyle pixels.
+        face = (((xn-cx)/.062)**2 + ((yn-.235)/.082)**2) < 1.0
+        env[face] = 0
+    else:
+        cx = .52
+        top = 1.0 - np.clip(((xn-cx)/.13)**2 + ((yn-.16)/.15)**2, 0, 1)
+        side_l = 1.0 - np.clip(((xn-(cx-.085))/.075)**2 + ((yn-.34)/.30)**2, 0, 1)
+        side_r = 1.0 - np.clip(((xn-(cx+.085))/.075)**2 + ((yn-.34)/.30)**2, 0, 1)
+        if style in ("female_bob", "female_short"):
+            side_l *= (yn < .46)
+            side_r *= (yn < .46)
+        env = np.maximum(top, np.maximum(side_l, side_r))
+        face = (((xn-cx)/.058)**2 + ((yn-.235)/.080)**2) < 1.0
+        env[face] = 0
+    return cv2.GaussianBlur(np.clip(env, 0, 1).astype(np.float32), (0, 0), 1.2)
+
+
 def safe_align_style_hair(gender, style):
     source = legacy.fit_scene(legacy.STYLE_SOURCES[gender][style])
-    # Never reuse reviewed/source masks here: a bad mask produced the hard square
-    # visible over the face. Recompute a pixel-derived hair-only mask every time.
-    hair_alpha = legacy.fallback_hair_mask(source, gender, style)
+    raw = legacy.fallback_hair_mask(source, gender, style)
+    h, w = raw.shape
+    hair_alpha = np.clip(raw * hair_shape_envelope(gender, style, h, w), 0, 1)
     mask = np.clip(hair_alpha * 255, 0, 255).astype(np.uint8)
+    # Remove tiny islands and feather the true non-rectangular silhouette.
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+    mask = cv2.GaussianBlur(mask, (0, 0), .75)
     ys, xs = np.where(mask > 12)
     if not len(xs):
         raise SystemExit(f"No safe hairstyle mask: {gender}/{style}")
@@ -108,12 +144,9 @@ def safe_align_style_hair(gender, style):
     rgb_crop = np.asarray(source, dtype=np.uint8)[y0:y1, x0:x1]
     a_crop = mask[y0:y1, x0:x1]
     fill_ratio = float(np.count_nonzero(a_crop > 96)) / max(1, a_crop.size)
-    edge_ratio = max(
-        np.mean(a_crop[0] > 96), np.mean(a_crop[-1] > 96),
-        np.mean(a_crop[:, 0] > 96), np.mean(a_crop[:, -1] > 96)
-    )
-    if fill_ratio > .78 or edge_ratio > .72:
-        raise SystemExit(f"Unsafe rectangular hairstyle mask rejected: {gender}/{style}")
+    edge_ratio = max(np.mean(a_crop[0] > 96), np.mean(a_crop[-1] > 96), np.mean(a_crop[:, 0] > 96), np.mean(a_crop[:, -1] > 96))
+    if fill_ratio > .72 or edge_ratio > .55:
+        raise SystemExit(f"Unsafe rectangular hairstyle mask rejected: {gender}/{style} fill={fill_ratio:.3f} edge={edge_ratio:.3f}")
     max_w, max_h, top_y = legacy.HAIR_ENVELOPES[style]
     scale = min(max_w / max(1, rgb_crop.shape[1]), max_h / max(1, rgb_crop.shape[0]))
     out_w = max(1, round(rgb_crop.shape[1] * scale))
