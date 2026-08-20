@@ -1,6 +1,6 @@
 status=failure
-source_commit=950e6c47c2810425a3e6d37ddfe6c0f5fef2d309
+source_commit=cab0cc8acfdd572999cbf1c71a25295a3db18bf3
 creator_version=dedicated-fullbody-v23
 asset_cache=fullbody23
-api_token_present=false
-account_id_present=false
+api_token_present=true
+account_id_present=true
