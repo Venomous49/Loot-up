@@ -6,6 +6,7 @@ on:
     paths:
       - 'scripts/build_creator_fullbody_hd.py'
       - 'scripts/build_creator_fullbody_hd_v2.py'
+      - 'scripts/build_creator_fullbody_hd_v3.py'
       - 'scripts/build_creator_from_hairstyle_masters.py'
       - 'scripts/validate_creator_library_hd.py'
       - 'scripts/creator_runtime_smoke.mjs'
@@ -47,7 +48,7 @@ jobs:
         run: |
           set -o pipefail
           : > /tmp/creator-hd-build.log
-          python scripts/build_creator_fullbody_hd_v2.py 2>&1 | tee -a /tmp/creator-hd-build.log
+          python scripts/build_creator_fullbody_hd_v3.py 2>&1 | tee -a /tmp/creator-hd-build.log
           build_status=${PIPESTATUS[0]}
           if [ "$build_status" -ne 0 ]; then
             exit "$build_status"
@@ -116,14 +117,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          printf 'status=success\nsource_commit=%s\nformat=1728x910\nassets=250\ncenter_x=864\nground_y=900\nstanding_height=780\ncanonical_body_per_gender=yes\nrobust_native_segmentation=yes\nprepublish_runtime_combinations=250\n' "$GITHUB_SHA" > creator-hd-build-status.txt
+          printf 'status=success\nsource_commit=%s\nformat=1728x910\nassets=250\ncenter_x=864\nground_y=900\nstanding_height=780\ncanonical_body_per_gender=yes\nrobust_native_segmentation=yes\nsafe_hair_masks=yes\nrectangular_hair_patches=rejected\nprepublish_runtime_combinations=250\n' "$GITHUB_SHA" > creator-hd-build-status.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add assets/creator/male assets/creator/female creator-hd-build-status.txt
           if git diff --cached --quiet; then
             echo 'No creator changes to publish'
           else
-            git commit -m 'Publish verified robust full-body HD creator presets'
+            git commit -m 'Publish square-free full-body creator presets'
             git pull --rebase origin main || true
             git push
           fi
@@ -133,7 +134,3 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run creator-runtime-smoke.yml --ref main
-
-      # GitHub does not start a second workflow from a push made with GITHUB_TOKEN.
-      # Explicit workflow_dispatch above guarantees that the exact files published
-      # to main are independently checked after Cloudflare deploys them.
