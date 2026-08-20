@@ -68,16 +68,10 @@ def native_skin_mask(scene, person_alpha):
 
 
 def neutralize_male_base_hair(scene):
-    """Remove the canonical male hairstyle before any selectable hair is composited.
-
-    Only dark pixels in the scalp cap are inpainted. The face/forehead below the
-    hairline is protected so facial identity, skin, pose and clothing stay intact.
-    """
     rgb = np.asarray(scene, dtype=np.uint8).copy()
     fx, fy, fw, fh = legacy.base.detect_face(scene)
     h, w = rgb.shape[:2]
     yy, xx = np.mgrid[0:h, 0:w]
-
     cx = fx + fw * .50
     cy = fy + fh * .02
     scalp = (((xx - cx) / (fw * .78)) ** 2 + ((yy - cy) / (fh * .62)) ** 2) <= 1.0
@@ -85,25 +79,20 @@ def neutralize_male_base_hair(scene):
     dark = (rgb[..., 0] < 120) & (rgb[..., 1] < 112) & (rgb[..., 2] < 108)
     warm_dark = (rgb[..., 0] <= rgb[..., 1] * 1.30 + 10) & (rgb[..., 2] <= rgb[..., 1] * 1.18 + 10)
     mask = (scalp & upper_head_only & dark & warm_dark).astype(np.uint8) * 255
-
-    # Include the little side tufts that remain visible beside several overlays.
     side_left = (((xx - (fx + fw * .13)) / (fw * .24)) ** 2 + ((yy - (fy + fh * .20)) / (fh * .34)) ** 2) <= 1.0
     side_right = (((xx - (fx + fw * .87)) / (fw * .24)) ** 2 + ((yy - (fy + fh * .20)) / (fh * .34)) ** 2) <= 1.0
     mask = np.maximum(mask, ((side_left | side_right) & upper_head_only & dark).astype(np.uint8) * 255)
-
     mask = cv2.dilate(mask, np.ones((7, 7), np.uint8), iterations=1)
     mask = cv2.GaussianBlur(mask, (0, 0), 1.0)
     _, mask = cv2.threshold(mask, 28, 255, cv2.THRESH_BINARY)
     if np.count_nonzero(mask) == 0:
         return scene
-
     bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
     cleaned = cv2.inpaint(bgr, mask, 5, cv2.INPAINT_TELEA)
     return Image.fromarray(cv2.cvtColor(cleaned, cv2.COLOR_BGR2RGB), "RGB")
 
 
 def robust_canonical_body(gender):
-    """Build exactly one fixed full-body scene per gender and return its head anchor."""
     path, _ = legacy.CANONICAL[gender]
     original_scene = native_scene(path)
     scene = neutralize_male_base_hair(original_scene) if gender == "male" else original_scene
@@ -129,7 +118,6 @@ def robust_canonical_body(gender):
     skin_layer = Image.new("L", legacy.CANVAS_SIZE, 0)
     skin_layer.paste(skin_crop, (x, y))
     skin_layer = skin_layer.filter(ImageFilter.GaussianBlur(.8))
-
     fx, fy, fw, fh = legacy.base.detect_face(original_scene)
     left, top, _, _ = bbox
     face_center_x = x + ((fx + fw * .50) - left) * scale
@@ -139,19 +127,12 @@ def robust_canonical_body(gender):
 
 
 def hair_shape_envelope(gender, style, h, w):
-    """Allow hairstyle pixels only around the scalp/hair silhouette, never the face/body."""
     yy, xx = np.mgrid[0:h, 0:w]
     xn = xx / float(w)
     yn = yy / float(h)
     if gender == "male":
         cx = .58
-        rx, ry = {
-            "male_textured": (.105, .115),
-            "male_short": (.090, .100),
-            "male_medium": (.120, .145),
-            "male_undercut": (.105, .115),
-            "male_slick": (.105, .110),
-        }[style]
+        rx, ry = {"male_textured": (.105, .115), "male_short": (.090, .100), "male_medium": (.120, .145), "male_undercut": (.105, .115), "male_slick": (.105, .110)}[style]
         cy = .155
         env = 1.0 - np.clip(((xn-cx)/rx)**2 + ((yn-cy)/ry)**2, 0, 1)
         face = (((xn-cx)/.062)**2 + ((yn-.235)/.082)**2) < 1.0
@@ -190,27 +171,23 @@ def safe_align_style_hair(gender, style, head_anchor=None):
     edge_ratio = max(np.mean(a_crop[0] > 96), np.mean(a_crop[-1] > 96), np.mean(a_crop[:, 0] > 96), np.mean(a_crop[:, -1] > 96))
     if fill_ratio > .72 or edge_ratio > .55:
         raise SystemExit(f"Unsafe rectangular hairstyle mask rejected: {gender}/{style} fill={fill_ratio:.3f} edge={edge_ratio:.3f}")
-
     max_w, max_h, top_y = legacy.HAIR_ENVELOPES[style]
     scale = min(max_w / max(1, rgb_crop.shape[1]), max_h / max(1, rgb_crop.shape[0]))
     if gender == "male":
         scale *= 1.07
-
     out_w = max(1, round(rgb_crop.shape[1] * scale))
     out_h = max(1, round(rgb_crop.shape[0] * scale))
     rgb_crop = cv2.resize(rgb_crop, (out_w, out_h), interpolation=cv2.INTER_LANCZOS4)
     a_crop = cv2.resize(a_crop, (out_w, out_h), interpolation=cv2.INTER_LINEAR)
-
     if gender == "male" and head_anchor is not None:
         face_center_x, _, _, _ = head_anchor
-        # Fine calibration from the deployed screenshot: all five styles still
-        # sat a few pixels to the right of the face after face anchoring.
-        x = round(face_center_x - out_w / 2) - 5
+        # Second deployed calibration: move the shared male overlay another 7px left.
+        # Total correction is now 12px left from the raw face-centered placement.
+        x = round(face_center_x - out_w / 2) - 12
         y = top_y + 11
     else:
         x = round(legacy.CENTER_X - out_w / 2)
         y = top_y
-
     aligned_rgb = np.zeros((legacy.CANVAS_SIZE[1], legacy.CANVAS_SIZE[0], 3), dtype=np.float32)
     aligned_alpha = np.zeros((legacy.CANVAS_SIZE[1], legacy.CANVAS_SIZE[0]), dtype=np.float32)
     x2 = min(legacy.CANVAS_SIZE[0], x + out_w)
@@ -227,17 +204,14 @@ def safe_align_style_hair(gender, style, head_anchor=None):
 
 
 def build_locked_presets():
-    """Pre-render 250 assets from fixed full-body bases."""
     requested_gender = os.environ.get("CREATOR_BUILD_GENDER")
     written = 0
     for gender, styles in legacy.STYLE_SOURCES.items():
         if requested_gender and gender != requested_gender:
             continue
-
         fixed_body, skin_alpha, head_anchor = robust_canonical_body(gender)
         fixed_rgb = np.asarray(fixed_body, dtype=np.float32)
         aligned_hair = {style: safe_align_style_hair(gender, style, head_anchor) for style in styles}
-
         for skin_name, skin_rgb in legacy.base.SKINS.items():
             skinned = legacy.recolor_skin(fixed_rgb, skin_alpha, skin_rgb)
             for hair_name, hair_rgb in legacy.base.HAIRS.items():
@@ -246,23 +220,20 @@ def build_locked_presets():
                     hair_coloured = legacy.recolor_hair(hair_source, hair_alpha, hair_rgb, hair_name)
                     a = np.clip(hair_alpha, 0, 1)[..., None]
                     result = np.clip(skinned * (1 - a) + hair_coloured * a, 0, 255)
-
                     if gender == "male":
                         expected_lower = skinned[330:, :, :]
                         actual_lower = result[330:, :, :]
                         if not np.array_equal(np.rint(expected_lower).astype(np.uint8), np.rint(actual_lower).astype(np.uint8)):
                             raise SystemExit(f"Male body lock violated by hairstyle: {skin_name}/{hair_name}/{style}")
-
                     out = Image.fromarray(np.rint(result).astype(np.uint8), "RGB")
                     path = legacy.base.OUTPUT / gender / skin_name / hair_name / f"{style}.webp"
                     path.parent.mkdir(parents=True, exist_ok=True)
                     out.save(path, "WEBP", quality=legacy.WEBP_QUALITY, method=legacy.WEBP_METHOD)
                     written += 1
-
     expected = 125 if requested_gender else 250
     if written != expected:
         raise SystemExit(f"Unexpected creator preset count: {written}, expected {expected}")
-    print(f"Built {written} fixed-body creator presets with neutral base scalp and calibrated hair alignment")
+    print(f"Built {written} fixed-body creator presets anchored to canonical face")
 
 
 build_locked_presets()
