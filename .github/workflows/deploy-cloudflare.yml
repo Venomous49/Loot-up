@@ -67,3 +67,5 @@ jobs:
       - name: Fail when deployment failed
         if: steps.deploy.outputs.outcome != 'success'
         run: exit 1
+
+# Redeploy marker: user-api-token-2026-08-20
