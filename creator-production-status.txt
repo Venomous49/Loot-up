@@ -1,5 +1,5 @@
 status=success
-source_commit=93960c927534b3bec7574c02ca34ea7095db8dfa
+source_commit=cb606f926d9b3c055232e78c11168644e1ee9af9
 format=1728x910
 assets=250
 cloudflare=validated
