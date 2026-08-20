@@ -1,0 +1,102 @@
+status=failed
+wrong size assets/creator_sources/fullbody/male_base.png: (910, 1729) expected (910, 1728)
+male skin mask spills outside body: 1.877%
+wrong size assets/creator_sources/fullbody/female_base.png: (910, 1729) expected (910, 1728)
+female skin mask spills outside body: 1.406%
+wrong size assets/creator_sources/fullbody/hair/male_textured_black.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/male_textured_black.png: 53.9%
+wrong size assets/creator_sources/fullbody/hair/male_textured_brown.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/male_textured_brown.png: 53.5%
+wrong size assets/creator_sources/fullbody/hair/male_textured_blond.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/male_textured_blond.png: 53.5%
+wrong size assets/creator_sources/fullbody/hair/male_textured_red.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/male_textured_red.png: 52.7%
+wrong size assets/creator_sources/fullbody/hair/male_textured_purple.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/male_textured_purple.png: 51.5%
+wrong size assets/creator_sources/fullbody/hair/male_short_black.png: (910, 1729) expected (910, 1728)
+wrong size assets/creator_sources/fullbody/hair/male_short_brown.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/male_short_brown.png: 34.3%
+wrong size assets/creator_sources/fullbody/hair/male_short_blond.png: (910, 1729) expected (910, 1728)
+wrong size assets/creator_sources/fullbody/hair/male_short_red.png: (910, 1729) expected (910, 1728)
+wrong size assets/creator_sources/fullbody/hair/male_short_purple.png: (910, 1729) expected (910, 1728)
+wrong size assets/creator_sources/fullbody/hair/male_medium_black.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/male_medium_black.png: 55.0%
+wrong size assets/creator_sources/fullbody/hair/male_medium_brown.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/male_medium_brown.png: 55.3%
+wrong size assets/creator_sources/fullbody/hair/male_medium_blond.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/male_medium_blond.png: 56.1%
+wrong size assets/creator_sources/fullbody/hair/male_medium_red.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/male_medium_red.png: 55.2%
+wrong size assets/creator_sources/fullbody/hair/male_medium_purple.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/male_medium_purple.png: 56.1%
+wrong size assets/creator_sources/fullbody/hair/male_undercut_black.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/male_undercut_black.png: 39.2%
+missing assets/creator_sources/fullbody/hair/male_undercut_brown.png
+missing assets/creator_sources/fullbody/hair/male_undercut_blond.png
+missing assets/creator_sources/fullbody/hair/male_undercut_red.png
+missing assets/creator_sources/fullbody/hair/male_undercut_purple.png
+wrong size assets/creator_sources/fullbody/hair/male_slick_black.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/male_slick_black.png: 45.4%
+missing assets/creator_sources/fullbody/hair/male_slick_brown.png
+missing assets/creator_sources/fullbody/hair/male_slick_blond.png
+missing assets/creator_sources/fullbody/hair/male_slick_red.png
+missing assets/creator_sources/fullbody/hair/male_slick_purple.png
+wrong size assets/creator_sources/fullbody/hair/female_long_black.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/female_long_black.png: 51.4%
+wrong size assets/creator_sources/fullbody/hair/female_long_brown.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/female_long_brown.png: 51.1%
+wrong size assets/creator_sources/fullbody/hair/female_long_blond.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/female_long_blond.png: 48.6%
+wrong size assets/creator_sources/fullbody/hair/female_long_red.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/female_long_red.png: 48.9%
+wrong size assets/creator_sources/fullbody/hair/female_long_purple.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/female_long_purple.png: 51.1%
+wrong size assets/creator_sources/fullbody/hair/female_wavy_black.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/female_wavy_black.png: 49.4%
+missing assets/creator_sources/fullbody/hair/female_wavy_brown.png
+wrong size assets/creator_sources/fullbody/hair/female_wavy_blond.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/female_wavy_blond.png: 48.3%
+wrong size assets/creator_sources/fullbody/hair/female_wavy_red.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/female_wavy_red.png: 42.1%
+wrong size assets/creator_sources/fullbody/hair/female_wavy_purple.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/female_wavy_purple.png: 48.1%
+wrong size assets/creator_sources/fullbody/hair/female_bob_black.png: (910, 1729) expected (910, 1728)
+hair extends too low assets/creator_sources/fullbody/hair/female_bob_black.png: 0.675
+hair covers face assets/creator_sources/fullbody/hair/female_bob_black.png: 51.5%
+wrong size assets/creator_sources/fullbody/hair/female_bob_brown.png: (910, 1729) expected (910, 1728)
+hair extends too low assets/creator_sources/fullbody/hair/female_bob_brown.png: 0.681
+hair covers face assets/creator_sources/fullbody/hair/female_bob_brown.png: 49.6%
+wrong size assets/creator_sources/fullbody/hair/female_bob_blond.png: (910, 1729) expected (910, 1728)
+hair extends too low assets/creator_sources/fullbody/hair/female_bob_blond.png: 0.674
+hair covers face assets/creator_sources/fullbody/hair/female_bob_blond.png: 50.2%
+wrong size assets/creator_sources/fullbody/hair/female_bob_red.png: (910, 1729) expected (910, 1728)
+hair extends too low assets/creator_sources/fullbody/hair/female_bob_red.png: 0.675
+hair covers face assets/creator_sources/fullbody/hair/female_bob_red.png: 50.7%
+wrong size assets/creator_sources/fullbody/hair/female_bob_purple.png: (910, 1729) expected (910, 1728)
+hair extends too low assets/creator_sources/fullbody/hair/female_bob_purple.png: 0.676
+hair covers face assets/creator_sources/fullbody/hair/female_bob_purple.png: 51.0%
+wrong size assets/creator_sources/fullbody/hair/female_ponytail_black.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/female_ponytail_black.png: 52.4%
+wrong size assets/creator_sources/fullbody/hair/female_ponytail_brown.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/female_ponytail_brown.png: 52.8%
+wrong size assets/creator_sources/fullbody/hair/female_ponytail_blond.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/female_ponytail_blond.png: 52.9%
+wrong size assets/creator_sources/fullbody/hair/female_ponytail_red.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/female_ponytail_red.png: 56.6%
+wrong size assets/creator_sources/fullbody/hair/female_ponytail_purple.png: (910, 1729) expected (910, 1728)
+hair covers face assets/creator_sources/fullbody/hair/female_ponytail_purple.png: 57.0%
+wrong size assets/creator_sources/fullbody/hair/female_short_black.png: (910, 1729) expected (910, 1728)
+hair extends too low assets/creator_sources/fullbody/hair/female_short_black.png: 0.678
+hair covers face assets/creator_sources/fullbody/hair/female_short_black.png: 52.7%
+wrong size assets/creator_sources/fullbody/hair/female_short_brown.png: (910, 1729) expected (910, 1728)
+hair extends too low assets/creator_sources/fullbody/hair/female_short_brown.png: 0.684
+hair covers face assets/creator_sources/fullbody/hair/female_short_brown.png: 51.3%
+wrong size assets/creator_sources/fullbody/hair/female_short_blond.png: (910, 1729) expected (910, 1728)
+hair extends too low assets/creator_sources/fullbody/hair/female_short_blond.png: 0.682
+hair covers face assets/creator_sources/fullbody/hair/female_short_blond.png: 50.1%
+wrong size assets/creator_sources/fullbody/hair/female_short_red.png: (910, 1729) expected (910, 1728)
+hair extends too low assets/creator_sources/fullbody/hair/female_short_red.png: 0.684
+hair covers face assets/creator_sources/fullbody/hair/female_short_red.png: 51.6%
+wrong size assets/creator_sources/fullbody/hair/female_short_purple.png: (910, 1729) expected (910, 1728)
+hair extends too low assets/creator_sources/fullbody/hair/female_short_purple.png: 0.684
+hair covers face assets/creator_sources/fullbody/hair/female_short_purple.png: 51.5%
