@@ -118,7 +118,6 @@ def hair_shape_envelope(gender, style, h, w):
         env = 1.0 - np.clip(((xn-cx)/rx)**2 + ((yn-cy)/ry)**2, 0, 1)
         face = (((xn-cx)/.062)**2 + ((yn-.235)/.082)**2) < 1.0
         env[face] = 0
-        # Absolute male body lock: no hairstyle pixel may exist below the head zone.
         env[yn > .295] = 0
     else:
         cx = .52
@@ -153,14 +152,28 @@ def safe_align_style_hair(gender, style):
     edge_ratio = max(np.mean(a_crop[0] > 96), np.mean(a_crop[-1] > 96), np.mean(a_crop[:, 0] > 96), np.mean(a_crop[:, -1] > 96))
     if fill_ratio > .72 or edge_ratio > .55:
         raise SystemExit(f"Unsafe rectangular hairstyle mask rejected: {gender}/{style} fill={fill_ratio:.3f} edge={edge_ratio:.3f}")
+
     max_w, max_h, top_y = legacy.HAIR_ENVELOPES[style]
     scale = min(max_w / max(1, rgb_crop.shape[1]), max_h / max(1, rgb_crop.shape[0]))
+
+    # Production-wide skull calibration. This is deliberately global for every
+    # male hairstyle, every hair colour and every skin tone. Earlier attempts
+    # changed an unused layered generator, so the public pre-rendered matrix did
+    # not receive the correction. The canonical body stays completely fixed.
+    if gender == "male":
+        scale *= 1.07
+
     out_w = max(1, round(rgb_crop.shape[1] * scale))
     out_h = max(1, round(rgb_crop.shape[0] * scale))
     rgb_crop = cv2.resize(rgb_crop, (out_w, out_h), interpolation=cv2.INTER_LANCZOS4)
     a_crop = cv2.resize(a_crop, (out_w, out_h), interpolation=cv2.INTER_LINEAR)
+
     x = round(legacy.CENTER_X - out_w / 2)
     y = top_y
+    if gender == "male":
+        x -= 7
+        y += 11
+
     aligned_rgb = np.zeros((legacy.CANVAS_SIZE[1], legacy.CANVAS_SIZE[0], 3), dtype=np.float32)
     aligned_alpha = np.zeros((legacy.CANVAS_SIZE[1], legacy.CANVAS_SIZE[0]), dtype=np.float32)
     x2 = min(legacy.CANVAS_SIZE[0], x + out_w)
@@ -172,8 +185,6 @@ def safe_align_style_hair(gender, style):
     aligned_alpha[y:y2, x:x2] = a_crop[:ch, :cw].astype(np.float32) / 255.0
     aligned_alpha = cv2.GaussianBlur(aligned_alpha, (0, 0), 0.72)
     if gender == "male":
-        # Final hard guard in output coordinates. This guarantees that hair cannot
-        # replace the torso, arms or legs even if an upstream mask regresses.
         aligned_alpha[330:, :] = 0
     return aligned_rgb, np.clip(aligned_alpha, 0, 1)
 
@@ -205,9 +216,6 @@ def build_locked_presets():
                     a = np.clip(hair_alpha, 0, 1)[..., None]
                     result = np.clip(skinned * (1 - a) + hair_coloured * a, 0, 255)
 
-                    # Before compression, prove that hairstyle composition cannot alter
-                    # any male pixel below the head line. Skin tone may still affect the
-                    # fixed skin mask, but hair can never move/replace the body.
                     if gender == "male":
                         expected_lower = skinned[330:, :, :]
                         actual_lower = result[330:, :, :]
@@ -223,7 +231,7 @@ def build_locked_presets():
     expected = 125 if requested_gender else 250
     if written != expected:
         raise SystemExit(f"Unexpected creator preset count: {written}, expected {expected}")
-    print(f"Built {written} fixed-body creator presets")
+    print(f"Built {written} fixed-body creator presets with global male skull calibration")
 
 
 build_locked_presets()
