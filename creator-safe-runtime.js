@@ -1,105 +1,162 @@
-/* Rise Looter creator runtime v7
-   Visual stability first: use the clean full-frame hairstyle masters directly.
-   Keeps the validated street background and full-body framing intact.
-   Skin selection remains stored in avatarDraft and will be used by evolution assets,
-   but is never allowed to corrupt the base creator image. */
+/* Rise Looter creator runtime v11
+   Canonical matrix runtime: every visible creator state maps to one complete
+   pre-rendered WebP asset. No skin/hair overlays, filters, tint blocks or
+   compositing are used at runtime. */
 (() => {
-  const ROOT='/assets/creator_sources/';
-  const FEMALE=new Set(['female_long','female_wavy','female_bob','female_ponytail','female_short']);
-  const MALE_NATURAL=new Set(['male_textured','male_short','male_medium']);
+  const ROOT = '/assets/creator';
+  const FEMALE = ['female_long','female_wavy','female_bob','female_ponytail','female_short'];
+  const MALE = ['male_textured','male_short','male_medium','male_undercut','male_slick'];
+  const SKINS = new Set(['light','warm','medium','deep','dark']);
+  const COLOURS = new Set(['black','brown','blond','red','purple']);
 
-  function listForGender(){ return avatarDraft.gender==='female' ? femaleHair : maleHair; }
-  function normalizeStyle(){
-    const list=listForGender();
-    if(!list.some(([v])=>v===avatarDraft.hairStyle)) avatarDraft.hairStyle=list[0][0];
+  function stylesForGender(gender = avatarDraft.gender) {
+    return gender === 'female' ? FEMALE : MALE;
+  }
+
+  function normalizedState(state = avatarDraft, style = state.hairStyle) {
+    const gender = state?.gender === 'female' ? 'female' : 'male';
+    const skin = SKINS.has(state?.skin) ? state.skin : 'medium';
+    const hairColor = COLOURS.has(state?.hairColor) ? state.hairColor : 'brown';
+    const styles = stylesForGender(gender);
+    const hairStyle = styles.includes(style) ? style : styles[0];
+    return { gender, skin, hairColor, hairStyle };
+  }
+
+  function matrixPath(state = avatarDraft, style = state.hairStyle) {
+    const s = normalizedState(state, style);
+    return `${ROOT}/${s.gender}/${s.skin}/${s.hairColor}/${s.hairStyle}.webp`;
+  }
+
+  function fallbackPath(state = avatarDraft) {
+    const s = normalizedState(state);
+    return matrixPath(s, stylesForGender(s.gender)[0]);
+  }
+
+  function setSave(enabled) {
+    const button = document.getElementById('saveAvatar');
+    if (button) button.disabled = !enabled;
+  }
+
+  function normalizeDraftStyle() {
+    const styles = stylesForGender();
+    if (!styles.includes(avatarDraft.hairStyle)) avatarDraft.hairStyle = styles[0];
     return avatarDraft.hairStyle;
   }
-  function cleanSource(style,color){
-    const c=color==='black'?'brown':color;
-    if(FEMALE.has(style)){
-      if(style==='female_wavy' && (color==='black'||c==='brown')) return `${ROOT}female_wavy.png`;
-      if(color==='black') return `${ROOT}${style}_brown_natural.png`;
-      return `${ROOT}${style}_${c}_natural.png`;
-    }
-    if(MALE_NATURAL.has(style)){
-      if(color==='black') return `${ROOT}${style}_brown_natural.png`;
-      return `${ROOT}${style}_${c}_natural.png`;
-    }
-    return `${ROOT}${style}_clean.png`;
-  }
-  function fallbackSource(){
-    return avatarDraft.gender==='female' ? `${ROOT}female_long_brown_natural.png` : `${ROOT}male_textured_brown_natural.png`;
-  }
-  function setSave(ok){ const b=document.getElementById('saveAvatar'); if(b) b.disabled=!ok; }
 
-  function updateCreator(){
-    const p=document.getElementById('creatorPreview');
-    if(!p||typeof avatarDraft==='undefined') return;
-    const s=normalizeStyle();
-    const src=cleanSource(s,avatarDraft.hairColor);
-    const fallback=fallbackSource();
-    p.innerHTML=`<img class="creator-real-preview" src="${src}" alt="Aperçu Looter" data-fallback="${fallback}" data-fallback-used="0"><div class="creator-asset-missing" hidden><strong>APERÇU INDISPONIBLE</strong></div><div class="creator-live-badge"><b>NIVEAU 1</b><strong>DÉBUTANT</strong></div>`;
-    const img=p.querySelector('.creator-real-preview');
-    const miss=p.querySelector('.creator-asset-missing');
+  function updateCreator() {
+    const root = document.getElementById('creatorPreview');
+    if (!root || typeof avatarDraft === 'undefined') return;
+
+    normalizeDraftStyle();
+    const requested = matrixPath();
+    const fallback = fallbackPath();
+    root.innerHTML = `<img class="creator-real-preview" src="${requested}" alt="Aperçu Looter" data-fallback="${fallback}" data-tried-fallback="0"><div class="creator-asset-missing" hidden><strong>APERÇU INDISPONIBLE</strong></div><div class="creator-live-badge"><b>NIVEAU 1</b><strong>DÉBUTANT</strong></div>`;
+
+    const img = root.querySelector('.creator-real-preview');
+    const missing = root.querySelector('.creator-asset-missing');
     setSave(false);
-    img.onload=()=>setSave(true);
-    img.onerror=()=>{
-      if(img.dataset.fallbackUsed==='0' && img.src!==new URL(fallback,location.href).href){
-        img.dataset.fallbackUsed='1';
-        img.src=fallback;
+
+    img.onload = () => {
+      setSave(img.dataset.triedFallback !== '1');
+    };
+
+    img.onerror = () => {
+      const fallbackURL = new URL(fallback, location.href).href;
+      if (img.dataset.triedFallback === '0' && img.src !== fallbackURL && requested !== fallback) {
+        img.dataset.triedFallback = '1';
+        img.src = fallback;
         return;
       }
-      img.hidden=true; miss.hidden=false; setSave(false);
+      img.hidden = true;
+      missing.hidden = false;
+      setSave(false);
     };
   }
 
-  function renderHair(){
-    if(typeof avatarDraft==='undefined') return;
-    const list=listForGender(); normalizeStyle();
-    const root=document.getElementById('hairStyleChoices'); if(!root) return;
-    root.innerHTML=list.map(([v,label])=>{
-      const src=cleanSource(v,avatarDraft.hairColor);
-      return `<button type="button" class="choice hair-choice ${avatarDraft.hairStyle===v?'selected':''}" data-value="${v}"><span class="hair-thumb"><img src="${src}" alt=""></span><span>${label}</span></button>`;
+  function renderHair() {
+    if (typeof avatarDraft === 'undefined') return;
+    normalizeDraftStyle();
+    const root = document.getElementById('hairStyleChoices');
+    if (!root) return;
+
+    const styles = stylesForGender();
+    const labels = avatarDraft.gender === 'female'
+      ? ['Longue','Ondulée','Carré','Queue-de-cheval','Courte']
+      : ['Texturée','Courte','Mi-longue','Undercut','Plaquée'];
+
+    root.innerHTML = styles.map((value, index) => {
+      const src = matrixPath(avatarDraft, value);
+      const selected = avatarDraft.hairStyle === value ? 'selected' : '';
+      return `<button type="button" class="choice hair-choice ${selected}" data-value="${value}"><span class="hair-thumb"><img src="${src}" alt="${labels[index]}"></span><span>${labels[index]}</span></button>`;
     }).join('');
-    root.querySelectorAll('.hair-choice').forEach(btn=>{
-      const img=btn.querySelector('img');
-      img.onerror=()=>{ img.src=fallbackSource(); };
-      btn.onclick=()=>{ avatarDraft.hairStyle=btn.dataset.value; renderHair(); updateCreator(); };
+
+    root.querySelectorAll('.hair-choice').forEach(button => {
+      const img = button.querySelector('img');
+      img.onerror = () => {
+        if (img.dataset.triedFallback === '1') return;
+        img.dataset.triedFallback = '1';
+        img.src = fallbackPath();
+      };
+      button.onclick = () => {
+        avatarDraft.hairStyle = button.dataset.value;
+        renderHair();
+        updateCreator();
+      };
     });
   }
 
-  function cleanBeginnerPath(profile){
-    const gender=profile?.avatar_gender||'male';
-    const color=profile?.avatar_hair_color||'brown';
-    const defaultStyle=gender==='female'?'female_long':'male_textured';
-    const style=profile?.avatar_hair_style||defaultStyle;
-    const previousGender=avatarDraft.gender, previousColor=avatarDraft.hairColor;
-    avatarDraft.gender=gender; avatarDraft.hairColor=color;
-    const src=cleanSource(style,color);
-    avatarDraft.gender=previousGender; avatarDraft.hairColor=previousColor;
-    return src;
+  function profileState(profile) {
+    const gender = profile?.avatar_gender === 'female' ? 'female' : 'male';
+    const styles = stylesForGender(gender);
+    return normalizedState({
+      gender,
+      skin: profile?.avatar_skin || 'medium',
+      hairColor: profile?.avatar_hair_color || 'brown',
+      hairStyle: profile?.avatar_hair_style || styles[0],
+    });
   }
 
-  function install(){
-    window.updateCreatorPreview=updateCreator;
-    window.renderHairChoices=renderHair;
-    window.creatorAssetPath=(state=avatarDraft,style=state.hairStyle)=>{
-      const oldG=avatarDraft.gender,oldC=avatarDraft.hairColor;
-      avatarDraft.gender=state.gender; avatarDraft.hairColor=state.hairColor;
-      const src=cleanSource(style,state.hairColor);
-      avatarDraft.gender=oldG; avatarDraft.hairColor=oldC;
-      return src;
+  function beginnerPath(profile) {
+    const state = profileState(profile);
+    return matrixPath(state, state.hairStyle);
+  }
+
+  function install() {
+    if (typeof avatarDraft === 'undefined') return;
+
+    window.creatorAssetPath = matrixPath;
+    window.creatorFallbackPath = (gender = avatarDraft.gender, skin = avatarDraft.skin, hairColor = avatarDraft.hairColor) => {
+      const styles = stylesForGender(gender);
+      return matrixPath({ gender, skin, hairColor, hairStyle: styles[0] }, styles[0]);
     };
-    const oldAssetPath=window.assetPath;
-    window.assetPath=(profile,stage)=> stage===0 ? cleanBeginnerPath(profile) : oldAssetPath(profile,stage);
-    ['genderChoices','skinChoices','hairColorChoices'].forEach(id=>{
-      const root=document.getElementById(id);
-      if(root) root.addEventListener('click',()=>setTimeout(()=>{renderHair();updateCreator();},0),true);
+    window.updateCreatorPreview = updateCreator;
+    window.renderHairChoices = renderHair;
+
+    const previousAssetPath = window.assetPath;
+    if (typeof previousAssetPath === 'function') {
+      window.assetPath = (profile, stage) => stage === 0 ? beginnerPath(profile) : previousAssetPath(profile, stage);
+    }
+
+    ['genderChoices','skinChoices','hairColorChoices'].forEach(id => {
+      const root = document.getElementById(id);
+      if (!root) return;
+      root.addEventListener('click', () => {
+        setTimeout(() => {
+          normalizeDraftStyle();
+          renderHair();
+          updateCreator();
+        }, 0);
+      }, true);
     });
-    renderHair(); updateCreator();
-    if(window.currentProfile && document.getElementById('mainCharacter')){
-      document.getElementById('mainCharacter').innerHTML=window.characterHTML(window.currentProfile,0);
+
+    renderHair();
+    updateCreator();
+
+    if (window.currentProfile && document.getElementById('mainCharacter') && typeof window.characterHTML === 'function') {
+      document.getElementById('mainCharacter').innerHTML = window.characterHTML(window.currentProfile, 0);
     }
   }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install,{once:true}); else install();
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once: true });
+  else install();
 })();
