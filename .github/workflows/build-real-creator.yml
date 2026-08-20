@@ -7,6 +7,8 @@ on:
       - 'scripts/build_creator_fullbody_hd_v3.py'
       - 'scripts/build_creator_fullbody_hd.py'
       - 'scripts/build_creator_from_hairstyle_masters.py'
+      - 'scripts/validate_creator_library.py'
+      - 'scripts/validate_creator_library_hd.py'
       - 'assets/creator_sources/**'
       - '.github/workflows/build-real-creator.yml'
   workflow_dispatch:
@@ -78,4 +80,4 @@ jobs:
           gh workflow run deploy-cloudflare.yml --ref main
           gh workflow run creator-runtime-smoke.yml --ref main
 
-# force-rebuild: 2026-08-21T00:40+02:00
+# force-rebuild: 2026-08-21T00:45+02:00
