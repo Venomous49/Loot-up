@@ -1,1 +1,1 @@
-BAD SIZE /home/runner/work/RiseLooter/RiseLooter/assets/creator_sources/fullbody/background.webp: (1729, 910), expected (1728, 910)
+Layered creator validated: immutable bases, skin-only overlays, transparent aligned hair layers

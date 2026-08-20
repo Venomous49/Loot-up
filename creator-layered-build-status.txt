@@ -1,4 +1,4 @@
-status=failure
-source_commit=a1da3fbd308288e49b050cda43c9af6131072c56
+status=success
+source_commit=05791be8be4c15ee6789f075fd6bd778b984ce62
 generator=layered-v1
 canvas=1728x910
