@@ -32,12 +32,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Deploy Worker and static assets with diagnostic capture
+      - name: Verify Cloudflare credential type
+        shell: bash
+        run: |
+          set +e
+          user_code=$(curl -sS -o /tmp/userverify.json -w '%{http_code}' -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify)
+          account_code=$(curl -sS -o /tmp/accountverify.json -w '%{http_code}' -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/tokens/verify")
+          user_ok=$(python3 -c "import json; print(str(json.load(open('/tmp/userverify.json')).get('success',False)).lower())" 2>/dev/null || echo false)
+          account_ok=$(python3 -c "import json; print(str(json.load(open('/tmp/accountverify.json')).get('success',False)).lower())" 2>/dev/null || echo false)
+          printf 'user_verify_http=%s\nuser_verify_success=%s\naccount_verify_http=%s\naccount_verify_success=%s\n' "$user_code" "$user_ok" "$account_code" "$account_ok" > cloudflare-auth-diagnostic.txt
+          exit 0
+      - name: Deploy Worker and static assets
         id: deploy
         shell: bash
         run: |
           set +e
-          # Wrangler expects CLOUDFLARE_API_TOKEN for a User API Token.
           npx --yes wrangler@4 deploy > /tmp/wrangler-deploy.log 2>&1
           code=$?
           set -e
@@ -55,7 +64,7 @@ jobs:
           printf 'status=%s\nsource_commit=%s\ncreator_version=dedicated-fullbody-v23\nasset_cache=fullbody23\napi_token_present=%s\naccount_id_present=%s\n' '${{ steps.deploy.outputs.outcome }}' "$GITHUB_SHA" "$HAS_CF_TOKEN" "$HAS_CF_ACCOUNT" > cloudflare-deploy-status.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add cloudflare-deploy-status.txt cloudflare-deploy-log.txt
+          git add cloudflare-deploy-status.txt cloudflare-deploy-log.txt cloudflare-auth-diagnostic.txt
           git diff --cached --quiet || (git commit -m 'Record Cloudflare deployment diagnostics' && git push origin HEAD:main)
       - name: Fail when deployment failed
         if: steps.deploy.outputs.outcome != 'success'
