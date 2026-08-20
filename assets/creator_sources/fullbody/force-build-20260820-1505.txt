@@ -1,0 +1,2 @@
+trigger=layered-v1
+purpose=force GitHub Actions push path match
