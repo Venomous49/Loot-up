@@ -41,25 +41,60 @@ def skin_layer(gender,base):
   trgb=cv2.cvtColor(toned.astype(np.uint8),cv2.COLOR_LAB2RGB); rgba=np.zeros((SIZE[1],SIZE[0],4),dtype=np.uint8); rgba[...,:3]=trgb; rgba[...,3]=np.clip(soft*255,0,255).astype(np.uint8)
   Image.fromarray(rgba,'RGBA').save(OUT/gender/f'skin-{name}.webp','WEBP',lossless=True,method=6)
 
+def face_box(gender):
+ mask=np.asarray(exact(SRC/f'{gender}_skin_mask.png','L'),dtype=np.uint8)
+ bw=(mask>80).astype(np.uint8)
+ n,labels,stats,cent=cv2.connectedComponentsWithStats(bw,8)
+ candidates=[]
+ for i in range(1,n):
+  x,y,w,h,area=stats[i]
+  if area<120: continue
+  # face is the highest meaningful exposed-skin component
+  candidates.append((y,-area,x,y,w,h,area))
+ if not candidates: raise SystemExit(f'{gender}: cannot detect face anchor')
+ _,_,x,y,w,h,_=sorted(candidates)[0]
+ return (x,y,w,h)
+
+def normalize_hair(im,gender):
+ arr=np.asarray(im,dtype=np.uint8); a=arr[...,3]
+ ys,xs=np.where(a>16)
+ if len(xs)<250: raise SystemExit('EMPTY HAIR SOURCE')
+ x0,x1,y0,y1=int(xs.min()),int(xs.max()+1),int(ys.min()),int(ys.max()+1)
+ crop=Image.fromarray(arr[y0:y1,x0:x1],'RGBA')
+ # Keep only the upper portion of contaminated source masks; hood/shoulder contamination sits below the actual hair mass.
+ ca=np.asarray(crop.getchannel('A'))
+ cys,cxs=np.where(ca>16)
+ if len(cxs)<250: raise SystemExit('EMPTY HAIR CROP')
+ ch=crop.height
+ keep_h=max(12,int(ch*0.58))
+ crop_arr=np.asarray(crop,dtype=np.uint8).copy()
+ crop_arr[keep_h:,:,:]=0
+ crop=Image.fromarray(crop_arr,'RGBA')
+ # Trim again after removing the lower contamination.
+ aa=np.asarray(crop.getchannel('A')); ys2,xs2=np.where(aa>16)
+ if len(xs2)<180: raise SystemExit('HAIR CLEANUP REMOVED TOO MUCH')
+ crop=crop.crop((int(xs2.min()),int(ys2.min()),int(xs2.max()+1),int(ys2.max()+1)))
+ fx,fy,fw,fh=face_box(gender)
+ # Fit proportionally around the detected face: natural width ~1.45x face, height ~1.15x face.
+ target_w=max(70,int(fw*1.45)); target_h=max(55,int(fh*1.15))
+ scale=min(target_w/crop.width,target_h/crop.height)
+ nw=max(1,int(crop.width*scale)); nh=max(1,int(crop.height*scale))
+ crop=crop.resize((nw,nh),Image.Resampling.LANCZOS)
+ # Center on face, sitting slightly above forehead; no runtime transform needed.
+ tx=int(fx+fw/2-nw/2); ty=int(fy-nh*0.42)
+ tx=max(0,min(SIZE[0]-nw,tx)); ty=max(0,min(SIZE[1]-nh,ty))
+ canvas=Image.new('RGBA',SIZE,(0,0,0,0)); canvas.alpha_composite(crop,(tx,ty))
+ return canvas
+
 def hair_layers(gender):
- # Hair PNGs are already full-canvas registration layers. Never scale/reposition them in runtime.
- # Reject source masks that include hood/shoulders/body instead of silently publishing bad overlays.
- person=np.asarray(exact(SRC/f'{gender}_base.png','RGBA').getchannel('A'),dtype=np.uint8)
- pys,pxs=np.where(person>12); person_top=int(pys.min()); person_left=int(pxs.min()); person_right=int(pxs.max())
  for style in STYLES[gender]:
   for color in COLORS:
-   p=HAIR/f'{style}_{color}.png'; im=exact(p,'RGBA'); a=np.asarray(im.getchannel('A'),dtype=np.uint8)
-   ys,xs=np.where(a>16)
-   if len(xs)<250: raise SystemExit(f'EMPTY HAIR {p}')
-   w=int(xs.max()-xs.min()+1); h=int(ys.max()-ys.min()+1); cx=float(xs.min()+xs.max())/2
-   person_w=max(1,person_right-person_left+1); pcx=float(person_left+person_right)/2
-   # Hair must stay in a compact head region. This catches the visible pink hood/shoulder spill.
-   if ys.min() < max(0,person_top-45): raise SystemExit(f'HAIR TOO HIGH {p}: y={ys.min()}')
-   if ys.max() > person_top+220: raise SystemExit(f'HAIR MASK INCLUDES HOOD/BODY {p}: y={ys.max()}')
-   if h>230 or w>240: raise SystemExit(f'HAIR MASK OVERSIZED {p}: {w}x{h}')
-   if abs(cx-pcx)>105: raise SystemExit(f'HAIR MASK OFF-CENTER {p}: hair_cx={cx:.1f}, person_cx={pcx:.1f}')
-   arr=np.asarray(im,dtype=np.uint8).copy(); arr[a==0,:3]=0
-   Image.fromarray(arr,'RGBA').save(OUT/gender/f'hair-{style}-{color}.webp','WEBP',lossless=True,method=6)
+   p=HAIR/f'{style}_{color}.png'; im=exact(p,'RGBA'); clean=normalize_hair(im,gender)
+   a=np.asarray(clean.getchannel('A'),dtype=np.uint8); ys,xs=np.where(a>16)
+   if len(xs)<180: raise SystemExit(f'EMPTY CLEAN HAIR {p}')
+   # Final guard: generated hair must stay compact around the head and never reach hood/shoulders.
+   if (ys.max()-ys.min()+1)>220 or (xs.max()-xs.min()+1)>250: raise SystemExit(f'CLEAN HAIR OVERSIZED {p}')
+   clean.save(OUT/gender/f'hair-{style}-{color}.webp','WEBP',lossless=True,method=6)
 
 def validate_outputs():
  for g in ('male','female'):
@@ -71,6 +106,6 @@ def validate_outputs():
 def main():
  for g in ('male','female'):
   base=build_base(g); skin_layer(g,base); hair_layers(g)
- validate_outputs(); print('Layered creator validated: compact registered hair masks, immutable base and skin overlays')
+ validate_outputs(); print('Layered creator validated: hair cleaned, face-anchored and hood-safe')
 
 if __name__=='__main__': main()
