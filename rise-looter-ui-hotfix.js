@@ -1,59 +1,4 @@
 (() => {
-  const ROOT='/assets/creator_sources/';
-  const FULL=ROOT+'fullbody/';
-  const HAIR=FULL+'hair/';
-  const maleStyles=new Set(['male_textured','male_short','male_medium','male_undercut','male_slick']);
-  const femaleStyles=new Set(['female_long','female_wavy','female_bob','female_ponytail','female_short']);
-  const skinTones={light:'#f4d6c0',warm:'#d9a06d',medium:'#b97855',deep:'#7d4b36',dark:'#4a2d24'};
-
-  function normalized(gender,style){
-    const g=gender==='female'?'female':'male';
-    const fallback=g==='female'?'female_bob':'male_textured';
-    if(g==='male'&&!maleStyles.has(style)) style=fallback;
-    if(g==='female'&&!femaleStyles.has(style)) style=fallback;
-    return [g,style];
-  }
-  function baseFor(g){return `${FULL}${g}_base.png`;}
-  function skinMaskFor(g){return `${FULL}${g}_skin_mask.png`;}
-  function hairFor(g,s,c){return `${HAIR}${s}_${c||'brown'}.png`;}
-
-  function avatarMarkup(gender,style,color,skin,home=false){
-    const [g,s]=normalized(gender,style);
-    const tone=skinTones[skin]||skinTones.medium;
-    return `<div class="rl-avatar-stack ${g==='female'?'female-avatar':''}${home?' home-avatar':''}" data-gender="${g}" data-skin="${skin||'medium'}" style="--skin-tone:${tone}">
-      <img class="rl-avatar-bg" src="${FULL}background.webp?avatar=v14" alt="">
-      <img class="rl-avatar-base" src="${baseFor(g)}?avatar=v14" alt="Looter">
-      <div class="rl-avatar-skin" style="-webkit-mask-image:url('${skinMaskFor(g)}?avatar=v14');mask-image:url('${skinMaskFor(g)}?avatar=v14')"></div>
-      <img class="rl-avatar-hair" src="${hairFor(g,s,color)}?avatar=v14" alt="">
-    </div>`;
-  }
-
-  function attachFallbacks(root){
-    root.querySelectorAll('.rl-avatar-base,.rl-avatar-bg,.rl-avatar-hair').forEach(img=>{img.onerror=()=>{img.style.display='none';};});
-  }
-
-  function restoreCreator(){
-    if(typeof avatarDraft==='undefined') return;
-    const preview=document.getElementById('creatorPreview'); if(!preview) return;
-    const gender=avatarDraft.gender||'male';
-    const style=avatarDraft.hairStyle||(gender==='female'?'female_bob':'male_textured');
-    const color=avatarDraft.hairColor||'brown';
-    const skin=avatarDraft.skin||'medium';
-    preview.innerHTML=`${avatarMarkup(gender,style,color,skin,false)}<div class="creator-live-badge"><b>NIVEAU 1</b><strong>DÉBUTANT</strong></div>`;
-    attachFallbacks(preview);
-  }
-
-  function restoreHomepage(){
-    const holder=document.getElementById('mainCharacter'); if(!holder) return;
-    const p=window.currentProfile||{};
-    const gender=p.avatar_gender||'male';
-    const style=p.avatar_hair_style||(gender==='female'?'female_bob':'male_textured');
-    const color=p.avatar_hair_color||'brown';
-    const skin=p.avatar_skin||'medium';
-    holder.innerHTML=`<div class="character-scene-clean">${avatarMarkup(gender,style,color,skin,true)}</div>`;
-    attachFallbacks(holder);
-  }
-
   function surveyOnlyUI(){
     document.querySelectorAll('.filter').forEach(btn=>{
       const t=(btn.textContent||'').toLowerCase();
@@ -77,9 +22,9 @@
     currentProfile.xp=newXP; localStorage.setItem(key,String(reward)); if(typeof window.renderDashboard==='function') window.renderDashboard(currentProfile);
   }
 
-  function refreshAll(){restoreCreator();restoreHomepage();surveyOnlyUI();awardDailyStreakXP();}
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(refreshAll,180),{once:true}); else setTimeout(refreshAll,180);
-  document.addEventListener('click',e=>{if(e.target.closest('#genderChoices,#skinChoices,#hairColorChoices,#hairStyleChoices,#testCreator')) setTimeout(()=>{restoreCreator();surveyOnlyUI();},80);},true);
-  const obs=new MutationObserver(()=>{clearTimeout(window.__rlHotfixTimer);window.__rlHotfixTimer=setTimeout(()=>{restoreHomepage();surveyOnlyUI();awardDailyStreakXP();},150);});
+  function refreshUI(){surveyOnlyUI();awardDailyStreakXP();}
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(refreshUI,180),{once:true}); else setTimeout(refreshUI,180);
+  document.addEventListener('click',e=>{if(e.target.closest('.filter,#testCreator')) setTimeout(surveyOnlyUI,80);},true);
+  const obs=new MutationObserver(()=>{clearTimeout(window.__rlHotfixTimer);window.__rlHotfixTimer=setTimeout(refreshUI,150);});
   obs.observe(document.documentElement,{childList:true,subtree:true});
 })();
