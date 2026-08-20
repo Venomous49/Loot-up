@@ -1,1 +1,1 @@
-layered-v4-fit1: enlarged centered fullbody and fine skull hair alignment
+layered-v4-fit2: male_medium +5% width, +3% height, 5px left, 2px down
