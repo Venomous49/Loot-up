@@ -33,3 +33,5 @@ for gender in ('male','female'):
     mask=cv2.GaussianBlur(mask,(9,9),0)
     cv2.imwrite(str(FULL/f'{gender}_skin_mask.png'),mask)
     print('built',gender)
+
+# trigger: skin-mask-v1
