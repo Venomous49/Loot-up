@@ -1,0 +1,4 @@
+status=failure
+source_commit=1248f675852e97f0fa708385bbd4848f36849780
+creator_version=dedicated-fullbody-v23
+asset_cache=fullbody23
