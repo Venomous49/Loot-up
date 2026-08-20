@@ -1,5 +1,5 @@
 status=failed
-source_commit=5f52b81eea6d656e64f2502d20c1747ead5be27b
+source_commit=59be2d45142e5fb7e03b7b84645d449302a22821
 cloudflare=not-validated
 creator_version=dedicated-fullbody-v23
 asset_cache=fullbody23
