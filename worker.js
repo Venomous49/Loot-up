@@ -2,7 +2,7 @@ class RiseLooterHead {
   element(element) {
     element.append('<link rel="stylesheet" href="/creator-hd.css?v=7">', { html: true });
     element.append('<script src="/silhouette-fix.js?v=6" defer></script>', { html: true });
-    element.append('<script src="/rise-looter-ui-hotfix.js?v=4" defer></script>', { html: true });
+    element.append('<script src="/rise-looter-ui-hotfix.js?v=5" defer></script>', { html: true });
   }
 }
 
@@ -13,8 +13,8 @@ export default {
     if (!contentType.includes('text/html')) return response;
 
     const headers = new Headers(response.headers);
-    headers.set('x-riselooter-creator-source', 'canonical-fullbody');
-    headers.set('x-riselooter-creator-version', 'fullbody-v12');
+    headers.set('x-riselooter-creator-source', 'clean-canonical-fullbody');
+    headers.set('x-riselooter-creator-version', 'fullbody-v13');
     headers.set('x-riselooter-silhouettes', 'character-cutout-v6');
     headers.set('x-riselooter-launch-mode', 'survey-only-v2');
 
