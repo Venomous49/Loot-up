@@ -68,10 +68,11 @@ def native_skin_mask(scene, person_alpha):
 
 
 def robust_canonical_body(gender):
-    """Build exactly one fixed full-body scene per gender.
+    """Build exactly one fixed full-body scene per gender and return its head anchor.
 
-    Every preset is derived from this exact scene. Hairstyle source images are never
-    allowed to contribute torso, arms, legs, clothing or pose pixels.
+    The head anchor is measured from the real canonical face after the same crop,
+    scale and paste transform used for the body. This is critical because the
+    character leans: the face is not centered on the canvas/body bounding box.
     """
     path, _ = legacy.CANONICAL[gender]
     scene = native_scene(path)
@@ -97,7 +98,16 @@ def robust_canonical_body(gender):
     skin_layer = Image.new("L", legacy.CANVAS_SIZE, 0)
     skin_layer.paste(skin_crop, (x, y))
     skin_layer = skin_layer.filter(ImageFilter.GaussianBlur(.8))
-    return body, np.asarray(skin_layer, dtype=np.float32) / 255.0
+
+    # Measure the actual face in the canonical source and transform that point
+    # into final-canvas coordinates. This removes the shared left/right offset
+    # that affected all five male hairstyles when CENTER_X was used directly.
+    fx, fy, fw, fh = legacy.base.detect_face(scene)
+    left, top, _, _ = bbox
+    face_center_x = x + ((fx + fw * .50) - left) * scale
+    face_top_y = y + (fy - top) * scale
+    head_anchor = (float(face_center_x), float(face_top_y), float(fw * scale), float(fh * scale))
+    return body, np.asarray(skin_layer, dtype=np.float32) / 255.0, head_anchor
 
 
 def hair_shape_envelope(gender, style, h, w):
@@ -133,7 +143,7 @@ def hair_shape_envelope(gender, style, h, w):
     return cv2.GaussianBlur(np.clip(env, 0, 1).astype(np.float32), (0, 0), 1.2)
 
 
-def safe_align_style_hair(gender, style):
+def safe_align_style_hair(gender, style, head_anchor=None):
     source = legacy.fit_scene(legacy.STYLE_SOURCES[gender][style])
     raw = legacy.fallback_hair_mask(source, gender, style)
     h, w = raw.shape
@@ -155,11 +165,6 @@ def safe_align_style_hair(gender, style):
 
     max_w, max_h, top_y = legacy.HAIR_ENVELOPES[style]
     scale = min(max_w / max(1, rgb_crop.shape[1]), max_h / max(1, rgb_crop.shape[0]))
-
-    # Production-wide skull calibration. This is deliberately global for every
-    # male hairstyle, every hair colour and every skin tone. Earlier attempts
-    # changed an unused layered generator, so the public pre-rendered matrix did
-    # not receive the correction. The canonical body stays completely fixed.
     if gender == "male":
         scale *= 1.07
 
@@ -168,11 +173,15 @@ def safe_align_style_hair(gender, style):
     rgb_crop = cv2.resize(rgb_crop, (out_w, out_h), interpolation=cv2.INTER_LANCZOS4)
     a_crop = cv2.resize(a_crop, (out_w, out_h), interpolation=cv2.INTER_LINEAR)
 
-    x = round(legacy.CENTER_X - out_w / 2)
-    y = top_y
-    if gender == "male":
-        x -= 7
-        y += 11
+    if gender == "male" and head_anchor is not None:
+        # The five hairstyles now follow the actual canonical face center rather
+        # than the global canvas center. Keep the proven vertical calibration.
+        face_center_x, _, _, _ = head_anchor
+        x = round(face_center_x - out_w / 2)
+        y = top_y + 11
+    else:
+        x = round(legacy.CENTER_X - out_w / 2)
+        y = top_y
 
     aligned_rgb = np.zeros((legacy.CANVAS_SIZE[1], legacy.CANVAS_SIZE[0], 3), dtype=np.float32)
     aligned_alpha = np.zeros((legacy.CANVAS_SIZE[1], legacy.CANVAS_SIZE[0]), dtype=np.float32)
@@ -190,22 +199,16 @@ def safe_align_style_hair(gender, style):
 
 
 def build_locked_presets():
-    """Pre-render 250 assets from fixed full-body bases.
-
-    Allowed differences are strictly:
-      1) skin-tone transfer inside the fixed skin mask;
-      2) hairstyle + hair colour inside the fixed head/hair mask.
-    The underlying full-body pose/clothes/arms/legs never come from hairstyle assets.
-    """
+    """Pre-render 250 assets from fixed full-body bases."""
     requested_gender = os.environ.get("CREATOR_BUILD_GENDER")
     written = 0
     for gender, styles in legacy.STYLE_SOURCES.items():
         if requested_gender and gender != requested_gender:
             continue
 
-        fixed_body, skin_alpha = robust_canonical_body(gender)
+        fixed_body, skin_alpha, head_anchor = robust_canonical_body(gender)
         fixed_rgb = np.asarray(fixed_body, dtype=np.float32)
-        aligned_hair = {style: safe_align_style_hair(gender, style) for style in styles}
+        aligned_hair = {style: safe_align_style_hair(gender, style, head_anchor) for style in styles}
 
         for skin_name, skin_rgb in legacy.base.SKINS.items():
             skinned = legacy.recolor_skin(fixed_rgb, skin_alpha, skin_rgb)
@@ -231,7 +234,7 @@ def build_locked_presets():
     expected = 125 if requested_gender else 250
     if written != expected:
         raise SystemExit(f"Unexpected creator preset count: {written}, expected {expected}")
-    print(f"Built {written} fixed-body creator presets with global male skull calibration")
+    print(f"Built {written} fixed-body creator presets anchored to canonical face")
 
 
 build_locked_presets()
