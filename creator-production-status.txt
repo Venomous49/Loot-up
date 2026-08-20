@@ -1,3 +1,6 @@
-status=failed
-source_commit=8d2414136b9f833db552ff1082eb4f73b0f8f74b
-cloudflare=not-validated
+status=success
+source_commit=953222592abcfbfb1f799131752dce2b5a51e077
+format=1728x910
+assets=250
+cloudflare=validated
+runtime_combinations=250
