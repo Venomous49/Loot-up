@@ -5,6 +5,7 @@ on:
     paths:
       - 'index.html'
       - 'worker.js'
+      - 'creator-safe-runtime.js'
       - 'assets/creator/**'
       - 'assets/creator_sources/**'
       - 'scripts/validate_creator_library.py'
@@ -28,6 +29,18 @@ jobs:
       - run: python -m pip install --quiet 'numpy<3' opencv-python-headless
       - name: Validate all 250 pre-rendered creator assets and UI routing
         run: python scripts/validate_creator_library.py
+
+      - name: Require canonical matrix runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          runtime=creator-safe-runtime.js
+          grep -q "const ROOT = '/assets/creator'" "$runtime"
+          grep -q 'matrixPath' "$runtime"
+          grep -q 'data-tried-fallback="0"' "$runtime"
+          grep -q "skin: profile?.avatar_skin || 'medium'" "$runtime"
+          ! grep -q "ROOT='/assets/creator_sources/'" "$runtime"
+          ! grep -q 'creator-skin-overlay\|creator-hair-overlay\|hue-rotate\|mix-blend-mode' "$runtime"
 
       - name: Reject workflows that can rewrite production creator routing
         shell: bash
@@ -72,11 +85,15 @@ jobs:
           set -euo pipefail
           smoke=.github/workflows/creator-runtime-smoke.yml
           grep -q -- "- 'worker.js'" "$smoke"
+          grep -q -- "- 'creator-safe-runtime.js'" "$smoke"
           grep -q -- "- 'wrangler.jsonc'" "$smoke"
           grep -q -- "- '.assetsignore'" "$smoke"
           grep -q 'CREATOR_PUBLIC_ORIGIN: https://loot-up.marin-iglesias.workers.dev' "$smoke"
-          grep -q 'Wait for validated HD creator deployment' "$smoke"
+          grep -q 'Wait for validated matrix creator deployment' "$smoke"
           grep -q 'x-riselooter-creator-source: validated' "$smoke"
+          grep -q 'x-riselooter-creator-version: matrix-runtime-v11' "$smoke"
+          grep -q 'Verify canonical creator runtime is public' "$smoke"
+          grep -q 'sha256sum creator-safe-runtime.js' "$smoke"
           grep -q 'Verify canonical creator stylesheet is public' "$smoke"
           grep -q 'sha256sum creator-hd.css' "$smoke"
           grep -q 'Verify all 250 public creator assets match this commit' "$smoke"
@@ -98,7 +115,9 @@ jobs:
           grep -q '"run_worker_first": true' wrangler.jsonc
           grep -q '"not_found_handling": "single-page-application"' wrangler.jsonc
           grep -q 'env.ASSETS.fetch(request)' worker.js
-          grep -q "x-riselooter-creator-source', 'validated'" worker.js
+          grep -q "x-riselooter-creator-source','validated'" worker.js
+          grep -q "x-riselooter-creator-version','matrix-runtime-v11'" worker.js
+          grep -q 'creator-safe-runtime.js?v=11' worker.js
           ! grep -q 'hardenCreatorHtml' worker.js
           ! grep -q 'CREATOR_FALLBACK_NEW' worker.js
           test -s .assetsignore
