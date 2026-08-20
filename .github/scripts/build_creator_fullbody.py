@@ -39,25 +39,18 @@ def segment_person(path, gender):
         raise SystemExit(f'missing {path}')
     h,w=img.shape[:2]
     mask=np.full((h,w),cv2.GC_BGD,np.uint8)
-
-    # Only the central full-height character is allowed to become foreground.
     x0,x1=int(w*.22),int(w*.78)
     y0,y1=int(h*.03),int(h*.965)
     mask[y0:y1,x0:x1]=cv2.GC_PR_FGD
-
-    # Strong foreground seeds: head, torso, both legs and arm zones.
     cv2.ellipse(mask,(int(w*.50),int(h*.17)),(int(w*.10),int(h*.115)),0,0,360,cv2.GC_FGD,-1)
     cv2.rectangle(mask,(int(w*.36),int(h*.24)),(int(w*.64),int(h*.58)),cv2.GC_FGD,-1)
     cv2.rectangle(mask,(int(w*.34),int(h*.34)),(int(w*.42),int(h*.68)),cv2.GC_PR_FGD,-1)
     cv2.rectangle(mask,(int(w*.58),int(h*.34)),(int(w*.68),int(h*.68)),cv2.GC_PR_FGD,-1)
     cv2.rectangle(mask,(int(w*.38),int(h*.55)),(int(w*.50),int(h*.95)),cv2.GC_FGD,-1)
     cv2.rectangle(mask,(int(w*.50),int(h*.55)),(int(w*.62),int(h*.95)),cv2.GC_FGD,-1)
-
-    # Explicitly forbid the title/level text zones embedded in the old master.
     mask[:int(h*.20),:int(w*.40)] = cv2.GC_BGD
     mask[int(h*.91):,:int(w*.36)] = cv2.GC_BGD
     mask[int(h*.91):,int(w*.67):] = cv2.GC_BGD
-
     bgd=np.zeros((1,65),np.float64); fgd=np.zeros((1,65),np.float64)
     cv2.grabCut(img,mask,None,bgd,fgd,12,cv2.GC_INIT_WITH_MASK)
     fg=np.where((mask==cv2.GC_FGD)|(mask==cv2.GC_PR_FGD),1,0).astype(np.uint8)
@@ -89,16 +82,34 @@ def fit_rgba(rgba, target_h_ratio=.86, x_center=.50):
     canvas[y:y+nh,x:x+nw]=crop
     return canvas
 
-# Rebuild BOTH canonical bodies from the original image masters. Do not reuse the old
-# beginner cutout because it contained title/background fragments and amputated limbs.
+
+def build_skin_mask(rgba):
+    bgr=rgba[:,:,:3]
+    alpha=rgba[:,:,3]
+    ycrcb=cv2.cvtColor(bgr,cv2.COLOR_BGR2YCrCb)
+    _,cr,cb=cv2.split(ycrcb)
+    skin=((cr>132)&(cr<180)&(cb>72)&(cb<138)&(alpha>25)).astype(np.uint8)*255
+    # Restrict to plausible exposed-skin zones so clothing/background can never be recoloured.
+    zone=np.zeros_like(skin)
+    zone[int(H*.08):int(H*.34), int(W*.37):int(W*.68)] = 255
+    zone[int(H*.31):int(H*.67), int(W*.25):int(W*.43)] = 255
+    zone[int(H*.31):int(H*.67), int(W*.60):int(W*.76)] = 255
+    skin=cv2.bitwise_and(skin,zone)
+    skin=cv2.morphologyEx(skin,cv2.MORPH_OPEN,np.ones((3,3),np.uint8),iterations=1)
+    skin=cv2.morphologyEx(skin,cv2.MORPH_CLOSE,np.ones((5,5),np.uint8),iterations=2)
+    skin=cv2.GaussianBlur(skin,(7,7),0)
+    return skin
+
 male=segment_person(ROOT/'01-debutant.webp','male')
 male=fit_rgba(male,.86,.54)
 cv2.imwrite(str(OUT/'male_base.png'),male)
+cv2.imwrite(str(OUT/'male_skin_mask.png'),build_skin_mask(male))
 
 female_src=ROOT/'assets'/'creator'/'female'/'medium'/'brown'/'female_bob.webp'
 female=segment_person(female_src,'female')
 female=fit_rgba(female,.86,.52)
 cv2.imwrite(str(OUT/'female_base.png'),female)
+cv2.imwrite(str(OUT/'female_skin_mask.png'),build_skin_mask(female))
 
 cv2.imwrite(str(OUT/'background.webp'),BG,[cv2.IMWRITE_WEBP_QUALITY,94])
-print('Built clean canonical full-body bases v13')
+print('Built canonical full-body bases + swappable skin masks v14')
