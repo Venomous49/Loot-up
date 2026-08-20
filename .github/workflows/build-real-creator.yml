@@ -39,6 +39,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          echo 'forced layered build 2026-08-20'
           python scripts/build_layered_creator_v1.py
 
       - name: Publish layered assets
