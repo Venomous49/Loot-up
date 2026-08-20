@@ -1,0 +1,15 @@
+
+ ⛅️ wrangler 4.86.0
+───────────────────
+
+Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mA request to the Cloudflare API (/accounts/567d0185b1b286ef05d53aa6834a7635/api-tokens/workers/services/loot-up) failed.[0m
+
+  Could not route to /accounts/567d0185b1b286ef05d53aa6834a7635/api-tokens/workers/services/loot-up, perhaps your object identifier is invalid? [code: 7003]
+  No route for that URI [code: 7000]
+  
+  If you think this is a bug, please open an issue at: [4mhttps://github.com/cloudflare/workers-sdk/issues/new/choose[0m
+
+
+🪵  Logs were written to "/home/runner/.config/.wrangler/logs/wrangler-2026-08-20_11-01-42_606.log"
