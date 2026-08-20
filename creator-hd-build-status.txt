@@ -1,4 +1,12 @@
-status=failed
-source_commit=c71449e7d2408bd529b0de8a391933909c645d4b
---- tail ---
-Unsafe rectangular hairstyle mask rejected: male/male_textured
+status=success
+source_commit=d27e78f0a6ce15f0e7590bb18569f373b1fa78a1
+format=1728x910
+assets=250
+center_x=864
+ground_y=900
+standing_height=780
+canonical_body_per_gender=yes
+robust_native_segmentation=yes
+safe_hair_masks=yes
+rectangular_hair_patches=rejected
+prepublish_runtime_combinations=250
