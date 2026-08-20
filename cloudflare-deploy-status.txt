@@ -1,5 +1,5 @@
 status=success
-source_commit=f78da38f4a789cddd503f1c60fe7988c1dbf652d
+source_commit=bd01e7993ce0bca02398c4397d7643b176b33b20
 creator_version=dedicated-fullbody-v23
 asset_cache=fullbody23
 api_token_present=true
