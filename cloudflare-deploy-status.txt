@@ -1,4 +1,4 @@
-status=success
-source_commit=87d866c0f626e68f5286486187e8743c8fc2b099
-creator_version=production-fixed-body
+status=
+source_commit=30e4564051df8f3935585af942a128dee03e5358
+stage_version=validated-eight-canonical-images
 api_token_present=true
