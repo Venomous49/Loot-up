@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '.stage-assets/validated-stages.zip'
+      - '.stage-assets/01-debutant.webp'
       - '.github/workflows/install-validated-stages.yml'
   workflow_dispatch:
 
@@ -25,30 +26,56 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Replace the 8 canonical evolution images
+      - name: Recover and install the exact 8 validated images
         shell: bash
         run: |
           set -euo pipefail
-          test -f .stage-assets/validated-stages.zip
-          rm -rf /tmp/validated-stages
-          mkdir -p /tmp/validated-stages
-          unzip -q .stage-assets/validated-stages.zip -d /tmp/validated-stages
-          for f in 01-debutant 05-debrouillard 10-chasseur 15-hustler 20-pro 30-elite 40-cyber-looter 50-rise-looter; do
-            test -s "/tmp/validated-stages/$f.webp"
-            cp "/tmp/validated-stages/$f.webp" "$f.webp"
-          done
+          test -s .stage-assets/01-debutant.webp
+          test -s .stage-assets/validated-stages.zip
+          cp .stage-assets/01-debutant.webp 01-debutant.webp
           python3 -m pip install --quiet pillow
           python3 - <<'PY'
+          from pathlib import Path
           from PIL import Image
-          names=['01-debutant','05-debrouillard','10-chasseur','15-hustler','20-pro','30-elite','40-cyber-looter','50-rise-looter']
-          for name in names:
+          import io
+
+          data=Path('.stage-assets/validated-stages.zip').read_bytes()
+          found=[]
+          pos=0
+          while True:
+              i=data.find(b'RIFF',pos)
+              if i<0: break
+              if i+12<=len(data) and data[i+8:i+12]==b'WEBP':
+                  size=int.from_bytes(data[i+4:i+8],'little')+8
+                  chunk=data[i:i+size]
+                  if len(chunk)==size:
+                      try:
+                          with Image.open(io.BytesIO(chunk)) as im:
+                              im.load()
+                              if im.size==(384,512): found.append(chunk)
+                      except Exception:
+                          pass
+              pos=i+4
+
+          # The first WebP header was lost in the staging transport, but the
+          # remaining seven validated panels are intact in their original order.
+          if len(found) < 7:
+              raise SystemExit(f'Only {len(found)} recoverable validated WebPs found')
+          found=found[-7:]
+          names=['05-debrouillard','10-chasseur','15-hustler','20-pro','30-elite','40-cyber-looter','50-rise-looter']
+          for name,chunk in zip(names,found):
+              Path(name+'.webp').write_bytes(chunk)
+
+          all_names=['01-debutant']+names
+          for name in all_names:
               with Image.open(name+'.webp') as im:
-                  if im.size != (384,512):
+                  im.load()
+                  if im.size!=(384,512):
                       raise SystemExit(f'Unexpected size for {name}: {im.size}')
-          print('Validated all 8 canonical stage images')
+          print('Recovered and validated all 8 approved evolution images')
           PY
 
-      - name: Force a fresh browser asset version
+      - name: Force fresh stage assets in the browser
         shell: bash
         run: |
           set -euo pipefail
@@ -56,25 +83,21 @@ jobs:
           from pathlib import Path
           p=Path('fixed-stage-home.js')
           s=p.read_text()
-          s=s.replace("'/01-debutant.webp'", "'/01-debutant.webp?v=validated-20260821-1'")
-          s=s.replace("'/05-debrouillard.webp'", "'/05-debrouillard.webp?v=validated-20260821-1'")
-          s=s.replace("'/10-chasseur.webp'", "'/10-chasseur.webp?v=validated-20260821-1'")
-          s=s.replace("'/15-hustler.webp'", "'/15-hustler.webp?v=validated-20260821-1'")
-          s=s.replace("'/20-pro.webp'", "'/20-pro.webp?v=validated-20260821-1'")
-          s=s.replace("'/30-elite.webp'", "'/30-elite.webp?v=validated-20260821-1'")
-          s=s.replace("'/40-cyber-looter.webp'", "'/40-cyber-looter.webp?v=validated-20260821-1'")
-          s=s.replace("'/50-rise-looter.webp'", "'/50-rise-looter.webp?v=validated-20260821-1'")
+          names=['01-debutant','05-debrouillard','10-chasseur','15-hustler','20-pro','30-elite','40-cyber-looter','50-rise-looter']
+          for name in names:
+              import re
+              s=re.sub(rf"'/{name}\.webp(?:\?v=[^']*)?'", f"'/{name}.webp?v=validated-final-20260821'", s)
           p.write_text(s)
           PY
 
-      - name: Commit the validated 8 stage images
+      - name: Publish the 8 validated stage images
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add 01-debutant.webp 05-debrouillard.webp 10-chasseur.webp 15-hustler.webp 20-pro.webp 30-elite.webp 40-cyber-looter.webp 50-rise-looter.webp fixed-stage-home.js
-          git rm -f .stage-assets/validated-stages.zip .github/workflows/install-validated-stages.yml
-          git commit -m 'Remplacer les 8 paliers par les visuels validés'
+          git rm -f .stage-assets/validated-stages.zip .stage-assets/01-debutant.webp .github/workflows/install-validated-stages.yml
+          git commit -m 'Remplacer définitivement les 8 paliers par les visuels validés'
           git pull --rebase origin main
           git push origin HEAD:main
