@@ -1,0 +1,61 @@
+name: Clean stage artwork once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/clean-stage-art-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install opencv-python-headless
+      - name: Remove baked level and filename labels
+        run: |
+          python - <<'PY'
+          import cv2
+          from pathlib import Path
+          slugs = [
+              '01-debutant','05-debrouillard','10-chasseur','15-hustler',
+              '20-pro','30-elite','40-cyber-looter','50-rise-looter'
+          ]
+          paths = [Path(f'{slug}.webp') for slug in slugs]
+          paths += [Path(f'assets/characters/male/medium/brown/male_textured/{slug}.webp') for slug in slugs]
+          for path in paths:
+              if not path.exists():
+                  continue
+              img = cv2.imread(str(path), cv2.IMREAD_COLOR)
+              if img is None:
+                  raise RuntimeError(f'Impossible de lire {path}')
+              h, w = img.shape[:2]
+              mask = cv2.UMat(h, w, cv2.CV_8UC1).get()
+              mask[:] = 0
+              # Zone « NIVEAU X » uniquement, au-dessus du nom du palier.
+              cv2.rectangle(mask, (int(w*0.045), int(h*0.025)), (int(w*0.37), int(h*0.105)), 255, -1)
+              # Cartouche noir du nom de fichier en bas.
+              cv2.rectangle(mask, (int(w*0.20), int(h*0.925)), (int(w*0.80), h-1), 255, -1)
+              cleaned = cv2.inpaint(img, mask, 5, cv2.INPAINT_TELEA)
+              ok = cv2.imwrite(str(path), cleaned, [cv2.IMWRITE_WEBP_QUALITY, 96])
+              if not ok:
+                  raise RuntimeError(f'Impossible d’écrire {path}')
+          PY
+      - name: Commit cleaned artwork and remove one-time workflow
+        run: |
+          rm .github/workflows/clean-stage-art-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- 01-debutant.webp 05-debrouillard.webp 10-chasseur.webp 15-hustler.webp 20-pro.webp 30-elite.webp 40-cyber-looter.webp 50-rise-looter.webp
+          git add -- assets/characters/male/medium/brown/male_textured/01-debutant.webp assets/characters/male/medium/brown/male_textured/05-debrouillard.webp assets/characters/male/medium/brown/male_textured/10-chasseur.webp assets/characters/male/medium/brown/male_textured/15-hustler.webp assets/characters/male/medium/brown/male_textured/20-pro.webp assets/characters/male/medium/brown/male_textured/30-elite.webp assets/characters/male/medium/brown/male_textured/40-cyber-looter.webp assets/characters/male/medium/brown/male_textured/50-rise-looter.webp
+          git add -- .github/workflows/clean-stage-art-once.yml
+          git commit -m 'Nettoyer les visuels des paliers'
+          git push origin HEAD:main
