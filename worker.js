@@ -2,7 +2,8 @@ class RiseLooterHead {
   element(element) {
     element.append('<link rel="stylesheet" href="/creator-hd.css?v=23">', { html: true });
     element.append('<script src="/creator-cache-v23.js?v=27" defer></script>', { html: true });
-    element.append('<script src="/safe-ui-bootstrap.js?v=layered-v4-fit1" defer></script>', { html: true });
+    element.append('<script src="/safe-ui-bootstrap.js?v=fixed-gender-v1" defer></script>', { html: true });
+    element.append('<script src="/fixed-stage-home.js?v=1" defer></script>', { html: true });
   }
 }
 
@@ -16,8 +17,8 @@ export default {
     headers.set('pragma', 'no-cache');
     headers.set('expires', '0');
     headers.set('x-riselooter-creator-source', 'layered-v4-clean-source');
-    headers.set('x-riselooter-creator-version', 'layered-v4-fit1-cachefix27');
-    headers.set('x-riselooter-runtime-hotfixes', 'safe-bootstrap-layered-v4-fit1-cachefix27');
+    headers.set('x-riselooter-creator-version', 'fixed-gender-v1-stage-home-v1');
+    headers.set('x-riselooter-runtime-hotfixes', 'safe-bootstrap-fixed-gender-v1-stage-home-v1');
     return new HTMLRewriter().on('head', new RiseLooterHead()).transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
   }
 };
