@@ -6,10 +6,7 @@ on:
     paths:
       - 'worker.js'
       - 'wrangler.jsonc'
-      - 'creator-cache-v23.js'
-      - 'creator-hd.css'
       - 'index.html'
-      - 'safe-ui-bootstrap.js'
       - 'fixed-stage-home.js'
       - 'site-polish-v3.js'
       - '01-debutant.webp'
@@ -20,8 +17,6 @@ on:
       - '30-elite.webp'
       - '40-cyber-looter.webp'
       - '50-rise-looter.webp'
-      - '.stage-assets/validated-stages.zip'
-      - '.stage-assets/01-debutant.webp'
       - '.github/workflows/deploy-cloudflare.yml'
   workflow_dispatch:
 
@@ -29,8 +24,8 @@ permissions:
   contents: write
 
 concurrency:
-  group: riselooter-cloudflare-production-v9
-  cancel-in-progress: false
+  group: riselooter-cloudflare-production-final
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -43,56 +38,31 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-
-      - name: Inspect and recover validated stage payload
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -f .stage-assets/validated-stages.zip ]; then
-            python3 -m pip install --quiet pillow
-            python3 - <<'PY'
-            from pathlib import Path
-            from PIL import Image
-            import io
-            data=Path('.stage-assets/validated-stages.zip').read_bytes()
-            riffs=[]; webps=[]; valid=[]; pos=0
-            while True:
-                i=data.find(b'RIFF',pos)
-                if i<0: break
-                riffs.append(i)
-                if i+12<=len(data) and data[i+8:i+12]==b'WEBP':
-                    size=int.from_bytes(data[i+4:i+8],'little')+8
-                    chunk=data[i:i+size]
-                    if len(chunk)==size:
-                        webps.append((i,size,chunk))
-                        try:
-                            with Image.open(io.BytesIO(chunk)) as im:
-                                im.load()
-                                valid.append((i,size,im.size))
-                        except Exception:
-                            pass
-                pos=i+4
-            Path('stage-recovery-status.txt').write_text(
-                f'data_bytes={len(data)}\nriff_count={len(riffs)}\nwebp_structural_count={len(webps)}\nvalid_image_count={len(valid)}\nvalid={[(i,s,sz) for i,s,sz in valid]}\n'
-            )
-            PY
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add stage-recovery-status.txt
-            git diff --cached --quiet || (git commit -m 'Record stage recovery diagnostics' && git pull --rebase origin main && git push origin HEAD:main)
-          fi
-
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Validate the 8 canonical evolution images
+      - name: Verify exact 8 canonical stage files
         shell: bash
         run: |
           set -euo pipefail
-          for f in 01-debutant.webp 05-debrouillard.webp 10-chasseur.webp 15-hustler.webp 20-pro.webp 30-elite.webp 40-cyber-looter.webp 50-rise-looter.webp; do test -s "$f"; done
+          declare -A EXPECTED=(
+            [01-debutant.webp]=0eb3dbbed95b72bb768f3bb03863250b3293a196
+            [05-debrouillard.webp]=d7a281dda71541fa7bc99cc122523c13942f9ea9
+            [10-chasseur.webp]=9e7ef24daa1f9229d9a3244b31400e41ceed15f4
+            [15-hustler.webp]=28b15d65472702612d6b06197f7aeda46c22e45f
+            [20-pro.webp]=c5ae33b7035613d133394c7bc10996466a253cfe
+            [30-elite.webp]=91d2eb621bf476b99f7803a5d72dc9728b9a5bc1
+            [40-cyber-looter.webp]=d4563716694cc6b9bd87c0fc296b650b447cf935
+            [50-rise-looter.webp]=5350982c5347d548a9d49e6434085e2a1f417cba
+          )
+          for f in "${!EXPECTED[@]}"; do
+            test -s "$f"
+            actual="$(git hash-object "$f")"
+            test "$actual" = "${EXPECTED[$f]}" || { echo "SHA mismatch for $f: $actual"; exit 1; }
+          done
 
-      - name: Verify Cloudflare user token
+      - name: Verify Cloudflare token
         shell: bash
         run: |
           set -euo pipefail
@@ -108,22 +78,27 @@ jobs:
           code=$?
           set -e
           sed -E 's/(cfut_|cfat_)[A-Za-z0-9_-]+/[REDACTED_TOKEN]/g' /tmp/wrangler-deploy.log | tail -n 120 > cloudflare-deploy-log.txt
-          if [ "$code" -eq 0 ]; then echo 'outcome=success' >> "$GITHUB_OUTPUT"; else echo 'outcome=failure' >> "$GITHUB_OUTPUT"; fi
-          exit 0
+          if [ "$code" -eq 0 ]; then
+            echo 'outcome=success' >> "$GITHUB_OUTPUT"
+          else
+            echo 'outcome=failure' >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Record Cloudflare deployment result
+      - name: Record Cloudflare result
         if: always()
         env:
           HAS_CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
         shell: bash
         run: |
           set -euo pipefail
-          printf 'status=%s\nsource_commit=%s\nstage_version=validated-eight-canonical-images\napi_token_present=%s\n' '${{ steps.deploy.outputs.outcome }}' "$(git rev-parse HEAD)" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
+          outcome='${{ steps.deploy.outputs.outcome }}'
+          [ -n "$outcome" ] || outcome='failure'
+          printf 'status=%s\nsource_commit=%s\nstage_version=validated-final-eight\napi_token_present=%s\n' "$outcome" "$(git rev-parse HEAD)" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add cloudflare-deploy-status.txt cloudflare-deploy-log.txt
           git diff --cached --quiet || (git commit -m 'Record Cloudflare deployment diagnostics' && git pull --rebase origin main && git push origin HEAD:main)
 
-      - name: Fail when deployment failed
+      - name: Fail on deployment failure
         if: steps.deploy.outputs.outcome != 'success'
         run: exit 1
