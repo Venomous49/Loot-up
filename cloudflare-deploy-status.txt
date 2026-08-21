@@ -1,4 +1,4 @@
 status=
-source_commit=30e4564051df8f3935585af942a128dee03e5358
+source_commit=08922bef5964e225f0b644b281f24e620dcdefdc
 stage_version=validated-eight-canonical-images
 api_token_present=true
