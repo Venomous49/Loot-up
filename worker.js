@@ -3,7 +3,7 @@ class RiseLooterHead {
     element.append('<link rel="stylesheet" href="/creator-hd.css?v=23">', { html: true });
     element.append('<script src="/creator-cache-v23.js?v=27" defer></script>', { html: true });
     element.append('<script src="/safe-ui-bootstrap.js?v=fixed-gender-v1" defer></script>', { html: true });
-    element.append('<script src="/fixed-stage-home.js?v=7" defer></script>', { html: true });
+    element.append('<script src="/fixed-stage-home.js?v=8" defer></script>', { html: true });
     element.append('<script src="/site-polish-v3.js?v=7" defer></script>', { html: true });
   }
 }
@@ -17,9 +17,9 @@ export default {
     headers.set('cache-control', 'no-store, no-cache, must-revalidate, max-age=0');
     headers.set('pragma', 'no-cache');
     headers.set('expires', '0');
-    headers.set('x-riselooter-creator-source', 'layered-v4-clean-source');
-    headers.set('x-riselooter-creator-version', 'fixed-gender-v1-stage-home-v7-clean-debutant');
-    headers.set('x-riselooter-runtime-hotfixes', 'safe-bootstrap-fixed-gender-v1-stage-home-v7-clean-debutant');
+    headers.set('x-riselooter-creator-source', 'canonical-stage-images');
+    headers.set('x-riselooter-creator-version', 'stage-home-v8-eight-canonical-assets');
+    headers.set('x-riselooter-runtime-hotfixes', 'stage-home-v8-eight-canonical-assets');
     return new HTMLRewriter().on('head', new RiseLooterHead()).transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
   }
 };
