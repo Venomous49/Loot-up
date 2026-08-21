@@ -25,7 +25,12 @@ def robust_person_mask(image, gender):
     preview = cv2.resize(rgb, (preview_w, max(2, round(h * scale))), interpolation=cv2.INTER_AREA)
     ph, pw = preview.shape[:2]
     gc = np.zeros((ph, pw), np.uint8)
-    rect = (int((.24 if gender == "male" else .20) * pw), int(.01 * ph), int((.52 if gender == "male" else .60) * pw), int(.98 * ph))
+    rect = (
+        int((.24 if gender == "male" else .20) * pw),
+        int(.01 * ph),
+        int((.52 if gender == "male" else .60) * pw),
+        int(.98 * ph),
+    )
     bgd = np.zeros((1, 65), np.float64)
     fgd = np.zeros((1, 65), np.float64)
     cv2.grabCut(preview, gc, rect, bgd, fgd, 7, cv2.GC_INIT_WITH_RECT)
@@ -83,8 +88,7 @@ def neutralize_male_base_hair(scene):
     mask = cv2.dilate(mask, np.ones((9, 9), np.uint8), iterations=1)
     mask = cv2.GaussianBlur(mask, (0, 0), 1.4)
     _, mask = cv2.threshold(mask, 24, 255, cv2.THRESH_BINARY)
-    bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
-    cleaned = cv2.inpaint(bgr, mask, 7, cv2.INPAINT_TELEA)
+    cleaned = cv2.inpaint(cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR), mask, 7, cv2.INPAINT_TELEA)
     return Image.fromarray(cv2.cvtColor(cleaned, cv2.COLOR_BGR2RGB), "RGB")
 
 
@@ -128,7 +132,13 @@ def hair_shape_envelope(gender, style, h, w):
     yn = yy / float(h)
     if gender == "male":
         cx = .58
-        rx, ry = {"male_textured": (.105, .115), "male_short": (.090, .100), "male_medium": (.120, .145), "male_undercut": (.105, .115), "male_slick": (.105, .110)}[style]
+        rx, ry = {
+            "male_textured": (.105, .115),
+            "male_short": (.090, .100),
+            "male_medium": (.120, .145),
+            "male_undercut": (.105, .115),
+            "male_slick": (.105, .110),
+        }[style]
         cy = .155
         env = 1.0 - np.clip(((xn-cx)/rx)**2 + ((yn-cy)/ry)**2, 0, 1)
         face = (((xn-cx)/.062)**2 + ((yn-.235)/.082)**2) < 1.0
@@ -170,54 +180,52 @@ def safe_align_style_hair(gender, style, head_anchor=None):
     if fill_ratio > .72 or edge_ratio > .55:
         raise SystemExit(f"Unsafe rectangular hairstyle mask rejected: {gender}/{style} fill={fill_ratio:.3f} edge={edge_ratio:.3f}")
 
+    max_w, max_h, top_y = legacy.HAIR_ENVELOPES[style]
+    scale = min(max_w / max(1, rgb_crop.shape[1]), max_h / max(1, rgb_crop.shape[0]))
+    if gender == "male":
+        scale *= 1.07
+    out_w = max(1, round(rgb_crop.shape[1] * scale))
+    out_h = max(1, round(rgb_crop.shape[0] * scale))
+    rgb_crop = cv2.resize(rgb_crop, (out_w, out_h), interpolation=cv2.INTER_LANCZOS4)
+    a_crop = cv2.resize(a_crop, (out_w, out_h), interpolation=cv2.INTER_LINEAR)
+
     if gender == "male" and head_anchor is not None:
-        # Important: preserve the hairstyle's original relation to ITS OWN face.
-        # Previous versions cropped the hair and then re-centered that crop, which
-        # destroys the offset between the hairline and the source face and causes
-        # the visible layer to remain to the right on the target character.
-        sfx, sfy, sfw, sfh = legacy.base.detect_face(source)
-        target_face_center_x, target_face_top_y, target_face_w, target_face_h = head_anchor
-        if sfw <= 1 or sfh <= 1:
-            raise SystemExit(f"Invalid source face for hairstyle alignment: {gender}/{style}")
-
-        # Scale from face-to-face geometry rather than from the hair bounding box.
-        face_scale_x = target_face_w / float(sfw)
-        face_scale_y = target_face_h / float(sfh)
-        scale = (face_scale_x + face_scale_y) * .50
-        scale = max(.25, min(scale, 4.0))
-
-        out_w = max(1, round(rgb_crop.shape[1] * scale))
-        out_h = max(1, round(rgb_crop.shape[0] * scale))
-        rgb_crop = cv2.resize(rgb_crop, (out_w, out_h), interpolation=cv2.INTER_LANCZOS4)
-        a_crop = cv2.resize(a_crop, (out_w, out_h), interpolation=cv2.INTER_LINEAR)
-
-        # Face anchor position inside the cropped hairstyle, then scaled.
-        source_face_center_in_crop_x = ((sfx + sfw * .50) - x0) * scale
-        source_face_top_in_crop_y = (sfy - y0) * scale
-
-        # Exact transform: source face center -> target face center, source face top
-        # -> target face top. No guessed -12/-18 px offsets and no crop-centering.
-        x = round(target_face_center_x - source_face_center_in_crop_x)
-        y = round(target_face_top_y - source_face_top_in_crop_y)
+        face_center_x, face_top_y, face_w, _ = head_anchor
+        weights = a_crop.astype(np.float32) / 255.0
+        gy, gx = np.mgrid[0:out_h, 0:out_w]
+        root_band = gy >= (out_h * .52)
+        root_weights = weights * root_band.astype(np.float32)
+        total = float(root_weights.sum())
+        if total < 1e-3:
+            root_weights = weights
+            total = float(root_weights.sum())
+        root_centroid_x = float((gx * root_weights).sum() / max(total, 1e-6))
+        # The deployed screenshots show the visible hair root consistently to the
+        # right of the actual head. Anchor the visible root directly to a point
+        # left of face-box center, proportional to the real target face width.
+        target_root_x = face_center_x - (face_w * .38)
+        x = round(target_root_x - root_centroid_x)
+        y = round(face_top_y - out_h * .43)
     else:
-        max_w, max_h, top_y = legacy.HAIR_ENVELOPES[style]
-        scale = min(max_w / max(1, rgb_crop.shape[1]), max_h / max(1, rgb_crop.shape[0]))
-        out_w = max(1, round(rgb_crop.shape[1] * scale))
-        out_h = max(1, round(rgb_crop.shape[0] * scale))
-        rgb_crop = cv2.resize(rgb_crop, (out_w, out_h), interpolation=cv2.INTER_LANCZOS4)
-        a_crop = cv2.resize(a_crop, (out_w, out_h), interpolation=cv2.INTER_LINEAR)
         x = round(legacy.CENTER_X - out_w / 2)
         y = top_y
 
-    aligned_rgb = np.zeros((legacy.CANVAS_SIZE[1], legacy.CANVAS_SIZE[0], 3), dtype=np.float32)
-    aligned_alpha = np.zeros((legacy.CANVAS_SIZE[1], legacy.CANVAS_SIZE[0]), dtype=np.float32)
-    x2 = min(legacy.CANVAS_SIZE[0], x + out_w)
-    y2 = min(legacy.CANVAS_SIZE[1], y + out_h)
-    if x < 0 or y < 0 or x2 <= x or y2 <= y:
-        raise SystemExit(f"Invalid hairstyle placement: {gender}/{style}")
-    cw, ch = x2 - x, y2 - y
-    aligned_rgb[y:y2, x:x2] = rgb_crop[:ch, :cw].astype(np.float32)
-    aligned_alpha[y:y2, x:x2] = a_crop[:ch, :cw].astype(np.float32) / 255.0
+    canvas_w, canvas_h = legacy.CANVAS_SIZE
+    dst_x0 = max(0, x)
+    dst_y0 = max(0, y)
+    dst_x1 = min(canvas_w, x + out_w)
+    dst_y1 = min(canvas_h, y + out_h)
+    if dst_x1 <= dst_x0 or dst_y1 <= dst_y0:
+        raise SystemExit(f"Hairstyle completely outside canvas: {gender}/{style}")
+    src_x0 = dst_x0 - x
+    src_y0 = dst_y0 - y
+    src_x1 = src_x0 + (dst_x1 - dst_x0)
+    src_y1 = src_y0 + (dst_y1 - dst_y0)
+
+    aligned_rgb = np.zeros((canvas_h, canvas_w, 3), dtype=np.float32)
+    aligned_alpha = np.zeros((canvas_h, canvas_w), dtype=np.float32)
+    aligned_rgb[dst_y0:dst_y1, dst_x0:dst_x1] = rgb_crop[src_y0:src_y1, src_x0:src_x1].astype(np.float32)
+    aligned_alpha[dst_y0:dst_y1, dst_x0:dst_x1] = a_crop[src_y0:src_y1, src_x0:src_x1].astype(np.float32) / 255.0
     aligned_alpha = cv2.GaussianBlur(aligned_alpha, (0, 0), 0.72)
     if gender == "male":
         aligned_alpha[330:, :] = 0
@@ -254,7 +262,7 @@ def build_locked_presets():
     expected = 125 if requested_gender else 250
     if written != expected:
         raise SystemExit(f"Unexpected creator preset count: {written}, expected {expected}")
-    print(f"Built {written} fixed-body creator presets aligned by source/target face geometry")
+    print(f"Built {written} fixed-body creator presets with root-anchored hairstyle alignment")
 
 
 build_locked_presets()
