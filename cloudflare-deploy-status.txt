@@ -1,4 +1,4 @@
 status=success
-source_commit=1cc293a0d7553d1c6a328d2530328ce4c1a0d0ce
+source_commit=6d24af3db075787fdbf788e36437fce8547112a4
 creator_version=production-fixed-body
 api_token_present=true
