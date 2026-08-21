@@ -2,14 +2,14 @@
   'use strict';
 
   const STAGE_ASSETS = [
-    '/01-debutant.webp?v=final-eight-20260821',
-    '/05-debrouillard.webp?v=final-eight-20260821',
-    '/10-chasseur.webp?v=final-eight-20260821',
-    '/15-hustler.webp?v=final-eight-20260821',
-    '/20-pro.webp?v=final-eight-20260821',
-    '/30-elite.webp?v=final-eight-20260821',
-    '/40-cyber-looter.webp?v=final-eight-20260821',
-    '/50-rise-looter.webp?v=final-eight-20260821'
+    '/01-debutant.webp?v=final-eight-20260821-2',
+    '/05-debrouillard.webp?v=final-eight-20260821-2',
+    '/10-chasseur.webp?v=final-eight-20260821-2',
+    '/15-hustler.webp?v=final-eight-20260821-2',
+    '/20-pro.webp?v=final-eight-20260821-2',
+    '/30-elite.webp?v=final-eight-20260821-2',
+    '/40-cyber-looter.webp?v=final-eight-20260821-2',
+    '/50-rise-looter.webp?v=final-eight-20260821-2'
   ];
 
   // The character creator has been retired. The homepage now uses exactly one
