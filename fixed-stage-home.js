@@ -29,16 +29,15 @@
     #home .hero .scene-clean-image.stage-art-clean {
       object-fit: contain !important;
       object-position: 79% center !important;
-      transform: scale(1.12) !important;
-      transform-origin: 79% 50% !important;
+      transform: none !important;
     }
     .evolution-real.stage-art-clean {
-      width: 112% !important;
-      height: 112% !important;
-      max-width: none !important;
-      object-fit: cover !important;
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      object-fit: contain !important;
       object-position: center center !important;
-      transform: translate(-5.35%,-5.35%) !important;
+      transform: none !important;
     }
   `;
   document.head.appendChild(style);
