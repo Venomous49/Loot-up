@@ -1,0 +1,9 @@
+status=ready
+01-debutant.webp bytes=23494 git_sha=0eb3dbbed95b72bb768f3bb03863250b3293a196
+05-debrouillard.webp bytes=22600 git_sha=d7a281dda71541fa7bc99cc122523c13942f9ea9
+10-chasseur.webp bytes=18356 git_sha=9e7ef24daa1f9229d9a3244b31400e41ceed15f4
+15-hustler.webp bytes=14288 git_sha=28b15d65472702612d6b06197f7aeda46c22e45f
+20-pro.webp bytes=17400 git_sha=c5ae33b7035613d133394c7bc10996466a253cfe
+30-elite.webp bytes=24596 git_sha=91d2eb621bf476b99f7803a5d72dc9728b9a5bc1
+40-cyber-looter.webp bytes=20240 git_sha=d4563716694cc6b9bd87c0fc296b650b447cf935
+50-rise-looter.webp bytes=29844 git_sha=5350982c5347d548a9d49e6434085e2a1f417cba
