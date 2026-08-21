@@ -61,7 +61,9 @@
     const scene=img&&img.closest('.character-scene-clean');
     if(!img||!scene)return;
     const src=img.currentSrc||img.src;
-    const value=src?`url("${src.replace(/"/g,'\\"')}")`:'none';
+    const cleanDebutant=img.dataset.cleanDebutant==='1'||/\/01-debutant-character\.png(?:\?|$)/i.test(src||'');
+    const backdrop=cleanDebutant?'/01-debutant-background.webp':src;
+    const value=backdrop?`url("${backdrop.replace(/"/g,'\\"')}")`:'none';
     if(scene.style.getPropertyValue('--stage-backdrop')!==value)scene.style.setProperty('--stage-backdrop',value);
   }
   function polishChallenges(){
@@ -86,5 +88,5 @@
   }
   function apply(){syncStageBackdrop();polishChallenges();polishMissions();polishMissionTest()}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();
-  let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;apply()})}).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['src','class']});
+  let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;apply()})}).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['src','class','data-clean-debutant']});
 })();
