@@ -33,14 +33,14 @@ jobs:
             cat ".stage-female/${name}.part"* | tr -d '\r\n' | base64 -d > "${name}.webp"
           done
           declare -A EXPECTED=(
-            [01-debutant-female]=62e486992eaa022f9eea1d2be7d01d14e1a43ff0
-            [05-debrouillard-female]=4d3a67b5b2470007ab2c410201476b2f96a2d1c9
-            [10-chasseur-female]=dfddbf92431bea3edb9818cc727558d7210a7aa1
-            [15-hustler-female]=7f168af419a32e7278839eb57e351e69fef0da7f
-            [20-pro-female]=3493b2d4f65c97fd9b695f0e48b632e5605dc60b
-            [30-elite-female]=1b01c0028c5e18ec565d19dc68cf8e6b903f4f60
-            [40-cyber-looter-female]=f5561375f54f85897dcac7a4a3154132d3adb3dd
-            [50-rise-looter-female]=d183a5cd6497c0adb7c740d45aa1af3a228c985c
+            [01-debutant-female]=30cbb071cce03746b0ce6e00e4c095182f5c5c48
+            [05-debrouillard-female]=da6a30e5591cedbe63f2f0183c7151ebf777ba15
+            [10-chasseur-female]=670fa31fc16f386f3a92b2226140b7362221f844
+            [15-hustler-female]=b9a6ef20c361fb6e0230cd17eceac9575ddb83b4
+            [20-pro-female]=a5e3104db54e8d1e8cf8e5a52b2c37120212cd8b
+            [30-elite-female]=93c2a7fe5a7b91d3ddfcaceda2ae18940ed1dde4
+            [40-cyber-looter-female]=9a7cf18a3f05c41dad9a8c13ed6a05a68c80d491
+            [50-rise-looter-female]=2cef1fa64b299fe53870eea9d7773eddc166e96a
           )
           python3 -m pip install --quiet pillow
           for name in "${names[@]}"; do
