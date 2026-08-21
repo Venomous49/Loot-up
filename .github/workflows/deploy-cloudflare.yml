@@ -29,7 +29,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: riselooter-cloudflare-production-v8
+  group: riselooter-cloudflare-production-v9
   cancel-in-progress: false
 
 jobs:
@@ -44,65 +44,42 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Recover and publish the exact 8 validated evolution images
+      - name: Inspect and recover validated stage payload
         shell: bash
         run: |
           set -euo pipefail
-          if [ -f .stage-assets/validated-stages.zip ] && [ -f .stage-assets/01-debutant.webp ]; then
-            cp .stage-assets/01-debutant.webp 01-debutant.webp
+          if [ -f .stage-assets/validated-stages.zip ]; then
             python3 -m pip install --quiet pillow
             python3 - <<'PY'
             from pathlib import Path
             from PIL import Image
-            import io, re
-
+            import io
             data=Path('.stage-assets/validated-stages.zip').read_bytes()
-            recovered=[]
-            pos=0
+            riffs=[]; webps=[]; valid=[]; pos=0
             while True:
                 i=data.find(b'RIFF',pos)
                 if i<0: break
+                riffs.append(i)
                 if i+12<=len(data) and data[i+8:i+12]==b'WEBP':
                     size=int.from_bytes(data[i+4:i+8],'little')+8
                     chunk=data[i:i+size]
                     if len(chunk)==size:
+                        webps.append((i,size,chunk))
                         try:
                             with Image.open(io.BytesIO(chunk)) as im:
                                 im.load()
-                                if im.size==(384,512): recovered.append(chunk)
+                                valid.append((i,size,im.size))
                         except Exception:
                             pass
                 pos=i+4
-
-            if len(recovered) < 7:
-                raise SystemExit(f'Only {len(recovered)} recoverable validated WebPs found')
-            recovered=recovered[-7:]
-            names=['05-debrouillard','10-chasseur','15-hustler','20-pro','30-elite','40-cyber-looter','50-rise-looter']
-            for name,chunk in zip(names,recovered):
-                Path(name+'.webp').write_bytes(chunk)
-
-            all_names=['01-debutant']+names
-            for name in all_names:
-                with Image.open(name+'.webp') as im:
-                    im.load()
-                    if im.size!=(384,512): raise SystemExit(f'Unexpected size for {name}: {im.size}')
-
-            p=Path('fixed-stage-home.js')
-            s=p.read_text()
-            for name in all_names:
-                s=re.sub(rf"'/{name}\.webp(?:\?v=[^']*)?'", f"'/{name}.webp?v=validated-final-20260821'", s)
-            p.write_text(s)
-            print('All 8 approved stage images recovered and validated')
+            Path('stage-recovery-status.txt').write_text(
+                f'data_bytes={len(data)}\nriff_count={len(riffs)}\nwebp_structural_count={len(webps)}\nvalid_image_count={len(valid)}\nvalid={[(i,s,sz) for i,s,sz in valid]}\n'
+            )
             PY
-
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add 01-debutant.webp 05-debrouillard.webp 10-chasseur.webp 15-hustler.webp 20-pro.webp 30-elite.webp 40-cyber-looter.webp 50-rise-looter.webp fixed-stage-home.js
-            git rm -f .stage-assets/validated-stages.zip .stage-assets/01-debutant.webp || true
-            git rm -f .github/workflows/install-validated-stages.yml || true
-            git commit -m 'Remplacer définitivement les 8 paliers par les visuels validés'
-            git pull --rebase origin main
-            git push origin HEAD:main
+            git add stage-recovery-status.txt
+            git diff --cached --quiet || (git commit -m 'Record stage recovery diagnostics' && git pull --rebase origin main && git push origin HEAD:main)
           fi
 
       - uses: actions/setup-node@v4
