@@ -4,7 +4,6 @@
   const style = document.createElement('style');
   style.id = 'riselooter-polish-v3-style';
   style.textContent = `
-    /* Stage artwork: crop the previously retouched top strip and remove side bars. */
     #home .hero .scene-clean-image.stage-art-clean {
       width: 100% !important;
       height: 100% !important;
@@ -24,38 +23,33 @@
       transform-origin: center center !important;
       filter: none !important;
     }
-
-    /* Give the description a little more breathing room. */
     #home .next-evolution {
       bottom: 68px !important;
     }
-
-    /* Survey-only experience. */
     #challenges .bonus { display: none !important; }
     #missions .filters .filter:not([data-filter="survey"]) { display: none !important; }
   `;
   document.head.appendChild(style);
 
+  function setText(el, value) {
+    if (el && el.textContent !== value) el.textContent = value;
+  }
+
   function polishChallenges() {
     const section = document.getElementById('challenges');
     if (!section) return;
 
-    const subtitle = section.querySelector('.section-subtitle');
-    if (subtitle) subtitle.textContent = 'Réponds à 5 sondages pour gagner de l’XP.';
+    setText(section.querySelector('.section-subtitle'), 'Réponds à 5 sondages pour gagner de l’XP.');
 
-    const challenges = [...section.querySelectorAll('.challenge')];
-    challenges.forEach(challenge => {
+    [...section.querySelectorAll('.challenge')].forEach(challenge => {
       if (challenge.dataset.category !== 'survey') {
         challenge.remove();
         return;
       }
-      const label = challenge.querySelector('span:first-child');
+      setText(challenge.querySelector('span:first-child'), '▤ Réponds à 5 sondages');
       const reward = challenge.querySelector('.challenge-reward');
-      if (label) label.textContent = '▤ Réponds à 5 sondages';
-      if (reward) {
-        reward.textContent = '+150 XP';
-        reward.style.color = '#bd74ff';
-      }
+      setText(reward, '+150 XP');
+      if (reward && reward.style.color !== 'rgb(189, 116, 255)') reward.style.color = '#bd74ff';
     });
   }
 
@@ -63,22 +57,18 @@
     const section = document.getElementById('missions');
     if (!section) return;
 
-    const subtitle = section.querySelector('.section-subtitle');
-    if (subtitle) subtitle.textContent = 'Choisis comment tu veux gagner de l’XP.';
+    setText(section.querySelector('.section-subtitle'), 'Choisis comment tu veux gagner de l’XP.');
 
     section.querySelectorAll('.filters .filter').forEach(button => {
-      if (button.dataset.filter === 'survey') {
-        button.classList.add('active');
-      } else {
-        button.classList.remove('active');
-        button.style.display = 'none';
-      }
+      const survey = button.dataset.filter === 'survey';
+      button.classList.toggle('active', survey);
+      if (!survey && button.style.display !== 'none') button.style.display = 'none';
     });
 
     section.querySelectorAll('.mission').forEach(card => {
-      const text = (card.textContent || '').toLowerCase();
-      const isSurvey = text.includes('sondage');
-      card.style.display = isSurvey ? '' : 'none';
+      const isSurvey = (card.textContent || '').toLowerCase().includes('sondage');
+      const target = isSurvey ? '' : 'none';
+      if (card.style.display !== target) card.style.display = target;
     });
   }
 
@@ -90,15 +80,11 @@
 
     nodes.forEach(node => {
       const value = node.nodeValue || '';
-      if (/mission test looter/i.test(value)) {
-        node.nodeValue = value.replace(/mission test looter/gi, 'Mission test Rise Looter');
-      }
-      if (/atteint le niveau demandé pour gagner des? lootx/i.test(value)) {
-        node.nodeValue = value.replace(/atteint le niveau demandé pour gagner des? lootx/gi, 'Atteint le niveau demandé pour gagner de l’XP');
-      }
-      if (/atteint le niveau demandé pour gagner des? rl coins/i.test(value)) {
-        node.nodeValue = value.replace(/atteint le niveau demandé pour gagner des? rl coins/gi, 'Atteint le niveau demandé pour gagner de l’XP');
-      }
+      let next = value;
+      next = next.replace(/mission test looter/gi, 'Mission test Rise Looter');
+      next = next.replace(/atteint le niveau demandé pour gagner des? lootx/gi, 'Atteint le niveau demandé pour gagner de l’XP');
+      next = next.replace(/atteint le niveau demandé pour gagner des? rl coins/gi, 'Atteint le niveau demandé pour gagner de l’XP');
+      if (next !== value) node.nodeValue = next;
     });
   }
 
