@@ -1,24 +1,21 @@
-name: Apply RiseLooter static asset patch
+name: Clean RiseLooter stage artwork
 
-# Rebuild exact character-only silhouettes from the validated master evolution art.
-# Never rewrites index.html or creator routing.
 on:
   workflow_dispatch:
   push:
     branches: [ main ]
     paths:
-      - '.github/scripts/build_silhouettes.py'
       - '.github/workflows/fix-riselooter-assets.yml'
 
 permissions:
   contents: write
 
 jobs:
-  patch:
+  clean:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
-      - name: Checkout
+      - name: Checkout full history
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -26,31 +23,122 @@ jobs:
       - name: Install image tools
         run: |
           python3 -m pip install --upgrade --quiet pip
-          python3 -m pip install --quiet opencv-python-headless numpy pillow rembg onnxruntime
+          python3 -m pip install --quiet opencv-python-headless numpy pillow
 
-      - name: Build character-only silhouette previews
+      - name: Restore pristine stage sources and remove all embedded text
+        shell: bash
         run: |
           set -euo pipefail
-          python3 .github/scripts/build_silhouettes.py
+          SOURCE_COMMIT='1e7e03a8e390984c115b432e677d6283ae4c9410'
+          BASE='assets/characters/male/medium/brown/male_textured'
+          mkdir -p /tmp/stage-pristine
           for f in 01-debutant 05-debrouillard 10-chasseur 15-hustler 20-pro 30-elite 40-cyber-looter 50-rise-looter; do
-            test -s "silhouettes/${f}.png"
-            cp "silhouettes/${f}.png" "sil-${f}.png"
+            git show "$SOURCE_COMMIT:$BASE/$f.webp" > "/tmp/stage-pristine/$f.webp"
           done
 
-      - name: Verify creator routing is untouched
-        run: |
-          set -euo pipefail
-          git diff --exit-code -- index.html creator-safe-runtime.js
+          cat > /tmp/clean_stages.py <<'PY'
+          import cv2, numpy as np, os
 
-      - name: Commit exact silhouette assets
+          names = ['01-debutant','05-debrouillard','10-chasseur','15-hustler','20-pro','30-elite','40-cyber-looter','50-rise-looter']
+          src_dir='/tmp/stage-pristine'
+          out_dir='assets/characters/male/medium/brown/male_textured'
+
+          def selective_text_mask(img):
+              h,w=img.shape[:2]
+              hsv=cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
+              gray=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+              mask=np.zeros((h,w),np.uint8)
+
+              # Upper-left stage title: remove only bright low-saturation glyph pixels + outline.
+              y0,y1=int(h*.025),int(h*.245)
+              x0,x1=int(w*.015),int(w*.53)
+              roi_hsv=hsv[y0:y1,x0:x1]
+              roi_gray=gray[y0:y1,x0:x1]
+              white=((roi_hsv[:,:,1] < 125) & (roi_hsv[:,:,2] > 150) & (roi_gray > 145)).astype(np.uint8)*255
+              n,labels,stats,_=cv2.connectedComponentsWithStats(white,8)
+              kept=np.zeros_like(white)
+              for i in range(1,n):
+                  x,y,ww,hh,area=stats[i]
+                  if 4 <= area <= int(white.size*.12) and hh >= 2 and ww >= 2:
+                      kept[labels==i]=255
+              kept=cv2.morphologyEx(kept,cv2.MORPH_CLOSE,np.ones((3,3),np.uint8),iterations=1)
+              kept=cv2.dilate(kept,np.ones((7,7),np.uint8),iterations=1)
+              mask[y0:y1,x0:x1]=cv2.max(mask[y0:y1,x0:x1],kept)
+
+              # Bottom filename/name plaque: detect bright lettering in the lower central area,
+              # then remove its compact surrounding plaque without touching the character.
+              by0=int(h*.865); bx0=int(w*.12); bx1=int(w*.88)
+              broi_hsv=hsv[by0:h,bx0:bx1]
+              broi_gray=gray[by0:h,bx0:bx1]
+              bright=((broi_hsv[:,:,1] < 135) & (broi_hsv[:,:,2] > 145) & (broi_gray > 140)).astype(np.uint8)*255
+              bright=cv2.morphologyEx(bright,cv2.MORPH_CLOSE,np.ones((3,3),np.uint8),iterations=1)
+              ys,xs=np.where(bright>0)
+              if len(xs) > 12:
+                  x_min,x_max=int(xs.min()),int(xs.max())
+                  y_min,y_max=int(ys.min()),int(ys.max())
+                  # Keep the repair constrained to the bottom text zone.
+                  x_min=max(0,x_min-10); x_max=min(bright.shape[1]-1,x_max+10)
+                  y_min=max(0,y_min-6); y_max=min(bright.shape[0]-1,y_max+6)
+                  if y_min > int(bright.shape[0]*.20):
+                      cv2.rectangle(mask,(bx0+x_min,by0+y_min),(bx0+x_max,by0+y_max),255,-1)
+
+              return mask
+
+          for name in names:
+              src=os.path.join(src_dir,name+'.webp')
+              img=cv2.imread(src,cv2.IMREAD_COLOR)
+              if img is None:
+                  raise RuntimeError(f'Cannot read {src}')
+
+              mask=selective_text_mask(img)
+              # Two gentle inpaint passes are cleaner than one large-radius smear.
+              cleaned=cv2.inpaint(img,mask,3,cv2.INPAINT_TELEA)
+              edge=cv2.dilate(mask,np.ones((3,3),np.uint8),iterations=1)
+              cleaned=cv2.inpaint(cleaned,edge,2,cv2.INPAINT_NS)
+
+              # Ultra-HD portrait output (8x original = 3072x4096 for 384x512 masters).
+              up=cv2.resize(cleaned,None,fx=8,fy=8,interpolation=cv2.INTER_LANCZOS4)
+              blur=cv2.GaussianBlur(up,(0,0),1.15)
+              sharp=cv2.addWeighted(up,1.22,blur,-0.22,0)
+
+              out=os.path.join(out_dir,name+'.webp')
+              ok=cv2.imwrite(out,sharp,[cv2.IMWRITE_WEBP_QUALITY,96])
+              if not ok:
+                  raise RuntimeError(f'Cannot write {out}')
+              hh,ww=sharp.shape[:2]
+              if hh < 3000 or ww < 2000:
+                  raise RuntimeError(f'Unexpected UHD size for {name}: {ww}x{hh}')
+              print(name, ww, hh, int(np.count_nonzero(mask)))
+          PY
+          python3 /tmp/clean_stages.py
+
+      - name: Bump site cache without changing layout
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('worker.js')
+          s=p.read_text()
+          s=s.replace('/fixed-stage-home.js?v=4','/fixed-stage-home.js?v=5')
+          s=s.replace('/site-polish-v3.js?v=4','/site-polish-v3.js?v=5')
+          s=s.replace('stage-home-v4-ultrahd','stage-home-v5-clean-ultrahd')
+          p.write_text(s)
+          PY
+
+      - name: Verify no unrelated site files changed
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add silhouettes/*.png sil-*.png
+          git diff --exit-code -- index.html creator-cache-v23.js creator-hd.css safe-ui-bootstrap.js fixed-stage-home.js site-polish-v3.js
+
+      - name: Commit cleaned UHD stage artwork
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/characters/male/medium/brown/male_textured/*.webp worker.js
           if git diff --cached --quiet; then
-            echo "No silhouette changes to commit"
+            echo 'No stage changes to commit'
             exit 0
           fi
-          git commit -m "Refresh exact character-only evolution silhouettes"
+          git commit -m 'Nettoyer sans flou les 8 visuels de paliers'
+          git pull --rebase origin main
           git push origin HEAD:main
