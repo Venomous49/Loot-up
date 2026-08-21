@@ -4,16 +4,20 @@
 🌀 Building list of assets...
 ✨ Read 741 files from the assets directory /home/runner/work/RiseLooter/RiseLooter
 🌀 Starting asset upload...
-No updated asset files to upload. Proceeding with deployment...
+🌀 Found 1 new or modified static asset to upload. Proceeding with upload...
++ /site-polish-v3.js
+Uploaded 1 of 1 asset
+✨ Success! Uploaded 1 file (527 already uploaded) (0.87 sec)
+
 Total Upload: 1.68 KiB / gzip: 0.70 KiB
-Worker Startup Time: 5 ms
+Worker Startup Time: 4 ms
 Your Worker has access to the following bindings:
 Binding            Resource      
 env.ASSETS         Assets        
 
-Uploaded loot-up (5.17 sec)
-Deployed loot-up triggers (0.77 sec)
+Uploaded loot-up (6.36 sec)
+Deployed loot-up triggers (0.56 sec)
   https://loot-up.marin-iglesias.workers.dev
-Current Version ID: e5318c15-b154-449d-9ce5-b18bf5031704
+Current Version ID: 54f32394-6f26-48d9-851a-194789febd0f
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
