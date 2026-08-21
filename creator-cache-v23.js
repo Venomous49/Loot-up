@@ -1,6 +1,11 @@
 (() => {
   'use strict';
-  const VERSION = 'fullbody23';
+
+  // Use one cache-busting token per page load. The old fixed value (fullbody23)
+  // meant every rebuilt hairstyle kept the exact same URL, so the browser/CDN
+  // could continue serving an older WebP even after GitHub rebuilt and deployed
+  // a different file at that path.
+  const VERSION = `creator-${Date.now().toString(36)}`;
 
   const rewrite = (img) => {
     if (!(img instanceof HTMLImageElement)) return;
