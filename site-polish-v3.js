@@ -4,23 +4,47 @@
   const style = document.createElement('style');
   style.id = 'riselooter-polish-v3-style';
   style.textContent = `
+    #home .hero .character-scene-clean {
+      position: absolute !important;
+      inset: 0 !important;
+      overflow: hidden !important;
+      background: #070b0e !important;
+    }
+    #home .hero .character-scene-clean::after {
+      content: "" !important;
+      display: block !important;
+      position: absolute !important;
+      inset: 0 !important;
+      z-index: 0 !important;
+      background-image: var(--stage-backdrop, none) !important;
+      background-size: cover !important;
+      background-position: center center !important;
+      background-repeat: no-repeat !important;
+      filter: brightness(.42) saturate(.82) !important;
+      opacity: .72 !important;
+      transform: scale(1.03) !important;
+      pointer-events: none !important;
+    }
     #home .hero .scene-clean-image.stage-art-clean {
+      position: absolute !important;
+      inset: 0 !important;
+      z-index: 1 !important;
       width: 100% !important;
       height: 100% !important;
-      object-fit: cover !important;
-      object-position: center 52% !important;
-      transform: scale(1.10) !important;
-      transform-origin: center center !important;
+      max-width: 100% !important;
+      object-fit: contain !important;
+      object-position: center center !important;
+      transform: none !important;
       filter: none !important;
+      opacity: 1 !important;
     }
     .evolution-real.stage-art-clean {
       width: 100% !important;
       height: 100% !important;
-      max-width: none !important;
-      object-fit: cover !important;
-      object-position: center 52% !important;
-      transform: scale(1.10) !important;
-      transform-origin: center center !important;
+      max-width: 100% !important;
+      object-fit: contain !important;
+      object-position: center center !important;
+      transform: none !important;
       filter: none !important;
     }
     #home .next-evolution {
@@ -33,6 +57,17 @@
 
   function setText(el, value) {
     if (el && el.textContent !== value) el.textContent = value;
+  }
+
+  function syncStageBackdrop() {
+    const img = document.querySelector('#home .hero .scene-clean-image.stage-art-clean');
+    const scene = img && img.closest('.character-scene-clean');
+    if (!img || !scene) return;
+    const src = img.currentSrc || img.src;
+    const value = src ? `url("${src.replace(/"/g, '\\"')}")` : 'none';
+    if (scene.style.getPropertyValue('--stage-backdrop') !== value) {
+      scene.style.setProperty('--stage-backdrop', value);
+    }
   }
 
   function polishChallenges() {
@@ -89,6 +124,7 @@
   }
 
   function apply() {
+    syncStageBackdrop();
     polishChallenges();
     polishMissions();
     polishMissionTest();
@@ -108,5 +144,5 @@
       queued = false;
       apply();
     });
-  }).observe(document.documentElement, { childList: true, subtree: true });
+  }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['src', 'class'] });
 })();
