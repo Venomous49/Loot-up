@@ -1,5 +1,6 @@
 name: Clean RiseLooter stage artwork
 
+# Final targeted pass: remove embedded stage titles and filename labels without touching site layout.
 on:
   push:
     branches: [ main ]
