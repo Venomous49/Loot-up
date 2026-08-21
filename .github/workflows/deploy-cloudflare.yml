@@ -20,6 +20,7 @@ on:
       - '30-elite.webp'
       - '40-cyber-looter.webp'
       - '50-rise-looter.webp'
+      - '.stage-assets/validated-stages.zip'
       - '.github/workflows/deploy-cloudflare.yml'
   workflow_dispatch:
 
@@ -27,8 +28,8 @@ permissions:
   contents: write
 
 concurrency:
-  group: riselooter-cloudflare-production-v6
-  cancel-in-progress: true
+  group: riselooter-cloudflare-production-v7
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -41,6 +42,38 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+
+      - name: Install the validated 8 evolution images when present
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f .stage-assets/validated-stages.zip ]; then
+            rm -rf /tmp/validated-stages
+            mkdir -p /tmp/validated-stages
+            unzip -q .stage-assets/validated-stages.zip -d /tmp/validated-stages
+            for f in 01-debutant 05-debrouillard 10-chasseur 15-hustler 20-pro 30-elite 40-cyber-looter 50-rise-looter; do
+              test -s "/tmp/validated-stages/$f.webp"
+              cp "/tmp/validated-stages/$f.webp" "$f.webp"
+            done
+            python3 - <<'PY'
+            from pathlib import Path
+            p=Path('fixed-stage-home.js')
+            s=p.read_text()
+            names=['01-debutant','05-debrouillard','10-chasseur','15-hustler','20-pro','30-elite','40-cyber-looter','50-rise-looter']
+            for name in names:
+                s=s.replace(f"'/{name}.webp'", f"'/{name}.webp?v=validated-20260821-2'")
+            p.write_text(s)
+            PY
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add 01-debutant.webp 05-debrouillard.webp 10-chasseur.webp 15-hustler.webp 20-pro.webp 30-elite.webp 40-cyber-looter.webp 50-rise-looter.webp fixed-stage-home.js
+            git rm -f .stage-assets/validated-stages.zip || true
+            git rm -f .github/workflows/install-validated-stages.yml || true
+            git commit -m 'Remplacer les 8 paliers par les visuels validés'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -87,7 +120,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          printf 'status=%s\nsource_commit=%s\nstage_version=eight-canonical-images\napi_token_present=%s\n' '${{ steps.deploy.outputs.outcome }}' "$(git rev-parse HEAD)" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
+          printf 'status=%s\nsource_commit=%s\nstage_version=validated-eight-canonical-images\napi_token_present=%s\n' '${{ steps.deploy.outputs.outcome }}' "$(git rev-parse HEAD)" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add cloudflare-deploy-status.txt cloudflare-deploy-log.txt
