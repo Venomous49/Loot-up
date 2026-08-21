@@ -11,6 +11,7 @@ on:
       - 'index.html'
       - 'safe-ui-bootstrap.js'
       - 'assets/creator/**'
+      - 'assets/characters/**'
       - 'creator-production-build-status.txt'
       - '.github/workflows/deploy-cloudflare.yml'
   workflow_dispatch:
