@@ -37,6 +37,7 @@ jobs:
             test -s "/tmp/validated-stages/$f.webp"
             cp "/tmp/validated-stages/$f.webp" "$f.webp"
           done
+          python3 -m pip install --quiet pillow
           python3 - <<'PY'
           from PIL import Image
           names=['01-debutant','05-debrouillard','10-chasseur','15-hustler','20-pro','30-elite','40-cyber-looter','50-rise-looter']
