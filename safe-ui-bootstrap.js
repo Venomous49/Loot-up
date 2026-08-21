@@ -1,15 +1,51 @@
 (() => {
   'use strict';
-  const $=id=>document.getElementById(id); const VERSION='layered-v4-fit1';
-  const hair={male:[['male_textured','Texturé'],['male_short','Court classique'],['male_medium','Mi-long'],['male_undercut','Dégradé'],['male_slick','Coiffé arrière']],female:[['female_long','Long lisse'],['female_wavy','Ondulé'],['female_bob','Carré'],['female_ponytail','Queue attachée'],['female_short','Court moderne']]};
-  const state={gender:'male',skin:'medium',hairColor:'brown',hairStyle:'male_textured'}; const isOpen=()=>document.body.classList.contains('creator-test-active');
-  const root=()=>`/assets/creator_layers/${state.gender}`; const layer=k=>k==='base'?`${root()}/base.webp?v=${VERSION}`:k==='skin'?`${root()}/skin-${state.skin}.webp?v=${VERSION}`:`${root()}/hair-${state.hairStyle}-${state.hairColor}.webp?v=${VERSION}`;
-  const sync=(id,f)=>{const r=$(id);if(r)r.querySelectorAll('.choice').forEach(b=>b.classList.toggle('selected',b.dataset.value===state[f]));};
-  function updatePreview(){const p=$('creatorPreview');if(!p)return;p.innerHTML=`<div class="creator-layer-stack" style="position:relative;width:100%;height:100%;overflow:hidden"><img src="${layer('base')}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center center;z-index:1"><img src="${layer('skin')}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center center;z-index:2;pointer-events:none"><img src="${layer('hair')}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center center;z-index:3;pointer-events:none"><div class="creator-live-badge" style="z-index:4"><b>NIVEAU 1</b><strong>DÉBUTANT</strong></div></div>`;}
-  function renderHair(){const r=$('hairStyleChoices');if(!r)return;const list=hair[state.gender];if(!list.some(x=>x[0]===state.hairStyle))state.hairStyle=list[0][0];r.innerHTML=list.map(([v,l])=>`<button type="button" class="choice hair-choice ${v===state.hairStyle?'selected':''}" data-value="${v}"><span class="hair-thumb"><img src="/assets/creator_layers/${state.gender}/hair-${v}-${state.hairColor}.webp?v=${VERSION}" alt="${l}" style="width:100%;height:100%;object-fit:contain"></span><span>${l}</span></button>`).join('');r.querySelectorAll('.choice').forEach(b=>b.addEventListener('click',e=>{if(!isOpen())return;e.preventDefault();e.stopImmediatePropagation();state.hairStyle=b.dataset.value;renderHair();updatePreview();},true));}
-  function reset(){Object.assign(state,{gender:'male',skin:'medium',hairColor:'brown',hairStyle:'male_textured'});sync('genderChoices','gender');sync('skinChoices','skin');sync('hairColorChoices','hairColor');renderHair();updatePreview();}
-  function open(e){if(e){e.preventDefault();e.stopImmediatePropagation();}const m=$('creatorModal');if(!m)return;document.body.classList.add('creator-test-active');m.classList.add('show');m.style.display='grid';reset();}
-  function bind(id,f){const r=$(id);if(!r)return;r.querySelectorAll('.choice').forEach(b=>b.addEventListener('click',e=>{if(!isOpen())return;e.preventDefault();e.stopImmediatePropagation();state[f]=b.dataset.value;if(f==='gender')state.hairStyle=state.gender==='female'?'female_long':'male_textured';sync(id,f);renderHair();updatePreview();},true));}
-  function init(){const b=$('creatorTestButton');if(b)b.addEventListener('click',open,true);bind('genderChoices','gender');bind('skinChoices','skin');bind('hairColorChoices','hairColor');const s=$('saveAvatar');if(s)s.addEventListener('click',e=>{if(!isOpen())return;e.preventDefault();e.stopImmediatePropagation();},true);if(new URLSearchParams(location.search).get('creatorTest')==='1')open();}
+  const $=id=>document.getElementById(id); const VERSION='fixed-gender-v1';
+  const state={gender:'male'}; const isOpen=()=>document.body.classList.contains('creator-test-active');
+  const fixedCharacter=()=>state.gender==='female'
+    ? `/assets/creator/female/medium/brown/female_long.webp?v=${VERSION}`
+    : `/assets/creator/male/medium/brown/male_textured.webp?v=${VERSION}`;
+  const syncGender=()=>{const r=$('genderChoices');if(r)r.querySelectorAll('.choice').forEach(b=>b.classList.toggle('selected',b.dataset.value===state.gender));};
+  function installTestOnlyStyle(){
+    if(document.getElementById('creator-gender-only-test-style'))return;
+    const steps=document.querySelectorAll('#creatorModal .creator-step');
+    steps.forEach((step,index)=>step.dataset.creatorTestStep=String(index+1));
+    const style=document.createElement('style');
+    style.id='creator-gender-only-test-style';
+    style.textContent=`
+      body.creator-test-active #creatorModal [data-creator-test-step="2"],
+      body.creator-test-active #creatorModal [data-creator-test-step="3"],
+      body.creator-test-active #creatorModal [data-creator-test-step="4"]{display:none!important}
+    `;
+    document.head.appendChild(style);
+  }
+  function updatePreview(){
+    const p=$('creatorPreview');if(!p)return;
+    p.innerHTML=`<div class="creator-fixed-preview" style="position:relative;width:100%;height:100%;overflow:hidden"><img src="${fixedCharacter()}" alt="Aperçu Looter" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 18%;filter:none;transform:none;animation:none"><div class="creator-live-badge" style="z-index:2"><b>NIVEAU 1</b><strong>DÉBUTANT</strong></div></div>`;
+  }
+  function reset(){state.gender='male';syncGender();updatePreview();}
+  function open(e){
+    if(e){e.preventDefault();e.stopImmediatePropagation();}
+    const m=$('creatorModal');if(!m)return;
+    installTestOnlyStyle();
+    document.body.classList.add('creator-test-active');
+    m.classList.add('show');m.style.display='grid';reset();
+  }
+  function bindGender(){
+    const r=$('genderChoices');if(!r)return;
+    r.querySelectorAll('.choice').forEach(b=>b.addEventListener('click',e=>{
+      if(!isOpen())return;
+      e.preventDefault();e.stopImmediatePropagation();
+      state.gender=b.dataset.value==='female'?'female':'male';
+      syncGender();updatePreview();
+    },true));
+  }
+  function init(){
+    installTestOnlyStyle();
+    const b=$('creatorTestButton');if(b)b.addEventListener('click',open,true);
+    bindGender();
+    const s=$('saveAvatar');if(s)s.addEventListener('click',e=>{if(!isOpen())return;e.preventDefault();e.stopImmediatePropagation();},true);
+    if(new URLSearchParams(location.search).get('creatorTest')==='1')open();
+  }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
