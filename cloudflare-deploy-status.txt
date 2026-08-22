@@ -1,6 +1,6 @@
-status=failure
-source_commit=2ae54a4bcf73d762febec37868945258997b3822
+status=success
+source_commit=3692de02b15a3324475ff29480e6dc81cde04330
 stage_version=native-hd-preprocessed
 character_assets=16
-hd_preprocess=failure
+hd_preprocess=success
 api_token_present=true
