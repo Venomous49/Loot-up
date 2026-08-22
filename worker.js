@@ -5,6 +5,7 @@ class RiseLooterHead {
     element.append('<script src="/safe-ui-bootstrap.js?v=base-hq-realesrgan-v2" defer></script>', { html: true });
     element.append('<script src="/fixed-stage-home.js?v=base-hq-realesrgan-v2" defer></script>', { html: true });
     element.append('<script src="/site-polish-v3.js?v=7" defer></script>', { html: true });
+    element.append('<script src="/evolution-test-mode.js?v=1" defer></script>', { html: true });
   }
 }
 
