@@ -1,7 +1,5 @@
 status=success
-source_commit=c93880b2611649425bb4086c772c399fc90695e3
-stage_version=base-hq-realesrgan-v2
+source_commit=dfc504bc2f8cbcdb10d19ea0adc4d8243c4e2ae9
+stage_version=preserve-current-assets
 character_assets=16
-female_base_assets=8
-hd_preprocess=success
-api_token_present=true
+asset_rewrite=disabled
