@@ -1,14 +1,13 @@
 (() => {
   'use strict';
   const $=id=>document.getElementById(id);
-  const VERSION='superres-x4-20260822-1';
+  const VERSION='superres-x4-20260822-2';
   const state={gender:'male'};
   const isOpen=()=>document.body.classList.contains('creator-test-active');
   const fixedCharacter=()=>state.gender==='female'
     ? `/female-01-debutant.webp?v=${VERSION}`
     : `/01-debutant.webp?v=${VERSION}`;
   const syncGender=()=>{const r=$('genderChoices');if(r)r.querySelectorAll('.choice').forEach(b=>b.classList.toggle('selected',b.dataset.value===state.gender));};
-
   function installTestOnlyStyle(){
     if(document.getElementById('creator-gender-only-test-style'))return;
     const steps=document.querySelectorAll('#creatorModal .creator-step');
