@@ -1,4 +1,4 @@
-status=success
-source_commit=cad64d3d0171731aede81f71598c1561c1665e17
+status=failure
+source_commit=6a655385f5a9ba7d5a10ce8889c8959adf8d070d
 stage_version=validated-final-eight
 api_token_present=true
