@@ -135,3 +135,5 @@ jobs:
       - name: Fail on deployment failure
         if: steps.deploy.outputs.outcome != 'success'
         run: exit 1
+
+      # Status refresh trigger: 2026-08-22T14:48+02:00
