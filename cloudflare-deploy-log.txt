@@ -2,31 +2,30 @@
  ⛅️ wrangler 4.86.0
 ───────────────────
 🌀 Building list of assets...
-✨ Read 866 files from the assets directory /home/runner/work/RiseLooter/RiseLooter
+✨ Read 865 files from the assets directory /home/runner/work/RiseLooter/RiseLooter
 🌀 Starting asset upload...
-🌀 Found 8 new or modified static assets to upload. Proceeding with upload...
+🌀 Found 7 new or modified static assets to upload. Proceeding with upload...
 + /female-15-hustler.webp
 + /female-40-cyber-looter.webp
 + /female-01-debutant.webp
 + /female-20-pro.webp
 + /female-30-elite.webp
-+ /female-50-rise-looter.webp
 + /female-10-chasseur.webp
 + /female-05-debrouillard.webp
-Uploaded 2 of 8 assets
-Uploaded 5 of 8 assets
-Uploaded 8 of 8 assets
-✨ Success! Uploaded 8 files (572 already uploaded) (3.00 sec)
+Uploaded 2 of 7 assets
+Uploaded 5 of 7 assets
+Uploaded 7 of 7 assets
+✨ Success! Uploaded 7 files (574 already uploaded) (2.94 sec)
 
-Total Upload: 1.65 KiB / gzip: 0.69 KiB
-Worker Startup Time: 4 ms
+Total Upload: 1.74 KiB / gzip: 0.71 KiB
+Worker Startup Time: 5 ms
 Your Worker has access to the following bindings:
 Binding            Resource      
 env.ASSETS         Assets        
 
-Uploaded loot-up (9.40 sec)
-Deployed loot-up triggers (0.59 sec)
+Uploaded loot-up (9.00 sec)
+Deployed loot-up triggers (0.74 sec)
   https://loot-up.marin-iglesias.workers.dev
-Current Version ID: 2386c484-908f-47c8-be8f-9a176896546c
+Current Version ID: 3bd9421d-5ca4-4811-ae4f-35b189978300
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
