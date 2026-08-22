@@ -1,6 +1,6 @@
-status=failure
-source_commit=db7a2ac2530d8ccc3565de73c6703e33930e0bc2
-stage_version=superres-x4-v1
+status=success
+source_commit=53d6fae87f559fac27a7bd03cc2629b4afdfb1f5
+stage_version=superres-x4-v2
 character_assets=16
 hd_preprocess=success
 api_token_present=true
