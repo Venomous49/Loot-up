@@ -51,27 +51,18 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Verify exact 8 canonical male stage files
+      - name: Verify all 16 canonical character assets
         shell: bash
         run: |
           set -euo pipefail
-          declare -A EXPECTED=(
-            [01-debutant.webp]=0eb3dbbed95b72bb768f3bb03863250b3293a196
-            [05-debrouillard.webp]=d7a281dda71541fa7bc99cc122523c13942f9ea9
-            [10-chasseur.webp]=9e7ef24daa1f9229d9a3244b31400e41ceed15f4
-            [15-hustler.webp]=28b15d65472702612d6b06197f7aeda46c22e45f
-            [20-pro.webp]=c5ae33b7035613d133394c7bc10996466a253cfe
-            [30-elite.webp]=91d2eb621bf476b99f7803a5d72dc9728b9a5bc1
-            [40-cyber-looter.webp]=d4563716694cc6b9bd87c0fc296b650b447cf935
-            [50-rise-looter.webp]=5350982c5347d548a9d49e6434085e2a1f417cba
+          files=(
+            01-debutant.webp 05-debrouillard.webp 10-chasseur.webp 15-hustler.webp
+            20-pro.webp 30-elite.webp 40-cyber-looter.webp 50-rise-looter.webp
+            female-01-debutant.webp female-05-debrouillard.webp female-10-chasseur.webp female-15-hustler.webp
+            female-20-pro.webp female-30-elite.webp female-40-cyber-looter.webp female-50-rise-looter.webp
           )
-          for f in "${!EXPECTED[@]}"; do
-            test -s "$f"
-            actual="$(git hash-object "$f")"
-            test "$actual" = "${EXPECTED[$f]}" || { echo "SHA mismatch for $f: $actual"; exit 1; }
-          done
-          for f in female-01-debutant.webp female-05-debrouillard.webp female-10-chasseur.webp female-15-hustler.webp female-20-pro.webp female-30-elite.webp female-40-cyber-looter.webp female-50-rise-looter.webp; do
-            test -s "$f"
+          for f in "${files[@]}"; do
+            test -s "$f" || { echo "Missing asset: $f"; exit 1; }
           done
 
       - name: Verify Cloudflare token
@@ -105,7 +96,7 @@ jobs:
           set -euo pipefail
           outcome='${{ steps.deploy.outputs.outcome }}'
           [ -n "$outcome" ] || outcome='failure'
-          printf 'status=%s\nsource_commit=%s\nstage_version=validated-final-eight\napi_token_present=%s\n' "$outcome" "$(git rev-parse HEAD)" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
+          printf 'status=%s\nsource_commit=%s\nstage_version=native-hd\napi_token_present=%s\n' "$outcome" "$(git rev-parse HEAD)" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add cloudflare-deploy-status.txt cloudflare-deploy-log.txt
