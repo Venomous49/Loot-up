@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION='stage-render-20260822-4';
+  const VERSION='stage-render-20260822-5';
   const MALE_STAGE_ASSETS = [
     `/01-debutant.webp?v=${VERSION}`,`/05-debrouillard.webp?v=${VERSION}`,`/10-chasseur.webp?v=${VERSION}`,`/15-hustler.webp?v=${VERSION}`,
     `/20-pro.webp?v=${VERSION}`,`/30-elite.webp?v=${VERSION}`,`/40-cyber-looter.webp?v=${VERSION}`,`/50-rise-looter.webp?v=${VERSION}`
@@ -33,34 +33,39 @@
   `;
   document.head.appendChild(style);
 
-  const sharpCache=new Map();
+  const hdCache=new Map();
   function enhance(img){
     if(!img||img.dataset.stageEnhance==='1')return;
     const run=()=>{
       if(img.dataset.stageEnhance==='1'||!img.naturalWidth||!img.naturalHeight)return;
       img.dataset.stageEnhance='1';
       const original=img.currentSrc||img.src;
-      if(img.naturalHeight>=600)return;
-      if(sharpCache.has(original)){img.src=sharpCache.get(original);return;}
+      if(hdCache.has(original)){img.src=hdCache.get(original);return;}
       const work=()=>{
         try{
-          const scale=Math.max(2,Math.min(3,Math.ceil(900/img.naturalHeight)));
-          const w=img.naturalWidth*scale,h=img.naturalHeight*scale;
-          const c=document.createElement('canvas');c.width=w;c.height=h;
-          const x=c.getContext('2d',{willReadFrequently:true});x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';x.drawImage(img,0,0,w,h);
-          const d=x.getImageData(0,0,w,h),s=d.data,o=new Uint8ClampedArray(s);
-          for(let y=1;y<h-1;y++)for(let xx=1;xx<w-1;xx++){
-            const i=(y*w+xx)*4;
+          const rect=img.getBoundingClientRect();
+          const dpr=Math.min(window.devicePixelRatio||1,2);
+          const targetH=Math.min(1600,Math.max(img.naturalHeight,1200,Math.ceil(rect.height*dpr*2)));
+          const targetW=Math.max(1,Math.round(targetH*(img.naturalWidth/img.naturalHeight)));
+          const c=document.createElement('canvas');c.width=targetW;c.height=targetH;
+          const x=c.getContext('2d',{willReadFrequently:true,alpha:true});
+          x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';x.drawImage(img,0,0,targetW,targetH);
+          const d=x.getImageData(0,0,targetW,targetH),s=d.data,o=new Uint8ClampedArray(s);
+          const stride=targetW*4,amount=.14;
+          for(let y=1;y<targetH-1;y++)for(let xx=1;xx<targetW-1;xx++){
+            const i=y*stride+xx*4;
             for(let ch=0;ch<3;ch++){
-              const v=1.32*s[i+ch]-.08*(s[i-4+ch]+s[i+4+ch]+s[i-w*4+ch]+s[i+w*4+ch]);
-              o[i+ch]=Math.max(0,Math.min(255,v));
+              const center=s[i+ch];
+              const v=(1+4*amount)*center-amount*(s[i-4+ch]+s[i+4+ch]+s[i-stride+ch]+s[i+stride+ch]);
+              const contrasted=(v-128)*1.035+128;
+              o[i+ch]=Math.max(0,Math.min(255,contrasted));
             }
           }
           d.data.set(o);x.putImageData(d,0,0);
-          const url=c.toDataURL('image/webp',.98);sharpCache.set(original,url);img.src=url;
+          const url=c.toDataURL('image/png');hdCache.set(original,url);img.src=url;
         }catch(_){ }
       };
-      if('requestIdleCallback'in window)requestIdleCallback(work,{timeout:500});else setTimeout(work,0);
+      if('requestIdleCallback'in window)requestIdleCallback(work,{timeout:700});else setTimeout(work,0);
     };
     if(img.complete)run();else img.addEventListener('load',run,{once:true});
   }
