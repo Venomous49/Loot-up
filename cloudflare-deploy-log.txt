@@ -2,39 +2,31 @@
  ⛅️ wrangler 4.86.0
 ───────────────────
 🌀 Building list of assets...
-✨ Read 835 files from the assets directory /home/runner/work/RiseLooter/RiseLooter
+✨ Read 858 files from the assets directory /home/runner/work/RiseLooter/RiseLooter
 🌀 Starting asset upload...
-🌀 Found 16 new or modified static assets to upload. Proceeding with upload...
-+ /15-hustler.webp
-+ /40-cyber-looter.webp
-+ /30-elite.webp
-+ /female-20-pro.webp
-+ /female-01-debutant.webp
-+ /female-50-rise-looter.webp
-+ /20-pro.webp
-+ /05-debrouillard.webp
-+ /50-rise-looter.webp
-+ /female-10-chasseur.webp
-+ /female-05-debrouillard.webp
-+ /10-chasseur.webp
-+ /01-debutant.webp
+🌀 Found 8 new or modified static assets to upload. Proceeding with upload...
 + /female-15-hustler.webp
 + /female-40-cyber-looter.webp
++ /female-05-debrouillard.webp
++ /female-20-pro.webp
 + /female-30-elite.webp
-Uploaded 5 of 16 assets
-Uploaded 10 of 16 assets
-Uploaded 16 of 16 assets
-✨ Success! Uploaded 16 files (564 already uploaded) (2.56 sec)
++ /female-50-rise-looter.webp
++ /female-10-chasseur.webp
++ /female-01-debutant.webp
+Uploaded 3 of 8 assets
+Uploaded 6 of 8 assets
+Uploaded 8 of 8 assets
+✨ Success! Uploaded 8 files (572 already uploaded) (1.56 sec)
 
 Total Upload: 1.62 KiB / gzip: 0.68 KiB
-Worker Startup Time: 8 ms
+Worker Startup Time: 4 ms
 Your Worker has access to the following bindings:
 Binding            Resource      
 env.ASSETS         Assets        
 
-Uploaded loot-up (7.87 sec)
-Deployed loot-up triggers (0.55 sec)
+Uploaded loot-up (6.92 sec)
+Deployed loot-up triggers (0.49 sec)
   https://loot-up.marin-iglesias.workers.dev
-Current Version ID: ca72a0a6-bd2b-4512-9f61-6bfbcc117be4
+Current Version ID: 6a2e1cd0-4723-462c-adc4-dfc0e5597008
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
