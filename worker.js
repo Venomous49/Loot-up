@@ -4,8 +4,8 @@ class RiseLooterHead {
     element.append('<script src="/creator-cache-v23.js?v=27" defer></script>', { html: true });
     element.append('<script src="/safe-ui-bootstrap.js?v=base-hq-realesrgan-v2" defer></script>', { html: true });
     element.append('<script src="/fixed-stage-home.js?v=base-hq-realesrgan-v2" defer></script>', { html: true });
-    element.append('<script src="/site-polish-v3.js?v=7" defer></script>', { html: true });
-    element.append('<script src="/evolution-test-mode.js?v=1" defer></script>', { html: true });
+    element.append('<script src="/site-polish-v3.js?v=survey-only-8" defer></script>', { html: true });
+    element.append('<script src="/evolution-test-mode.js?v=survey-only-2" defer></script>', { html: true });
   }
 }
 
@@ -20,7 +20,7 @@ export default {
     headers.set('expires', '0');
     headers.set('x-riselooter-creator-source', 'canonical-stage-images');
     headers.set('x-riselooter-creator-version', 'base-hq-realesrgan-v2');
-    headers.set('x-riselooter-runtime-hotfixes', 'base-hq-realesrgan-v2');
+    headers.set('x-riselooter-runtime-hotfixes', 'survey-only-restored-v2');
     return new HTMLRewriter().on('head', new RiseLooterHead()).transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
   }
 };
