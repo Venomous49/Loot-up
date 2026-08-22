@@ -1,7 +1,7 @@
-status=success
-source_commit=f039fca6186f558a5e27dbae30df3d122f4e64e4
-stage_version=base-hq-edsr-v1
+status=failure
+source_commit=a25d5d03064a4916116af739805315c70c2892ed
+stage_version=base-hq-realesrgan-v2
 character_assets=16
 female_base_assets=8
-hd_preprocess=success
+hd_preprocess=failure
 api_token_present=true
