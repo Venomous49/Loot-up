@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const STAGE_ASSETS = [
+  const MALE_STAGE_ASSETS = [
     '/01-debutant.webp?v=final-eight-20260821-2',
     '/05-debrouillard.webp?v=final-eight-20260821-2',
     '/10-chasseur.webp?v=final-eight-20260821-2',
@@ -12,14 +12,24 @@
     '/50-rise-looter.webp?v=final-eight-20260821-2'
   ];
 
-  // The character creator has been retired. The homepage now uses exactly one
-  // canonical full-scene image per evolution stage, with no dependency on
-  // gender/skin/hair folders.
+  const FEMALE_STAGE_ASSETS = [
+    '/female-01-debutant.webp?v=female-fixed-20260822-1',
+    '/female-05-debrouillard.webp?v=female-fixed-20260822-1',
+    '/female-10-chasseur.webp?v=female-fixed-20260822-1',
+    '/female-15-hustler.webp?v=female-fixed-20260822-1',
+    '/female-20-pro.webp?v=female-fixed-20260822-1',
+    '/female-30-elite.webp?v=female-fixed-20260822-1',
+    '/female-40-cyber-looter.webp?v=female-fixed-20260822-1',
+    '/female-50-rise-looter.webp?v=female-fixed-20260822-1'
+  ];
+
   const originalAssetPath = window.assetPath;
   if (typeof originalAssetPath === 'function') {
-    window.assetPath = function(_profile, stage) {
-      const index = Math.max(0, Math.min(Number(stage) || 0, STAGE_ASSETS.length - 1));
-      return STAGE_ASSETS[index];
+    window.assetPath = function(profile, stage) {
+      const index = Math.max(0, Math.min(Number(stage) || 0, MALE_STAGE_ASSETS.length - 1));
+      return profile?.avatar_gender === 'female'
+        ? FEMALE_STAGE_ASSETS[index]
+        : MALE_STAGE_ASSETS[index];
     };
   }
 
@@ -46,7 +56,9 @@
   function markStageArtwork(root = document) {
     root.querySelectorAll?.('img').forEach(img => {
       const src = img.getAttribute('src') || img.currentSrc || '';
-      if (STAGE_ASSETS.some(asset => src.includes(asset))) img.classList.add('stage-art-clean');
+      const matches = [...MALE_STAGE_ASSETS, ...FEMALE_STAGE_ASSETS]
+        .some(asset => src.includes(asset.split('?')[0]));
+      if (matches) img.classList.add('stage-art-clean');
     });
   }
 
