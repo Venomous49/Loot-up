@@ -27,6 +27,8 @@ on:
       - 'female-40-cyber-looter.webp'
       - 'female-50-rise-looter.webp'
       - '.github/workflows/deploy-cloudflare.yml'
+  pull_request:
+    types: [opened]
   issues:
     types: [opened]
   workflow_dispatch:
@@ -40,7 +42,9 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.event_name != 'issues' || github.event.issue.title == 'Trigger HD deployment verification'
+    if: >-
+      (github.event_name != 'issues' || github.event.issue.title == 'Trigger HD deployment verification') &&
+      (github.event_name != 'pull_request' || github.event.pull_request.title == 'Trigger HD deployment verification PR')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -143,5 +147,3 @@ jobs:
       - name: Fail on deployment failure
         if: steps.deploy.outputs.outcome != 'success'
         run: exit 1
-
-      # PR-merge trigger: 2026-08-22T15:07+02:00
