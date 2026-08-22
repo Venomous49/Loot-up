@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const $=id=>document.getElementById(id); const VERSION='beginner-preview-20260822-1';
+  const $=id=>document.getElementById(id); const VERSION='beginner-preview-20260822-2';
   const state={gender:'male'}; const isOpen=()=>document.body.classList.contains('creator-test-active');
   const fixedCharacter=()=>state.gender==='female'
     ? `/female-01-debutant.webp?v=${VERSION}`
@@ -16,12 +16,30 @@
       body.creator-test-active #creatorModal [data-creator-test-step="2"],
       body.creator-test-active #creatorModal [data-creator-test-step="3"],
       body.creator-test-active #creatorModal [data-creator-test-step="4"]{display:none!important}
+      body.creator-test-active #creatorPreview{overflow:hidden!important}
+      body.creator-test-active #creatorPreview .creator-fixed-preview{display:flex!important;align-items:center!important;justify-content:center!important}
+      body.creator-test-active #creatorPreview .creator-fixed-preview>img{
+        width:100%!important;
+        height:100%!important;
+        max-width:100%!important;
+        max-height:100%!important;
+        object-fit:contain!important;
+        object-position:center 56%!important;
+        padding:12px 10px 4px!important;
+        box-sizing:border-box!important;
+        filter:none!important;
+        opacity:1!important;
+        transform:translateY(5px)!important;
+        animation:none!important;
+        image-rendering:auto!important;
+        backface-visibility:hidden!important;
+      }
     `;
     document.head.appendChild(style);
   }
   function updatePreview(){
     const p=$('creatorPreview');if(!p)return;
-    p.innerHTML=`<div class="creator-fixed-preview" style="position:relative;width:100%;height:100%;overflow:hidden"><img src="${fixedCharacter()}" alt="Aperçu Looter" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center center;filter:none;transform:none;animation:none"><div class="creator-live-badge" style="z-index:2"><b>NIVEAU 1</b><strong>DÉBUTANT</strong></div></div>`;
+    p.innerHTML=`<div class="creator-fixed-preview" style="position:relative;width:100%;height:100%;overflow:hidden"><img src="${fixedCharacter()}" alt="Aperçu Looter" decoding="async" fetchpriority="high"><div class="creator-live-badge" style="z-index:2"><b>NIVEAU 1</b><strong>DÉBUTANT</strong></div></div>`;
   }
   function reset(){state.gender='male';syncGender();updatePreview();}
   function open(e){
