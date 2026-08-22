@@ -95,6 +95,7 @@ jobs:
           sr = cv2.dnn_superres.DnnSuperResImpl_create()
           sr.readModel('/tmp/FSRCNN_x4.pb')
           sr.setModel('fsrcnn', 4)
+          target_long=1536
           for name in names:
               p=Path(name)
               raw=cv2.imread(str(p), cv2.IMREAD_COLOR)
@@ -103,10 +104,11 @@ jobs:
               h,w=raw.shape[:2]
               enhanced=sr.upsample(raw)
               eh,ew=enhanced.shape[:2]
-              target_long=1536
-              if max(ew,eh)>target_long:
-                  scale=target_long/max(ew,eh)
-                  enhanced=cv2.resize(enhanced,(round(ew*scale),round(eh*scale)),interpolation=cv2.INTER_AREA)
+              current_long=max(ew,eh)
+              if current_long != target_long:
+                  scale=target_long/current_long
+                  interpolation=cv2.INTER_AREA if scale < 1 else cv2.INTER_LANCZOS4
+                  enhanced=cv2.resize(enhanced,(round(ew*scale),round(eh*scale)),interpolation=interpolation)
               rgb=cv2.cvtColor(enhanced,cv2.COLOR_BGR2RGB)
               im=Image.fromarray(rgb).filter(ImageFilter.UnsharpMask(radius=0.45,percent=55,threshold=2))
               if name.startswith('female-'):
@@ -126,7 +128,7 @@ jobs:
           for name in names:
               with Image.open(name) as im:
                   w,h=im.size
-                  assert max(w,h)>=1536, f'{name} is only {w}x{h}'
+                  assert max(w,h)==1536, f'{name} is {w}x{h}, expected long side 1536'
                   print(f'OK {name} {w}x{h}')
           PY
 
@@ -165,7 +167,7 @@ jobs:
           [ -n "$outcome" ] || outcome='failure'
           prep="$PREP_OUTCOME"
           [ -n "$prep" ] || prep='not-run'
-          printf 'status=%s\nsource_commit=%s\nstage_version=superres-x4-v1\ncharacter_assets=16\nhd_preprocess=%s\napi_token_present=%s\n' "$outcome" "$TRIGGER_SHA" "$prep" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
+          printf 'status=%s\nsource_commit=%s\nstage_version=superres-x4-v2\ncharacter_assets=16\nhd_preprocess=%s\napi_token_present=%s\n' "$outcome" "$TRIGGER_SHA" "$prep" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
           git restore -- '*.webp' || true
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
