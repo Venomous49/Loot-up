@@ -1,4 +1,4 @@
-status=failure
-source_commit=6a655385f5a9ba7d5a10ce8889c8959adf8d070d
-stage_version=validated-final-eight
+status=success
+source_commit=4748011386a679e8a89b7c0ede6b09c0cee16c22
+stage_version=native-hd
 api_token_present=true
