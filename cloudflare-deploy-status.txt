@@ -1,4 +1,6 @@
-status=success
-source_commit=4748011386a679e8a89b7c0ede6b09c0cee16c22
-stage_version=native-hd
+status=pending
+source_commit=ad3cd0aec19c62ad86024f8bd82fd07cd4771967
+stage_version=native-hd-preprocessed
+character_assets=16
+hd_preprocess=scheduled
 api_token_present=true
