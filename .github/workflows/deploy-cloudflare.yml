@@ -29,8 +29,6 @@ on:
       - '.github/workflows/deploy-cloudflare.yml'
   pull_request:
     types: [opened]
-  issues:
-    types: [opened]
   workflow_dispatch:
 
 permissions:
@@ -43,10 +41,9 @@ concurrency:
 jobs:
   deploy:
     if: >-
-      (github.event_name != 'issues' || github.event.issue.title == 'Trigger HD deployment verification') &&
-      (github.event_name != 'pull_request' || github.event.pull_request.title == 'Trigger HD deployment verification PR')
+      github.event_name != 'pull_request' || github.event.pull_request.title == 'Trigger HD deployment verification PR'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
@@ -71,66 +68,73 @@ jobs:
             female-01-debutant.webp female-05-debrouillard.webp female-10-chasseur.webp female-15-hustler.webp
             female-20-pro.webp female-30-elite.webp female-40-cyber-looter.webp female-50-rise-looter.webp
           )
-          for f in "${files[@]}"; do
-            test -s "$f" || { echo "Missing asset: $f"; exit 1; }
-          done
+          for f in "${files[@]}"; do test -s "$f" || { echo "Missing asset: $f"; exit 1; }; done
 
-      - name: Prepare all 16 character assets with x4 super-resolution
+      - name: Enhance the 8 female base files with EDSR x4
         id: prep
         shell: bash
         run: |
           set -euo pipefail
           python -m pip install --quiet pillow opencv-contrib-python-headless
-          curl -fL --retry 3 -o /tmp/FSRCNN_x4.pb https://github.com/Saafke/FSRCNN_Tensorflow/raw/master/models/FSRCNN_x4.pb
+          curl -fL --retry 3 -o /tmp/EDSR_x4.pb https://github.com/Saafke/EDSR_Tensorflow/raw/master/models/EDSR_x4.pb
           python - <<'PY'
           import cv2
-          from pathlib import Path
           from PIL import Image, ImageFilter
-          names = [
-            '01-debutant.webp','05-debrouillard.webp','10-chasseur.webp','15-hustler.webp',
-            '20-pro.webp','30-elite.webp','40-cyber-looter.webp','50-rise-looter.webp',
+          names=[
             'female-01-debutant.webp','female-05-debrouillard.webp','female-10-chasseur.webp','female-15-hustler.webp',
             'female-20-pro.webp','female-30-elite.webp','female-40-cyber-looter.webp','female-50-rise-looter.webp'
           ]
-          sr = cv2.dnn_superres.DnnSuperResImpl_create()
-          sr.readModel('/tmp/FSRCNN_x4.pb')
-          sr.setModel('fsrcnn', 4)
-          target_long=1536
+          sr=cv2.dnn_superres.DnnSuperResImpl_create()
+          sr.readModel('/tmp/EDSR_x4.pb')
+          sr.setModel('edsr',4)
+          target=(1152,1536)
           for name in names:
-              p=Path(name)
-              raw=cv2.imread(str(p), cv2.IMREAD_COLOR)
-              if raw is None:
-                  raise RuntimeError(f'Cannot decode {name}')
+              raw=cv2.imread(name,cv2.IMREAD_COLOR)
+              if raw is None: raise RuntimeError(f'Cannot decode {name}')
               h,w=raw.shape[:2]
-              enhanced=sr.upsample(raw)
-              eh,ew=enhanced.shape[:2]
-              current_long=max(ew,eh)
-              if current_long != target_long:
-                  scale=target_long/current_long
-                  interpolation=cv2.INTER_AREA if scale < 1 else cv2.INTER_LANCZOS4
-                  enhanced=cv2.resize(enhanced,(round(ew*scale),round(eh*scale)),interpolation=interpolation)
-              rgb=cv2.cvtColor(enhanced,cv2.COLOR_BGR2RGB)
-              im=Image.fromarray(rgb).filter(ImageFilter.UnsharpMask(radius=0.45,percent=55,threshold=2))
-              if name.startswith('female-'):
-                  im.save(p,'WEBP',lossless=True,method=6,exact=True)
+              if max(w,h) < 1536:
+                  out=sr.upsample(raw)
               else:
-                  im.save(p,'WEBP',quality=100,method=6)
+                  out=raw
+              oh,ow=out.shape[:2]
+              if (ow,oh)!=target:
+                  interp=cv2.INTER_AREA if ow>target[0] or oh>target[1] else cv2.INTER_LANCZOS4
+                  out=cv2.resize(out,target,interpolation=interp)
+              rgb=cv2.cvtColor(out,cv2.COLOR_BGR2RGB)
+              im=Image.fromarray(rgb)
+              im=im.filter(ImageFilter.UnsharpMask(radius=0.55,percent=85,threshold=2))
+              im.save(name,'WEBP',quality=100,method=6)
               print(f'{name}: {w}x{h} -> {im.width}x{im.height}')
           PY
 
-      - name: Verify processed dimensions for all 16 assets
+      - name: Verify all 8 female base files are native HD
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           from PIL import Image
-          names=['01-debutant.webp','05-debrouillard.webp','10-chasseur.webp','15-hustler.webp','20-pro.webp','30-elite.webp','40-cyber-looter.webp','50-rise-looter.webp','female-01-debutant.webp','female-05-debrouillard.webp','female-10-chasseur.webp','female-15-hustler.webp','female-20-pro.webp','female-30-elite.webp','female-40-cyber-looter.webp','female-50-rise-looter.webp']
+          names=[
+            'female-01-debutant.webp','female-05-debrouillard.webp','female-10-chasseur.webp','female-15-hustler.webp',
+            'female-20-pro.webp','female-30-elite.webp','female-40-cyber-looter.webp','female-50-rise-looter.webp'
+          ]
           for name in names:
               with Image.open(name) as im:
-                  w,h=im.size
-                  assert max(w,h)==1536, f'{name} is {w}x{h}, expected long side 1536'
-                  print(f'OK {name} {w}x{h}')
+                  assert im.size==(1152,1536), f'{name}: {im.size}'
+                  print('OK',name,im.size)
           PY
+
+      - name: Persist enhanced female files at the same canonical paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add female-*.webp
+          if ! git diff --cached --quiet; then
+            git commit -m 'Replace female base assets with EDSR HD versions [skip ci]'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
 
       - name: Verify Cloudflare token
         shell: bash
@@ -147,12 +151,8 @@ jobs:
           npx --yes wrangler@4 deploy > /tmp/wrangler-deploy.log 2>&1
           code=$?
           set -e
-          sed -E 's/(cfut_|cfat_)[A-Za-z0-9_-]+/[REDACTED_TOKEN]/g' /tmp/wrangler-deploy.log | tail -n 140 > cloudflare-deploy-log.txt
-          if [ "$code" -eq 0 ]; then
-            echo 'outcome=success' >> "$GITHUB_OUTPUT"
-          else
-            echo 'outcome=failure' >> "$GITHUB_OUTPUT"
-          fi
+          sed -E 's/(cfut_|cfat_)[A-Za-z0-9_-]+/[REDACTED_TOKEN]/g' /tmp/wrangler-deploy.log | tail -n 160 > cloudflare-deploy-log.txt
+          if [ "$code" -eq 0 ]; then echo 'outcome=success' >> "$GITHUB_OUTPUT"; else echo 'outcome=failure' >> "$GITHUB_OUTPUT"; fi
 
       - name: Record Cloudflare result
         if: always()
@@ -163,16 +163,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          outcome='${{ steps.deploy.outputs.outcome }}'
-          [ -n "$outcome" ] || outcome='failure'
-          prep="$PREP_OUTCOME"
-          [ -n "$prep" ] || prep='not-run'
-          printf 'status=%s\nsource_commit=%s\nstage_version=superres-x4-v2\ncharacter_assets=16\nhd_preprocess=%s\napi_token_present=%s\n' "$outcome" "$TRIGGER_SHA" "$prep" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
-          git restore -- '*.webp' || true
+          outcome='${{ steps.deploy.outputs.outcome }}'; [ -n "$outcome" ] || outcome='failure'
+          prep="$PREP_OUTCOME"; [ -n "$prep" ] || prep='not-run'
+          printf 'status=%s\nsource_commit=%s\nstage_version=base-hq-edsr-v1\ncharacter_assets=16\nfemale_base_assets=8\nhd_preprocess=%s\napi_token_present=%s\n' "$outcome" "$TRIGGER_SHA" "$prep" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add cloudflare-deploy-status.txt cloudflare-deploy-log.txt
-          git diff --cached --quiet || (git commit -m 'Record Cloudflare deployment diagnostics' && git pull --rebase origin main && git push origin HEAD:main)
+          git diff --cached --quiet || (git commit -m 'Record Cloudflare deployment diagnostics [skip ci]' && git pull --rebase origin main && git push origin HEAD:main)
 
       - name: Fail on deployment failure
         if: steps.deploy.outputs.outcome != 'success'
