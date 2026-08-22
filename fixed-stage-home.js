@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const VERSION='superres-x4-20260822-2';
+  const VERSION='base-hq-edsr-v1';
   const MALE_STAGE_ASSETS=[
     `/01-debutant.webp?v=${VERSION}`,`/05-debrouillard.webp?v=${VERSION}`,`/10-chasseur.webp?v=${VERSION}`,`/15-hustler.webp?v=${VERSION}`,
     `/20-pro.webp?v=${VERSION}`,`/30-elite.webp?v=${VERSION}`,`/40-cyber-looter.webp?v=${VERSION}`,`/50-rise-looter.webp?v=${VERSION}`
@@ -23,36 +23,16 @@
     .evolution-card.locked .evolution-real.stage-art-clean{filter:brightness(0)!important;opacity:.86!important}
   `;
   document.head.appendChild(style);
-  function mark(root=document){
-    root.querySelectorAll?.('img').forEach(img=>{
-      const src=img.getAttribute('src')||img.currentSrc||'';
-      if([...MALE_STAGE_ASSETS,...FEMALE_STAGE_ASSETS].some(a=>src.includes(a.split('?')[0]))){
-        img.classList.add('stage-art-clean');
-        img.decoding='async';
-      }
-    });
-  }
+  function mark(root=document){root.querySelectorAll?.('img').forEach(img=>{const src=img.getAttribute('src')||img.currentSrc||'';if([...MALE_STAGE_ASSETS,...FEMALE_STAGE_ASSETS].some(a=>src.includes(a.split('?')[0]))){img.classList.add('stage-art-clean');img.decoding='async';}})}
   function repairHome(){
-    const holder=document.getElementById('mainCharacter');
-    if(!holder)return;
-    const profile=window.currentProfile||null;
-    const level=Number(profile?.level||1);
-    const levels=[1,5,10,15,20,30,40,50];
-    let stage=0;levels.forEach((n,i)=>{if(level>=n)stage=i});
-    const wanted=fixedAssetPath(profile,stage);
-    let img=holder.querySelector('img.scene-clean-image');
-    if(!img){
-      holder.innerHTML=`<div class="character-scene-clean"><img class="scene-clean-image stage-art-clean" src="${wanted}" alt="Looter" decoding="async"></div>`;
-      return;
-    }
-    const current=img.getAttribute('src')||'';
-    if(!current.includes(wanted.split('?')[0]))img.src=wanted;
-    img.style.display='block';
-    img.classList.add('stage-art-clean');
-    holder.querySelectorAll('.character-missing').forEach(el=>el.style.display='none');
+    const holder=document.getElementById('mainCharacter');if(!holder)return;
+    const profile=window.currentProfile||null;const level=Number(profile?.level||1);const levels=[1,5,10,15,20,30,40,50];
+    let stage=0;levels.forEach((n,i)=>{if(level>=n)stage=i});const wanted=fixedAssetPath(profile,stage);let img=holder.querySelector('img.scene-clean-image');
+    if(!img){holder.innerHTML=`<div class="character-scene-clean"><img class="scene-clean-image stage-art-clean" src="${wanted}" alt="Looter" decoding="async"></div>`;return;}
+    const current=img.getAttribute('src')||'';if(!current.includes(wanted.split('?')[0])||!current.includes(VERSION))img.src=wanted;
+    img.style.display='block';img.classList.add('stage-art-clean');holder.querySelectorAll('.character-missing').forEach(el=>el.style.display='none');
   }
   function apply(){mark();repairHome()}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();
-  let queued=false;
-  new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;apply()})}).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['src','style']});
+  let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;apply()})}).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['src','style']});
 })();
