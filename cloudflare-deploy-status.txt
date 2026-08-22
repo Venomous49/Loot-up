@@ -1,6 +1,6 @@
 status=failure
-source_commit=187101f5a5c03eebea421a221388e54dd0f456ab
-stage_version=source-hq-lossless
+source_commit=db7a2ac2530d8ccc3565de73c6703e33930e0bc2
+stage_version=superres-x4-v1
 character_assets=16
-hd_preprocess=failure
+hd_preprocess=success
 api_token_present=true
