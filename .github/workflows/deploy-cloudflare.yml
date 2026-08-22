@@ -29,6 +29,8 @@ on:
       - 'female-40-cyber-looter.webp'
       - 'female-50-rise-looter.webp'
       - '.github/workflows/deploy-cloudflare.yml'
+  pull_request:
+    types: [opened]
   workflow_dispatch:
 
 permissions:
@@ -40,6 +42,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: github.event_name != 'pull_request' || github.event.pull_request.title == 'Trigger all 16 assets 4K production run'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     env:
