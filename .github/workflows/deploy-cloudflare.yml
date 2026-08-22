@@ -101,8 +101,11 @@ jobs:
               if max(w,h) < target_long:
                   scale = target_long / max(w,h)
                   im = im.resize((round(w*scale), round(h*scale)), Image.Resampling.LANCZOS)
-              im = im.filter(ImageFilter.UnsharpMask(radius=0.65, percent=65, threshold=2))
-              im.save(p, 'WEBP', quality=97, method=6)
+              im = im.filter(ImageFilter.UnsharpMask(radius=0.55, percent=70, threshold=2))
+              if name.startswith('female-'):
+                  im.save(p, 'WEBP', lossless=True, method=6, exact=True)
+              else:
+                  im.save(p, 'WEBP', quality=100, method=6)
               print(f'{name}: {w}x{h} -> {im.width}x{im.height}')
           PY
 
@@ -141,9 +144,7 @@ jobs:
           [ -n "$outcome" ] || outcome='failure'
           prep="$PREP_OUTCOME"
           [ -n "$prep" ] || prep='not-run'
-          printf 'status=%s\nsource_commit=%s\nstage_version=native-hd-preprocessed\ncharacter_assets=16\nhd_preprocess=%s\napi_token_present=%s\n' "$outcome" "$TRIGGER_SHA" "$prep" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
-          # The HD files are deployment-time derivatives. Restore tracked source files
-          # before committing diagnostics so git pull/rebase cannot be blocked.
+          printf 'status=%s\nsource_commit=%s\nstage_version=source-hq-lossless\ncharacter_assets=16\nhd_preprocess=%s\napi_token_present=%s\n' "$outcome" "$TRIGGER_SHA" "$prep" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
           git restore -- '*.webp' || true
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
