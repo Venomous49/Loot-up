@@ -10,6 +10,7 @@ on:
       - 'fixed-stage-home.js'
       - 'safe-ui-bootstrap.js'
       - 'site-polish-v3.js'
+      - 'evolution-test-mode.js'
       - '01-debutant.webp'
       - '05-debrouillard.webp'
       - '10-chasseur.webp'
@@ -27,23 +28,19 @@ on:
       - 'female-40-cyber-looter.webp'
       - 'female-50-rise-looter.webp'
       - '.github/workflows/deploy-cloudflare.yml'
-  pull_request:
-    types: [opened]
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: riselooter-cloudflare-production-final
+  group: riselooter-cloudflare-production
   cancel-in-progress: true
 
 jobs:
   deploy:
-    if: >-
-      github.event_name != 'pull_request' || github.event.pull_request.title == 'Trigger HD deployment verification PR'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 20
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
@@ -51,14 +48,12 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
 
-      - name: Verify all 16 canonical character assets
+      - name: Verify all 16 canonical character assets without modifying them
         shell: bash
         run: |
           set -euo pipefail
@@ -68,121 +63,19 @@ jobs:
             female-01-debutant.webp female-05-debrouillard.webp female-10-chasseur.webp female-15-hustler.webp
             female-20-pro.webp female-30-elite.webp female-40-cyber-looter.webp female-50-rise-looter.webp
           )
-          for f in "${files[@]}"; do test -s "$f" || { echo "Missing asset: $f"; exit 1; }; done
-
-      - name: Restore original female sources before enhancement
-        shell: bash
-        run: |
-          set -euo pipefail
-          SOURCE_COMMIT='18fdbe09c28a995f1dfa3f36124242abcc398a2e'
-          names=(
-            female-01-debutant.webp female-05-debrouillard.webp female-10-chasseur.webp female-15-hustler.webp
-            female-20-pro.webp female-30-elite.webp female-40-cyber-looter.webp female-50-rise-looter.webp
-          )
-          mkdir -p /tmp/female-src
-          for name in "${names[@]}"; do
-            git show "$SOURCE_COMMIT:$name" > "/tmp/female-src/$name"
-            test -s "/tmp/female-src/$name"
+          for f in "${files[@]}"; do
+            test -s "$f" || { echo "Missing asset: $f"; exit 1; }
           done
-
-      - name: Enhance the 8 female base files with Real-ESRGAN and face restoration
-        id: prep
-        shell: bash
-        run: |
-          set -euo pipefail
-          python -m pip install --upgrade --quiet pip setuptools wheel
-          git clone --depth 1 https://github.com/xinntao/Real-ESRGAN.git /tmp/Real-ESRGAN
-          cd /tmp/Real-ESRGAN
-          python -m pip install --quiet -r requirements.txt
-          python setup.py develop >/dev/null
-          python - <<'PY'
-          from pathlib import Path
-          import site
-          old='from torchvision.transforms.functional_tensor import rgb_to_grayscale'
-          new='from torchvision.transforms.functional import rgb_to_grayscale'
-          patched=0
-          for root in site.getsitepackages():
-              base=Path(root)/'basicsr'
-              if not base.exists():
-                  continue
-              for p in base.rglob('*.py'):
-                  text=p.read_text(errors='ignore')
-                  if old in text:
-                      p.write_text(text.replace(old,new))
-                      patched+=1
-          print('patched basicsr files:',patched)
-          PY
-          mkdir -p weights /tmp/female-out
-          curl -fL --retry 3 -o weights/RealESRGAN_x4plus.pth https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth
-          python inference_realesrgan.py \
-            -n RealESRGAN_x4plus \
-            -i /tmp/female-src \
-            -o /tmp/female-out \
-            --outscale 4 \
-            --face_enhance \
-            --suffix restored \
-            --ext png \
-            -t 256 \
-            --fp32
-          cd "$GITHUB_WORKSPACE"
-          python -m pip install --quiet pillow
-          python - <<'PY'
-          from pathlib import Path
-          from PIL import Image, ImageFilter
-          names=[
-            'female-01-debutant.webp','female-05-debrouillard.webp','female-10-chasseur.webp','female-15-hustler.webp',
-            'female-20-pro.webp','female-30-elite.webp','female-40-cyber-looter.webp','female-50-rise-looter.webp'
-          ]
-          for name in names:
-              stem=Path(name).stem
-              src=Path('/tmp/female-out')/f'{stem}_restored.png'
-              if not src.exists():
-                  raise RuntimeError(f'Missing restored output: {src}')
-              with Image.open(src) as raw:
-                  im=raw.convert('RGB')
-              im=im.resize((1152,1536),Image.Resampling.LANCZOS)
-              im=im.filter(ImageFilter.UnsharpMask(radius=0.35,percent=35,threshold=2))
-              im.save(name,'WEBP',lossless=True,method=6)
-              print(f'{name}: restored -> {im.width}x{im.height}')
-          PY
-
-      - name: Verify all 8 female base files are native HD
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          from PIL import Image
-          names=[
-            'female-01-debutant.webp','female-05-debrouillard.webp','female-10-chasseur.webp','female-15-hustler.webp',
-            'female-20-pro.webp','female-30-elite.webp','female-40-cyber-looter.webp','female-50-rise-looter.webp'
-          ]
-          for name in names:
-              with Image.open(name) as im:
-                  assert im.size==(1152,1536), f'{name}: {im.size}'
-                  print('OK',name,im.size)
-          PY
-
-      - name: Persist restored female files at the same canonical paths
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add female-*.webp
-          if ! git diff --cached --quiet; then
-            git commit -m 'Replace female base assets with Real-ESRGAN restored HD versions [skip ci]'
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
+          echo 'All 16 current canonical assets preserved unchanged.'
 
       - name: Verify Cloudflare token
         shell: bash
         run: |
           set -euo pipefail
           curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify > /tmp/userverify.json
-          python3 -c "import json,sys; d=json.load(open('/tmp/userverify.json')); sys.exit(0 if d.get('success') else 1)"
+          node -e "const d=require('/tmp/userverify.json'); process.exit(d.success?0:1)"
 
-      - name: Deploy Worker and static assets
+      - name: Deploy current main exactly as-is to Cloudflare
         id: deploy
         shell: bash
         run: |
@@ -196,15 +89,12 @@ jobs:
       - name: Record Cloudflare result
         if: always()
         env:
-          HAS_CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
           TRIGGER_SHA: ${{ github.sha }}
-          PREP_OUTCOME: ${{ steps.prep.outcome }}
         shell: bash
         run: |
           set -euo pipefail
           outcome='${{ steps.deploy.outputs.outcome }}'; [ -n "$outcome" ] || outcome='failure'
-          prep="$PREP_OUTCOME"; [ -n "$prep" ] || prep='not-run'
-          printf 'status=%s\nsource_commit=%s\nstage_version=base-hq-realesrgan-v2\ncharacter_assets=16\nfemale_base_assets=8\nhd_preprocess=%s\napi_token_present=%s\n' "$outcome" "$TRIGGER_SHA" "$prep" "$HAS_CF_TOKEN" > cloudflare-deploy-status.txt
+          printf 'status=%s\nsource_commit=%s\nstage_version=preserve-current-assets\ncharacter_assets=16\nasset_rewrite=disabled\n' "$outcome" "$TRIGGER_SHA" > cloudflare-deploy-status.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add cloudflare-deploy-status.txt cloudflare-deploy-log.txt
