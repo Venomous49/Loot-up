@@ -1,5 +1,5 @@
 status=failure
-source_commit=a25d5d03064a4916116af739805315c70c2892ed
+source_commit=6ba6d125b57d3624b6af897f63c7e4164f0ac39e
 stage_version=base-hq-realesrgan-v2
 character_assets=16
 female_base_assets=8
