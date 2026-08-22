@@ -27,6 +27,8 @@ on:
       - 'female-40-cyber-looter.webp'
       - 'female-50-rise-looter.webp'
       - '.github/workflows/deploy-cloudflare.yml'
+  issues:
+    types: [opened]
   workflow_dispatch:
 
 permissions:
@@ -38,6 +40,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: github.event_name != 'issues' || github.event.issue.title == 'Trigger HD deployment verification'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -140,5 +143,3 @@ jobs:
       - name: Fail on deployment failure
         if: steps.deploy.outputs.outcome != 'success'
         run: exit 1
-
-      # Native git push trigger: 2026-08-22T15:00+02:00
