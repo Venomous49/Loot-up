@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const VERSION='native-hd-20260822-2';
+  const VERSION='superres-x4-20260822-1';
   const MALE_STAGE_ASSETS=[
     `/01-debutant.webp?v=${VERSION}`,`/05-debrouillard.webp?v=${VERSION}`,`/10-chasseur.webp?v=${VERSION}`,`/15-hustler.webp?v=${VERSION}`,
     `/20-pro.webp?v=${VERSION}`,`/30-elite.webp?v=${VERSION}`,`/40-cyber-looter.webp?v=${VERSION}`,`/50-rise-looter.webp?v=${VERSION}`
