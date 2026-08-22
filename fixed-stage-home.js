@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const VERSION='superres-x4-20260822-1';
+  const VERSION='superres-x4-20260822-2';
   const MALE_STAGE_ASSETS=[
     `/01-debutant.webp?v=${VERSION}`,`/05-debrouillard.webp?v=${VERSION}`,`/10-chasseur.webp?v=${VERSION}`,`/15-hustler.webp?v=${VERSION}`,
     `/20-pro.webp?v=${VERSION}`,`/30-elite.webp?v=${VERSION}`,`/40-cyber-looter.webp?v=${VERSION}`,`/50-rise-looter.webp?v=${VERSION}`
@@ -12,7 +12,6 @@
   const assetsFor=profile=>String(profile?.avatar_gender||'male').toLowerCase()==='female'?FEMALE_STAGE_ASSETS:MALE_STAGE_ASSETS;
   const fixedAssetPath=(profile,stage)=>assetsFor(profile)[Math.max(0,Math.min(Number(stage)||0,7))];
   window.assetPath=fixedAssetPath;
-
   const style=document.createElement('style');
   style.id='fixed-stage-home-art-style';
   style.textContent=`
@@ -24,7 +23,6 @@
     .evolution-card.locked .evolution-real.stage-art-clean{filter:brightness(0)!important;opacity:.86!important}
   `;
   document.head.appendChild(style);
-
   function mark(root=document){
     root.querySelectorAll?.('img').forEach(img=>{
       const src=img.getAttribute('src')||img.currentSrc||'';
@@ -34,7 +32,6 @@
       }
     });
   }
-
   function repairHome(){
     const holder=document.getElementById('mainCharacter');
     if(!holder)return;
@@ -54,7 +51,6 @@
     img.classList.add('stage-art-clean');
     holder.querySelectorAll('.character-missing').forEach(el=>el.style.display='none');
   }
-
   function apply(){mark();repairHome()}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();
   let queued=false;
