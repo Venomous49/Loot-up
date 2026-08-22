@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const $=id=>document.getElementById(id);
-  const VERSION='superres-x4-20260822-2';
+  const VERSION='base-hq-edsr-v1';
   const state={gender:'male'};
   const isOpen=()=>document.body.classList.contains('creator-test-active');
   const fixedCharacter=()=>state.gender==='female'
