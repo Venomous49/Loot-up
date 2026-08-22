@@ -1,5 +1,5 @@
-status=success
-source_commit=970fcaa61e565ecb8bc2eba0ed861ba6acc067da
-stage_version=current-assets-safe-4k
+status=failure
+source_commit=fbf2be2e864064f92c4806c050ffea96620c8ac0
+stage_version=all-assets-4k-v1
 character_assets=16
 rollback_source=disabled
