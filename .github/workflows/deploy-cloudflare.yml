@@ -141,4 +141,4 @@ jobs:
         if: steps.deploy.outputs.outcome != 'success'
         run: exit 1
 
-      # Explicit HD status refresh trigger: 2026-08-22T14:57+02:00
+      # Native git push trigger: 2026-08-22T15:00+02:00
