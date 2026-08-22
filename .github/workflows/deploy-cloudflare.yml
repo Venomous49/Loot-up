@@ -143,3 +143,5 @@ jobs:
       - name: Fail on deployment failure
         if: steps.deploy.outputs.outcome != 'success'
         run: exit 1
+
+      # PR-merge trigger: 2026-08-22T15:07+02:00
