@@ -1,6 +1,7 @@
 (() => {
   'use strict';
 
+  // Deployment trigger: female fixed-stage assets are now part of the production set.
   const MALE_STAGE_ASSETS = [
     '/01-debutant.webp?v=final-eight-20260821-2',
     '/05-debrouillard.webp?v=final-eight-20260821-2',
